@@ -1,0 +1,9 @@
+{
+"base_url":"http://127.0.0.1:9001",
+"session_configs": {
+"wds.linkis.yarnqueue":"root.default",
+"spark.driver.memory":"4g",
+"spark.executor.instances":"1",
+"spark.executor.memory":"4g"
+}
+}
