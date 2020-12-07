@@ -1,0 +1,35 @@
+:8081 {
+  root /home
+  errors error.log
+  log access.log
+  gzip
+
+  auth_request {
+     check {
+        path /cc/v1/*
+        api /userOrAuthInterceptor
+        except GET /cc/v1/login /cc/v1/logout /cc/v1/auth/access/namespaces/*/notebooks/*
+        except POST /cc/v1/alerts  /cc/v1/alerts/training
+     }
+
+     check {
+        path /notebook/*
+        api /ipInterceptor
+     }
+
+  }
+
+  proxy /cc localhost:7777 {
+    header_upstream MLSS-Token {MLSS-Token}
+    header_upstream MLSS-RealIP {remote}
+    header_upstream X-Real-IP {remote}
+    header_upstream MLSS-Userid {MLSS-Userid}
+    header_upstream MLSS-Auth-Type {MLSS-Auth-Type}
+    header_upstream MLSS-UIURL {MLSS-UIURL}
+    header_upstream MLSS-Passwd {MLSS-Passwd}
+    header_upstream MLSS-APPID {MLSS-APPID}
+    header_upstream MLSS-APPTimestamp {MLSS-APPTimestamp}
+    header_upstream MLSS-APPSignature {MLSS-APPSignature}
+  }
+
+}

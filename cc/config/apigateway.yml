@@ -1,0 +1,9 @@
+authAddress:
+  user: http://localhost:7777/cc/v1/inter/user
+  auth: http://localhost:7777/cc/v1/inter/auth
+  ip: http://localhost:7777/cc/v1/inter/ip
+checkApi:
+  userOrAuthApi: /userOrAuthInterceptor
+  ipApi: /ipInterceptor
+noteBook:
+  authUrl: /cc/v1/auth/access/namespaces/*/notebooks/*

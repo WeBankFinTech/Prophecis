@@ -1,0 +1,174 @@
+@import './variables.scss';
+
+body{
+  font-family: $global-font-family;
+  
+}
+
+:focus {
+  outline: none !important;
+}
+
+.el-table{
+  font-size: 12px;
+  td{
+    padding: 6px 0;
+    text-align: center
+  }
+  th.is-leaf{
+      text-align: center
+    }
+}
+
+.el-table thead th{
+  background-color: #f5f7fa!important;
+  padding: 13px 0;
+  .cell{
+    color: #909399;
+  }
+}
+
+.margin-l30{
+  margin-left: 30px;
+}
+
+.margin-b20{
+  margin-bottom: 20px;
+}
+
+.el-pagination{
+  margin-top: 15px;
+  text-align: right;
+}
+
+.operations-toolbars{
+  padding-bottom: 10px;
+}
+
+.el-form{
+  .el-select{
+    display:block;
+  }
+  .subtitle {
+    height: 28px;
+    padding-left: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    .add {
+      margin-left: 10px;
+      color: #3399ff;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .delete {
+      margin-left: 10px;
+      color: #ff9900;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+    }
+  }
+  .el-textarea{
+    textarea{
+      font-family: Arial;
+    }
+  }
+}
+
+.query{
+  padding: 10px 0 10px;
+}
+
+.dialog-style{
+  .el-dialog__header{
+    border-bottom:1px solid #e3e8ee;
+    .el-dialog__title{
+      font-size: 16px;
+      font-weight: 600;
+    }
+  }
+  .el-dialog__body{
+    padding: 25px 20px 10px;
+  }
+}
+
+.upload-box,.tofs-upload {
+  text-align: right;
+  height: 50px;
+  .upload{
+    display: inline;
+  }
+  .file-name {
+    position: relative;
+    float: left;
+    margin-left: 190px;
+    display: inline-block;
+    padding: 9px 20px;
+    font-size: 14px;
+    background: #f5f7fa;
+    border-radius: 5px;
+  }
+  .delete-file {
+      position: absolute;
+      right: 0;
+      top:0;
+      cursor: pointer;
+  }
+  .el-upload-list {
+    display: none;
+  }
+}
+
+
+
+/* 设置滚动条的样式 */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+
+/* 滚动槽 */
+
+::-webkit-scrollbar-track {
+  box-shadow: inset 0 0 2px $shadow-color;
+  -webkit-box-shadow: inset 0 0 2px $shadow-color;
+  border-radius: $border-radius-large;
+  -webkit-border-radius: $border-radius-large;
+  -moz-border-radius: $border-radius-large;
+  -ms-border-radius: $border-radius-large;
+  -o-border-radius: $border-radius-large;
+}
+/* 滚动条滑块 */
+
+::-webkit-scrollbar-thumb {
+  box-shadow: inset 0 0 2px $shadow-color;
+  border-radius: $border-radius-large;
+  background: #cdcdcd;
+  -webkit-box-shadow: inset 0 0 2px $shadow-color;
+  -webkit-border-radius: $border-radius-large;
+  -moz-border-radius: $border-radius-large;
+  -ms-border-radius: $border-radius-large;
+  -o-border-radius: $border-radius-large;
+}
+
+::-webkit-scrollbar-thumb:window-inactive {
+  background: #cdcdcd;
+}
+// 流程图icon样式
+.icon {
+  margin-left: 5px;
+  color: #2d8cf0;
+}
+// 列表下拉操作按钮
+.el-button.multi-operate-btn{
+  color: #79879c;
+  &:hover{
+    background-color: #e3e9ef;
+  }
+  i{
+    transform: rotate(90deg);
+  }
+}
