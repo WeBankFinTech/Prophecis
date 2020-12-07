@@ -1,0 +1,89 @@
+/*!
+ * Copyright 2020 WeBank
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+// 文字相关的
+// 全局的字体
+$global-font-family: "PingFang SC","Helvetica Neue","Hiragino Sans GB",Helvetica,"Microsoft YaHei",Arial;
+// 一级字号，最大的标题使用
+$font-size-first: 18px;
+// 二级字号，导航、二级标题使用
+$font-size-second: 16px;
+// 三级字号，普通的文字
+$font-size-third: 14px;
+
+// 颜色相关的
+// 主色
+$color-primary: #3387ff;
+// 主色的hover色
+$color-primary-hover: #126ce9;
+// 导航色
+$color-nav: #2e3846;
+// 导航的hover色
+$color-nav-hover: #1e252f;
+// 一级文字
+$color-font-first: #333;
+// 二级文字
+$color-font-second: #666;
+// 三级文字
+$color-font-third: #999;
+// 提示文字
+$color-hint-font: #ccc;
+// 链接
+$color-link: #267BF3;
+// 白色
+$color-white: #fff;
+// 黑色
+$color-black: #000;
+// 成功
+$color-success: #22c67c;
+// 警告
+$color-warning: #ffa027;
+// 错误
+$color-error: #fd3838;
+// disabled
+$color-disabled: #ccc;
+// 背景色
+$color-background: #f7f7f7;
+// 分割线
+$color-divider: #e4e4e4;
+
+// 间距
+// 整体布局的外层横向margin
+$margin-layout-horizontal: 40px;
+// 整体布局的外层竖向margin
+$margin-layout-vertical: 28px;
+// 内容间的margin
+$margin-content: 20px;
+// 整体布局的外层横向padding
+$padding-layout-horizontal: 40px;
+// 整体布局的外层竖向padding
+$padding-layout-vertical: 28px;
+// 内容间的padding
+$padding-content: 20px;
+
+// 其他
+// 面包屑这一栏的高度
+$breadcrumb-height: 22px;
+// 分页组件这一栏的高度
+$pagination-height: 34px;
+// 操作栏的高度
+$operations-height: 35px;
+// 全局最小宽度
+$global-min-width: 1280px;
+// Shadow
+$shadow-color           : rgba(0, 0, 0, .2);
+$border-radius-large    : 8px;

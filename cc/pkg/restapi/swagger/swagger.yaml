@@ -1,0 +1,3284 @@
+swagger: "2.0"
+info:
+  title: mlss-cc API
+  description: API description in Markdown.
+  version: 1.0.0
+host: gateway.mlss.cc
+schemes:
+  - https
+produces:
+  - application/json
+consumes:
+  - application/json
+paths:
+  #api for groups
+  /cc/v1/login:
+    get:
+      tags:
+        - Logins
+      summary: login .
+      description: Optional extended description in Markdown.
+      operationId: UMLogin
+      produces:
+        - application/json
+      parameters:
+        - name: username
+          in: query
+          description: the username
+          required: true
+          type: string
+        - name: password
+          in: query
+          description: the password
+          required: true
+          type: string
+        - name: pwdEncoded
+          in: query
+          description: the pwdEncoded
+          required: false
+          type: boolean
+      responses:
+        200:
+          description: login.
+          schema:
+            $ref: '#/definitions/Result'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: the url to login not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /cc/v1/logout:
+    get:
+      tags:
+        - Logouts
+      summary: Returns a user.
+      description: Optional extended description in Markdown.
+      operationId: Logout
+      produces:
+        - application/json
+      responses:
+        200:
+          description: logout.
+          schema:
+            $ref: '#/definitions/Result'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: the url to logout not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /cc/v1/users/admin/{name}:
+    get:
+      tags:
+        - Users
+      summary: Returns a user.
+      description: Optional extended description in Markdown.
+      operationId: GetSAByName
+      produces:
+        - application/json
+      parameters:
+        - name: name
+          in: path
+          description: the name of SA
+          required: true
+          type: string
+      responses:
+        200:
+          description: Detailed User and User information.
+          schema:
+            $ref: '#/definitions/Result'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model with the given ID not found.
+          schema:
+            $ref: '#/definitions/Error'
+  /cc/v1/LDAPlogin:
+    post:
+      tags:
+        - Logins
+      summary: login .
+      description: Optional extended description in Markdown.
+      operationId: LDAPLogin
+      produces:
+        - application/json
+      parameters:
+        - name: loginRequest
+          in: body
+          schema:
+            $ref: '#/definitions/LoginRequest'
+          description: the login Request
+          required: true
+      responses:
+        200:
+          description: login.
+          schema:
+            $ref: '#/definitions/Result'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: the url to login not found.
+          schema:
+            $ref: '#/definitions/Error'
+  /cc/v1/users/id/{userId}:
+    get:
+      tags:
+        - Users
+      summary: Returns a user.
+      description: Optional extended description in Markdown.
+      operationId: GetUserByUserId
+      produces:
+        - application/json
+      parameters:
+        - name: userId
+          in: path
+          description: the id of user
+          required: true
+          type: integer
+          format: int64
+      responses:
+        200:
+          description: Detailed User and User information.
+          schema:
+            $ref: '#/definitions/User'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model with the given ID not found.
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      tags:
+        - Users
+      summary: Returns a user.
+      description: Optional extended description in Markdown.
+      operationId: DeleteUserById
+      produces:
+        - application/json
+      parameters:
+        - name: userId
+          in: path
+          description: the id of user
+          required: true
+          type: integer
+          format: int64
+      responses:
+        200:
+          description: Detailed User and User information.
+          schema:
+            $ref: '#/definitions/User'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model with the given ID not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /cc/v1/users/name/{userName}:
+    get:
+      tags:
+        - Users
+      summary: Returns a user.
+      description: Optional extended description in Markdown.
+      operationId: GetUserByUserName
+      produces:
+        - application/json
+      parameters:
+        - name: userName
+          in: path
+          description: the id of user
+          required: true
+          type: string
+      responses:
+        200:
+          description: Detailed User and User information.
+          schema:
+            $ref: '#/definitions/User'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model with the given ID not found.
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      tags:
+        - Users
+      summary: Returns a user.
+      description: Optional extended description in Markdown.
+      operationId: DeleteUserByName
+      produces:
+        - application/json
+      parameters:
+        - name: userName
+          in: path
+          description: the id of user
+          required: true
+          type: string
+      responses:
+        200:
+          description: Detailed User and User information.
+          schema:
+            $ref: '#/definitions/User'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model with the given ID not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /cc/v1/users:
+    get:
+      tags:
+        - Users
+      summary: Returns a list of users.
+      description: Optional extended description in Markdown.
+      operationId: GetAllUsers
+      produces:
+        - application/json
+      parameters:
+        - name: page
+          in: query
+          description: page number.
+          required: false
+          type: integer
+          format: int64
+          default: 0
+        - name: size
+          in: query
+          description: entity number per page.
+          required: false
+          type: integer
+          format: int64
+          default: 0
+      responses:
+        200:
+          description: Detailed User and User information.
+          schema:
+            $ref: '#/definitions/PageUserList'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to get allUsers not found.
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      tags:
+        - Users
+      summary: Returns a list of users.
+      description: Optional extended description in Markdown.
+      operationId: AddUser
+      parameters:
+        - in: body
+          name: user
+          description: The user Request
+          required: true
+          schema:
+            $ref: '#/definitions/UserRequest'
+      responses:
+        200:
+          description: Detailed User and User information.
+          schema:
+            $ref: '#/definitions/Result'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to get allUsers not found.
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      tags:
+        - Users
+      summary: Returns a list of users.
+      description: Optional extended description in Markdown.
+      operationId: UpdateUser
+      parameters:
+        - in: body
+          name: user
+          description: The user Request
+          required: true
+          schema:
+            $ref: '#/definitions/User'
+      responses:
+        200:
+          description: Detailed User and User information.
+          schema:
+            $ref: '#/definitions/Result'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to get allUsers not found.
+          schema:
+            $ref: '#/definitions/Error'
+  /cc/v1/users/myUsers:
+    get:
+      tags:
+        - Users
+      summary: Returns a list of users.
+      description: Optional extended description in Markdown.
+      operationId: GetMyUsers
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Detailed User and User information.
+          schema:
+            $ref: '#/definitions/UserList'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to get myUsers not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+  #api for groups
+  /cc/v1/groups:
+    get:
+      tags:
+        - Groups
+      summary: Returns a list of groups.
+      description: Optional extended description in Markdown.
+      operationId: GetAllGroups
+      produces:
+        - application/json
+      parameters:
+        - name: page
+          in: query
+          description: page number.
+          required: false
+          type: integer
+          format: int64
+          default: 0
+        - name: size
+          in: query
+          description: entity number per page.
+          required: false
+          type: integer
+          format: int64
+          default: 0
+      responses:
+        200:
+          description: Detailed Group and Group information.
+          schema:
+            $ref: '#/definitions/PageGroupList'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to get allGroups not found.
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      tags:
+        - Groups
+      summary: Returns a list of groups.
+      description: Optional extended description in Markdown.
+      operationId: AddGroup
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: group
+          description: The group Request
+          required: true
+          schema:
+            $ref: '#/definitions/Group'
+      responses:
+        200:
+          description: Detailed group and group information.
+          schema:
+            $ref: '#/definitions/Group'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to get allGroups not found.
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      tags:
+        - Groups
+      summary: Returns a list of groups.
+      description: Optional extended description in Markdown.
+      operationId: UpdateGroup
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: group
+          description: The group Request
+          required: true
+          schema:
+            $ref: '#/definitions/Group'
+      responses:
+        200:
+          description: Detailed group and group information.
+          schema:
+            $ref: '#/definitions/Group'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to get allGroups not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /cc/v1/groups/id/{groupId}:
+    get:
+      tags:
+        - Groups
+      summary: Returns a group.
+      description: Optional extended description in Markdown.
+      operationId: GetGroupByGroupId
+      produces:
+        - application/json
+      parameters:
+        - name: groupId
+          in: path
+          description: the id of group
+          required: true
+          type: integer
+          format: int64
+      responses:
+        200:
+          description: Detailed Group and Group information.
+          schema:
+            $ref: '#/definitions/Group'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model with the given ID not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+    delete:
+      tags:
+        - Groups
+      summary: Returns a group.
+      description: Optional extended description in Markdown.
+      operationId: DeleteGroupById
+      produces:
+        - application/json
+      parameters:
+        - name: groupId
+          in: path
+          description: the id of group
+          required: true
+          type: integer
+          format: int64
+      responses:
+        200:
+          description: Detailed Group and Group information.
+          schema:
+            $ref: '#/definitions/Group'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model with the given ID not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /cc/v1/groups/name/{groupName}:
+    get:
+      tags:
+        - Groups
+      summary: Returns a Group.
+      description: Optional extended description in Markdown.
+      operationId: GetGroupByName
+      produces:
+        - application/json
+      parameters:
+        - name: groupName
+          in: path
+          description: the id of group
+          required: true
+          type: string
+      responses:
+        200:
+          description: Detailed Group and Group information.
+          schema:
+            $ref: '#/definitions/Group'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model with the given ID not found.
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      tags:
+        - Groups
+      summary: Returns a user.
+      description: Optional extended description in Markdown.
+      operationId: DeleteGroupByName
+      produces:
+        - application/json
+      parameters:
+        - name: groupName
+          in: path
+          description: the name of group
+          required: true
+          type: string
+      responses:
+        200:
+          description: Detailed Group and Group information.
+          schema:
+            $ref: '#/definitions/Group'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model with the given ID not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /cc/v1/groups/users:
+    post:
+      tags:
+        - Groups
+      summary: add user to group.
+      description: Optional extended description in Markdown.
+      operationId: AddUserToGroup
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: userGroup
+          description: The group Request
+          required: true
+          schema:
+            $ref: '#/definitions/UserGroup'
+      responses:
+        200:
+          description: Detailed group and group information.
+          schema:
+            $ref: '#/definitions/UserGroup'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to get allGroups not found.
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      tags:
+        - Groups
+      summary: Returns a list of groups.
+      description: Optional extended description in Markdown.
+      operationId: UpdateUserGroup
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: userGroup
+          description: The group Request
+          required: true
+          schema:
+            $ref: '#/definitions/UserGroup'
+      responses:
+        200:
+          description: Detailed group and group information.
+          schema:
+            $ref: '#/definitions/UserGroup'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to get allGroups not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /cc/v1/groups/userGroup/user/{userId}:
+    get:
+      tags:
+        - Groups
+      summary: Returns a userGroup.
+      description: Optional extended description in Markdown.
+      operationId: GetAllUserGroupByUserId
+      produces:
+        - application/json
+      parameters:
+        - name: userId
+          in: path
+          description: the userId of userGroup
+          required: true
+          type: integer
+          format: int64
+        - name: page
+          in: query
+          description: page number.
+          required: false
+          type: integer
+          format: int64
+          default: 0
+        - name: size
+          in: query
+          description: entity number per page.
+          required: false
+          type: integer
+          format: int64
+          default: 0
+      responses:
+        200:
+          description: Detailed userGroup and userGroup information.
+          schema:
+            $ref: '#/definitions/UserGroup'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model with the given ID not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /cc/v1/groups/userGroup/user/{userId}/group/{groupId}:
+    get:
+      tags:
+        - Groups
+      summary: Returns a userGroup.
+      description: Optional extended description in Markdown.
+      operationId: GetUserGroupByUserIdAndGroupId
+      produces:
+        - application/json
+      parameters:
+        - name: userId
+          in: path
+          description: the userId of userGroup
+          required: true
+          type: integer
+          format: int64
+        - name: groupId
+          in: path
+          description: the groupId of userGroup
+          required: true
+          type: integer
+          format: int64
+      responses:
+        200:
+          description: Detailed userGroup and userGroup information.
+          schema:
+            $ref: '#/definitions/UserGroup'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model with the given ID not found.
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      tags:
+        - Groups
+      summary: Returns a userGroup.
+      description: Optional extended description in Markdown.
+      operationId: DeleteUserGroupByUserIdAndGroupId
+      produces:
+        - application/json
+      parameters:
+        - name: userId
+          in: path
+          description: the userId of userGroup
+          required: true
+          type: integer
+          format: int64
+        - name: groupId
+          in: path
+          description: the groupId of userGroup
+          required: true
+          type: integer
+          format: int64
+      responses:
+        200:
+          description: Detailed userGroup and userGroup information.
+          schema:
+            $ref: '#/definitions/UserGroup'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model with the given ID not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+
+  /cc/v1/groups/userGroup/id/{id}:
+    delete:
+      tags:
+        - Groups
+      summary: Returns a user.
+      description: Optional extended description in Markdown.
+      operationId: DeleteUserFromGroup
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          description: the id of userGroup
+          required: true
+          type: integer
+          format: int64
+      responses:
+        200:
+          description: Detailed Group and Group information.
+          schema:
+            $ref: '#/definitions/UserGroup'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model with the given ID not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /cc/v1/groups/storages:
+    post:
+      tags:
+        - Groups
+      summary: add storage to group.
+      description: Optional extended description in Markdown.
+      operationId: AddStorageToGroup
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: groupStorage
+          description: The groupStorage Request
+          required: true
+          schema:
+            $ref: '#/definitions/GroupStorage'
+      responses:
+        200:
+          description: Detailed GroupStorage and GroupStorage information.
+          schema:
+            $ref: '#/definitions/GroupStorage'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add GroupStorage not found.
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      tags:
+        - Groups
+      summary: Returns a list of groups.
+      description: Optional extended description in Markdown.
+      operationId: UpdateGroupStorage
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: groupStorage
+          description: The GroupStorage Request
+          required: true
+          schema:
+            $ref: '#/definitions/GroupStorage'
+      responses:
+        200:
+          description: Detailed group and group information.
+          schema:
+            $ref: '#/definitions/GroupStorage'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to get allGroups not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /cc/v1/groups/groupStorage/storage/{storageId}:
+    get:
+      tags:
+        - Groups
+      summary: Returns a GroupStorage.
+      description: Optional extended description in Markdown.
+      operationId: GetAllGroupStorageByStorageId
+      produces:
+        - application/json
+      parameters:
+        - name: storageId
+          in: path
+          description: the storageId of groupStorage
+          required: true
+          type: integer
+          format: int64
+        - name: page
+          in: query
+          description: page number.
+          required: false
+          type: integer
+          format: int64
+          default: 0
+        - name: size
+          in: query
+          description: entity number per page.
+          required: false
+          type: integer
+          format: int64
+          default: 0
+      responses:
+        200:
+          description: Detailed groupStorage and groupStorage information.
+          schema:
+            $ref: '#/definitions/GroupStorage'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model with the given ID not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /cc/v1/groups/groupStorage/id/{id}:
+    delete:
+      tags:
+        - Groups
+      summary: Returns a GroupStorage.
+      description: Optional extended description in Markdown.
+      operationId: DeleteStorageFromGroup
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          description: the id of GroupStorage
+          required: true
+          type: integer
+          format: int64
+      responses:
+        200:
+          description: Detailed GroupStorage and GroupStorage information.
+          schema:
+            $ref: '#/definitions/GroupStorage'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model with the given ID not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /cc/v1/groups/group/storage:
+    get:
+      tags:
+        - Groups
+      summary: Returns a storage list.
+      description: Optional extended description in Markdown.
+      operationId: GetCurrentUserStoragePath
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Detailed GroupStorage and GroupStorage information.
+          schema:
+            $ref: '#/definitions/Result'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model with the given ID not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+  # api for groupNamespace
+  /cc/v1/groups/namespaces:
+    post:
+      tags:
+        - Groups
+      summary: add namespace to group.
+      description: Optional extended description in Markdown.
+      operationId: AddNamespaceToGroup
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: groupNamespace
+          description: The groupNamespace Request
+          required: true
+          schema:
+            $ref: '#/definitions/GroupNamespace'
+      responses:
+        200:
+          description: Detailed GroupNamespace and GroupNamespace information.
+          schema:
+            $ref: '#/definitions/GroupNamespace'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add GroupNamespace not found.
+          schema:
+            $ref: '#/definitions/Error'
+  /cc/v1/groups/{groupId}/namespace/{namespaceId}:
+    get:
+      tags:
+        - Groups
+      summary: get namespace by groupId and namespaceId.
+      description: Optional extended description in Markdown.
+      operationId: GetNamespaceByGroupIdAndNamespace
+      produces:
+        - application/json
+      parameters:
+        - name: groupId
+          in: path
+          description: the groupId of GroupNamespace
+          required: true
+          type: integer
+          format: int64
+        - name: namespaceId
+          in: path
+          description: the namespaceId of GroupNamespace
+          required: true
+          type: integer
+          format: int64
+      responses:
+        200:
+          description: Detailed GroupNamespace and GroupNamespace information.
+          schema:
+            $ref: '#/definitions/GroupNamespace'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add GroupNamespace not found.
+          schema:
+            $ref: '#/definitions/Error'
+  /cc/v1/groups/{groupId}/namespaces:
+    get:
+      tags:
+        - Groups
+      summary: get namespace by groupId.
+      description: Optional extended description in Markdown.
+      operationId: GetNamespacesByGroupId
+      produces:
+        - application/json
+      parameters:
+        - name: groupId
+          in: path
+          description: the groupId of GroupNamespace
+          required: true
+          type: integer
+          format: int64
+      responses:
+        200:
+          description: Detailed GroupNamespace and GroupNamespace information.
+          schema:
+            $ref: '#/definitions/GroupNamespace'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add GroupNamespace not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /cc/v1/groups/namespaces/id/{id}:
+    delete:
+      tags:
+        - Groups
+      summary: delete namespace from group.
+      description: Optional extended description in Markdown.
+      operationId: DeleteGroupNamespace
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          description: the id of GroupNamespace
+          required: true
+          type: integer
+          format: int64
+      responses:
+        200:
+          description: Detailed GroupNamespace and GroupNamespace information.
+          schema:
+            $ref: '#/definitions/GroupNamespace'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add GroupNamespace not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /cc/v1/groups/groupNamespace/{namespaceId}:
+    get:
+      tags:
+        - Groups
+      summary: get GroupNamespace.
+      description: Optional extended description in Markdown.
+      operationId: GetAllGroupNamespaceByNamespaceId
+      produces:
+        - application/json
+      parameters:
+        - name: namespaceId
+          in: path
+          description: the namespaceId of GroupNamespace
+          required: true
+          type: integer
+          format: int64
+        - name: page
+          in: query
+          description: page number.
+          required: false
+          type: integer
+          format: int64
+          default: 0
+        - name: size
+          in: query
+          description: entity number per page.
+          required: false
+          type: integer
+          format: int64
+          default: 0
+      responses:
+        200:
+          description: Detailed GroupNamespace and GroupNamespace information.
+          schema:
+            $ref: '#/definitions/GroupNamespace'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add GroupNamespace not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+  #api for storages
+  /cc/v1/storages:
+    get:
+      tags:
+        - Storages
+      summary: Returns a list of Storages.
+      description: Optional extended description in Markdown.
+      operationId: GetAllStorage
+      produces:
+        - application/json
+      parameters:
+        - name: page
+          in: query
+          description: page number.
+          required: false
+          type: integer
+          format: int64
+          default: 0
+        - name: size
+          in: query
+          description: entity number per page.
+          required: false
+          type: integer
+          format: int64
+          default: 0
+      responses:
+        200:
+          description: Detailed Storage and Storage information.
+          schema:
+            $ref: '#/definitions/PageStorageList'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to get allStorages not found.
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      tags:
+        - Storages
+      summary: Returns a list of Storages.
+      description: Optional extended description in Markdown.
+      operationId: AddStorage
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: storage
+          description: The Storage Request
+          required: true
+          schema:
+            $ref: '#/definitions/Storage'
+      responses:
+        200:
+          description: Detailed Storage and Storage information.
+          schema:
+            $ref: '#/definitions/Storage'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to get allStorages not found.
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      tags:
+        - Storages
+      summary: update Storage.
+      description: Optional extended description in Markdown.
+      operationId: UpdateStorage
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: storage
+          description: The Storage Request
+          required: true
+          schema:
+            $ref: '#/definitions/Storage'
+      responses:
+        200:
+          description: Detailed Storage and Storage information.
+          schema:
+            $ref: '#/definitions/Storage'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to put Storage not found.
+          schema:
+            $ref: '#/definitions/Error'
+  /cc/v1/storages/id/{storageId}:
+    delete:
+      tags:
+        - Storages
+      summary: Returns a Storage.
+      description: Optional extended description in Markdown.
+      operationId: DeleteStorageById
+      produces:
+        - application/json
+      parameters:
+        - name: storageId
+          in: path
+          description: the id of Storage
+          required: true
+          type: integer
+          format: int64
+      responses:
+        200:
+          description: Detailed Storage and Storage information.
+          schema:
+            $ref: '#/definitions/Storage'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model with the given ID not found.
+          schema:
+            $ref: '#/definitions/Error'
+  /cc/v1/storages/path:
+    get:
+      tags:
+        - Storages
+      summary: Returns a Storage.
+      description: Optional extended description in Markdown.
+      operationId: GetStorageByPath
+      produces:
+        - application/json
+      parameters:
+        - name: path
+          in: query
+          description: the path of Storage
+          required: true
+          type: string
+      responses:
+        200:
+          description: Detailed Storage and Storage information.
+          schema:
+            $ref: '#/definitions/Storage'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model with the given ID not found.
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      tags:
+        - Storages
+      summary: Returns a Storage.
+      description: Optional extended description in Markdown.
+      operationId: DeleteStorageByPath
+      produces:
+        - application/json
+      parameters:
+        - name: path
+          in: query
+          description: the id of Storage
+          required: true
+          type: string
+      responses:
+        200:
+          description: Detailed Storage and Storage information.
+          schema:
+            $ref: '#/definitions/Storage'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model with the given ID not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /cc/v1/namespaces:
+    get:
+      tags:
+        - Namespaces
+      summary: Returns a list of namespaces.
+      description: Optional extended description in Markdown.
+      operationId: GetAllNamespaces
+      produces:
+        - application/json
+      parameters:
+        - name: page
+          in: query
+          description: page number.
+          required: false
+          type: integer
+          format: int64
+          default: 0
+        - name: size
+          in: query
+          description: entity number per page.
+          required: false
+          type: integer
+          format: int64
+          default: 0
+      responses:
+        200:
+          description: Detailed namespace and namespace information.
+          schema:
+            $ref: '#/definitions/PageNamespaceList'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to get allNamespaces not found.
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      tags:
+        - Namespaces
+      summary: create a namespace.
+      description: Optional extended description in Markdown.
+      operationId: AddNamespace
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: namespace
+          description: The namespace Request
+          required: true
+          schema:
+            $ref: '#/definitions/NamespaceRequest'
+      responses:
+        200:
+          description: Detailed namespace and namespace information.
+          schema:
+            $ref: '#/definitions/NamespaceRequest'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add namespace not found.
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      tags:
+        - Namespaces
+      summary: update namespace.
+      description: Optional extended description in Markdown.
+      operationId: UpdateNamespace
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: namespace
+          description: The namespace Request
+          required: true
+          schema:
+            $ref: '#/definitions/NamespaceRequest'
+      responses:
+        200:
+          description: Detailed namespace and namespace information.
+          schema:
+            $ref: '#/definitions/NamespaceRequest'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to put namespace not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /cc/v1/namespaces/namespace/{namespace}:
+    get:
+      tags:
+        - Namespaces
+      summary: Returns a namespace.
+      description: Optional extended description in Markdown.
+      operationId: GetNamespaceByName
+      produces:
+        - application/json
+      parameters:
+        - name: namespace
+          in: path
+          description: the namespace of namespace
+          required: true
+          type: string
+      responses:
+        200:
+          description: Detailed namespace and namespace information.
+          schema:
+            $ref: '#/definitions/NamespaceRequest'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model with the given ID not found.
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      tags:
+        - Namespaces
+      summary: Returns a namespace.
+      description: Optional extended description in Markdown.
+      operationId: DeleteNamespaceByName
+      produces:
+        - application/json
+      parameters:
+        - name: namespace
+          in: path
+          description: the namespace of namespace
+          required: true
+          type: string
+      responses:
+        200:
+          description: Detailed namespace and namespace information.
+          schema:
+            $ref: '#/definitions/NamespaceRequest'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model with the given ID not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /cc/v1/namespaces/myNamespace:
+    get:
+      tags:
+        - Namespaces
+      summary: Returns a namespace.
+      description: Optional extended description in Markdown.
+      operationId: GetMyNamespace
+      produces:
+        - application/json
+      parameters:
+        - name: clusterName
+          in: query
+          description: clusterName.
+          required: false
+          type: string
+          default: ""
+      responses:
+        200:
+          description: Detailed User and User information.
+          schema:
+            $ref: '#/definitions/Namespace'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to get myUsers not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /cc/v1/resources:
+    put:
+      tags:
+        - Resources
+      summary: update a namespace rq.
+      description: Optional extended description in Markdown.
+      operationId: SetNamespaceRQ
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: resourcesQuota
+          description: The namespace resourcesQuota Request
+          required: true
+          schema:
+            $ref: '#/definitions/ResourcesQuota'
+      responses:
+        200:
+          description: Detailed namespace and namespace information.
+          schema:
+            $ref: '#/definitions/ResourcesQuota'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add namespace not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /cc/v1/resources/labels:
+    get:
+      tags:
+        - Resources
+      summary: get labels of nodes.
+      description: Optional extended description in Markdown.
+      operationId: GetLabelsOfNode
+      produces:
+        - application/json
+      parameters:
+        - name: page
+          in: query
+          description: page number.
+          required: false
+          type: integer
+          format: int64
+          default: 0
+        - name: size
+          in: query
+          description: entity number per page.
+          required: false
+          type: integer
+          format: int64
+          default: 0
+      responses:
+        200:
+          description: Detailed namespace and namespace information.
+          schema:
+            $ref: '#/definitions/LabelsResponse'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add namespace not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+    post:
+      tags:
+        - Resources
+      summary: add labels to nodes.
+      description: Optional extended description in Markdown.
+      operationId: AddLabels
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: labelsRequest
+          description: add labels to nodes
+          required: true
+          schema:
+            $ref: '#/definitions/LabelsRequest'
+      responses:
+        200:
+          description: Detailed namespace and namespace information.
+          schema:
+            $ref: '#/definitions/LabelsResponse'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add namespace not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+    put:
+      tags:
+        - Resources
+      summary: get labels of nodes.
+      description: Optional extended description in Markdown.
+      operationId: UpdateLabels
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: resourcesQuota
+          description: The namespace resourcesQuota Request
+          required: true
+          schema:
+            $ref: '#/definitions/LabelsRequest'
+      responses:
+        200:
+          description: Detailed namespace and namespace information.
+          schema:
+            $ref: '#/definitions/LabelsResponse'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add namespace not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /cc/v1/nodes/{nodeName}/labels/{label}:
+    delete:
+      tags:
+        - Resources
+      summary: delete labels.
+      description: Optional extended description in Markdown.
+      operationId: RemoveNodeLabel
+      produces:
+        - application/json
+      parameters:
+        - name: nodeName
+          in: path
+          description: node name.
+          required: true
+          type: string
+        - name: label
+          in: path
+          description: label.
+          required: true
+          type: string
+      responses:
+        200:
+          description: Detailed Role and Role information.
+          schema:
+            $ref: '#/definitions/Result'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add namespace not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+
+  /cc/v1/resources/{nodeName}:
+    get:
+      tags:
+        - Resources
+      summary: get nodeInfo of nodes.
+      description: Optional extended description in Markdown.
+      operationId: GetNodeByName
+      produces:
+        - application/json
+      parameters:
+        - name: nodeName
+          in: path
+          description: nodeName.
+          required: true
+          type: string
+      responses:
+        200:
+          description: Detailed namespace and namespace information.
+          schema:
+            $ref: '#/definitions/LabelsResponse'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add namespace not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+  #TODO api for role
+  /cc/v1/roles:
+    get:
+      tags:
+        - Roles
+      summary: get roles.
+      description: Optional extended description in Markdown.
+      operationId: GetRoles
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Detailed Role and Role information.
+          schema:
+            $ref: '#/definitions/Role'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add namespace not found.
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      tags:
+        - Roles
+      summary: add role to db.
+      description: Optional extended description in Markdown.
+      operationId: AddRole
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: role
+          description: The role Request
+          required: true
+          schema:
+            $ref: '#/definitions/Role'
+      responses:
+        200:
+          description: Detailed role and role information.
+          schema:
+            $ref: '#/definitions/Role'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add role not found.
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      tags:
+        - Roles
+      summary: add role to db.
+      description: Optional extended description in Markdown.
+      operationId: UpdateRole
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: role
+          description: The role Request
+          required: true
+          schema:
+            $ref: '#/definitions/Role'
+      responses:
+        200:
+          description: Detailed role and role information.
+          schema:
+            $ref: '#/definitions/Role'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add role not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /cc/v1/roles/id/{id}:
+    get:
+      tags:
+        - Roles
+      summary: get roles.
+      description: Optional extended description in Markdown.
+      operationId: GetRoleById
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          description: role id.
+          required: true
+          type: integer
+          format: int64
+      responses:
+        200:
+          description: Detailed Role and Role information.
+          schema:
+            $ref: '#/definitions/Role'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add namespace not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /cc/v1/roles/name/{name}:
+    get:
+      tags:
+        - Roles
+      summary: get roles.
+      description: Optional extended description in Markdown.
+      operationId: GetRoleByName
+      produces:
+        - application/json
+      parameters:
+        - name: name
+          in: path
+          description: role name.
+          required: true
+          type: string
+      responses:
+        200:
+          description: Detailed Role and Role information.
+          schema:
+            $ref: '#/definitions/Role'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add namespace not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+
+  /cc/v1/auth/access/users/{username}/storages:
+    get:
+      tags:
+        - Auths
+      summary: auth by username and path.
+      description: Optional extended description in Markdown.
+      operationId: UserStorageCheck
+      produces:
+        - application/json
+      parameters:
+        - name: username
+          in: path
+          description: username.
+          required: true
+          type: string
+        - name: path
+          in: query
+          description: path.
+          required: true
+          type: string
+      responses:
+        200:
+          description: auth by username and path.
+          schema:
+            $ref: '#/definitions/Result'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add namespace not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /cc/v1/auth/access/users/{username}/namespaces/{namespace}:
+    get:
+      tags:
+        - Auths
+      summary: auth by username and namespace.
+      description: Optional extended description in Markdown.
+      operationId: UserNamespaceCheck
+      produces:
+        - application/json
+      parameters:
+        - name: username
+          in: path
+          description: username.
+          required: true
+          type: string
+        - name: namespace
+          in: path
+          description: namespace.
+          required: true
+          type: string
+      responses:
+        200:
+          description: auth by username and namespace.
+          schema:
+            $ref: '#/definitions/Result'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add namespace not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /cc/v1/auth/access/users/{username}/namespaces/{namespace}/storages:
+    get:
+      tags:
+        - Auths
+      summary: auth by username and namespace and path.
+      description: Optional extended description in Markdown.
+      operationId: UserStoragePathCheck
+      produces:
+        - application/json
+      parameters:
+        - name: username
+          in: path
+          description: username.
+          required: true
+          type: string
+        - name: namespace
+          in: path
+          description: namespace.
+          required: true
+          type: string
+        - name: path
+          in: query
+          description: path.
+          required: true
+          type: string
+      responses:
+        200:
+          description: auth by username and namespace and path.
+          schema:
+            $ref: '#/definitions/Result'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to auth by username and namespace and path not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /cc/v1/auth/access/users/{adminUsername}/users/{username}:
+    get:
+      tags:
+        - Auths
+      summary: auth by adminUsername and username.
+      description: Optional extended description in Markdown.
+      operationId: AdminUserCheck
+      produces:
+        - application/json
+      parameters:
+        - name: adminUsername
+          in: path
+          description: adminUsername.
+          required: true
+          type: string
+        - name: username
+          in: path
+          description: username.
+          required: true
+          type: string
+      responses:
+        200:
+          description: auth by adminUsername and username.
+          schema:
+            $ref: '#/definitions/Result'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add namespace not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /cc/v1/auth/access/admin/namespaces/{namespace}:
+    get:
+      tags:
+        - Auths
+      summary: auth by namespace .
+      description: Optional extended description in Markdown.
+      operationId: CheckNamespace
+      produces:
+        - application/json
+      parameters:
+        - name: namespace
+          in: path
+          description: namespace.
+          required: true
+          type: string
+      responses:
+        200:
+          description: auth by namespace.
+          schema:
+            $ref: '#/definitions/Result'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add namespace not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /cc/v1/auth/access/admin/namespaces/{namespace}/users/{username}:
+    get:
+      tags:
+        - Auths
+      summary: auth by namespace .
+      description: Optional extended description in Markdown.
+      operationId: CheckNamespaceUser
+      produces:
+        - application/json
+      parameters:
+        - name: namespace
+          in: path
+          description: namespace.
+          required: true
+          type: string
+        - name: username
+          in: path
+          description: username.
+          required: true
+          type: string
+      responses:
+        200:
+          description: auth by namespace.
+          schema:
+            $ref: '#/definitions/Result'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add namespace not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /cc/v1/groups/users/roles/{roleId}/namespaces/clusterName/{clusterName}:
+    get:
+      tags:
+        - Groups
+      summary: auth by roleId and clusterName .
+      description: Optional extended description in Markdown.
+      operationId: GetCurrentUserNamespaceWithRole
+      produces:
+        - application/json
+      parameters:
+        - name: roleId
+          in: path
+          description: roleId.
+          required: true
+          type: integer
+          format: int64
+        - name: clusterName
+          in: path
+          description: clusterName.
+          required: true
+          type: string
+      responses:
+        200:
+          description: auth by roleId and clusterName.
+          schema:
+            $ref: '#/definitions/Result'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add namespace not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /cc/v1/alerts/training:
+    post:
+      tags:
+        - Alerts
+      summary: job laert.
+      description: Optional extended description in Markdown.
+      operationId: ReceiveTaskAlert
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: jobRequest
+          description: The alert of job Request
+          required: true
+          schema:
+            $ref: '#/definitions/JobRequest'
+      responses:
+        200:
+          description: Detailed role and role information.
+          schema:
+            $ref: '#/definitions/Result'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add role not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /cc/v1/sample:
+    post:
+      tags:
+        - Samples
+      summary: sample .
+      description: Optional extended description in Markdown.
+      operationId: SamplePost
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: cluster
+          description: The access Request
+          required: true
+          schema:
+            $ref: '#/definitions/Cluster'
+      responses:
+        200:
+          description: Detailed role and role information.
+          schema:
+            $ref: '#/definitions/Result'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add role not found.
+          schema:
+            $ref: '#/definitions/Error'
+    get:
+      tags:
+        - Samples
+      summary: sample .
+      description: Optional extended description in Markdown.
+      operationId: SampleGet
+      produces:
+        - application/json
+      parameters:
+        - name: clusterName
+          in: query
+          description: clusterName.
+          required: false
+          type: string
+          default: ""
+      responses:
+        200:
+          description: Detailed role and role information.
+          schema:
+            $ref: '#/definitions/Result'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add role not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /cc/v1/auth/access/admin/users/{username}:
+    get:
+      tags:
+        - Auths
+      summary: auth by username .
+      description: Optional extended description in Markdown.
+      operationId: CheckUserGetNamespace
+      produces:
+        - application/json
+      parameters:
+        - name: username
+          in: path
+          description: username.
+          required: true
+          type: string
+      responses:
+        200:
+          description: auth by namespace.
+          schema:
+            $ref: '#/definitions/Result'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add namespace not found.
+          schema:
+            $ref: '#/definitions/Error'
+  /cc/v1/auth/access/namespaces/{namespace}/notebooks/{notebook}:
+    get:
+      tags:
+        - Auths
+      summary: auth by namespace and notebook .
+      description: Optional extended description in Markdown.
+      operationId: CheckCurrentUserNamespacedNotebook
+      produces:
+        - application/json
+      parameters:
+        - name: namespace
+          in: path
+          description: namespace.
+          required: true
+          type: string
+        - name: notebook
+          in: path
+          description: notebook.
+          required: true
+          type: string
+      responses:
+        200:
+          description: auth by namespace and notebook.
+          schema:
+            $ref: '#/definitions/Result'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add namespace not found.
+          schema:
+            $ref: '#/definitions/Error'
+  #TODO for interceptor
+  /cc/v1/inter/user:
+    get:
+      tags:
+        - Inters
+      summary: user interceptor .
+      description: Optional extended description in Markdown.
+      operationId: UserInterceptor
+      produces:
+        - application/json
+      responses:
+        200:
+          description: user interceptor.
+          schema:
+            $ref: '#/definitions/Result'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add namespace not found.
+          schema:
+            $ref: '#/definitions/Error'
+  /cc/v1/inter/auth:
+    get:
+      tags:
+        - Inters
+      summary: auth interceptor .
+      description: Optional extended description in Markdown.
+      operationId: AuthInterceptor
+      produces:
+        - application/json
+      responses:
+        200:
+          description: user interceptor.
+          schema:
+            $ref: '#/definitions/Result'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add namespace not found.
+          schema:
+            $ref: '#/definitions/Error'
+  /cc/v1/inter/ip:
+    get:
+      tags:
+        - Inters
+      summary: ip interceptor .
+      description: Optional extended description in Markdown.
+      operationId: IpInterceptor
+      produces:
+        - application/json
+      responses:
+        200:
+          description: user interceptor.
+          schema:
+            $ref: '#/definitions/Result'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add namespace not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+  #TODO
+  /cc/v1/keys:
+    post:
+      tags:
+        - keys
+      summary: ip interceptor .
+      description: Optional extended description in Markdown.
+      operationId: AddKey
+      parameters:
+        - in: body
+          name: keyPair
+          description: The alert of job Request
+          required: true
+          schema:
+            $ref: '#/definitions/KeyPairRequest'
+      produces:
+        - application/json
+      responses:
+        200:
+          description: keyPair interceptor.
+          schema:
+            $ref: '#/definitions/Result'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add keyPair not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /cc/v1/keys/{name}:
+    get:
+      tags:
+        - keys
+      summary: ip interceptor .
+      description: Optional extended description in Markdown.
+      operationId: GetByName
+      parameters:
+        - name: name
+          in: path
+          description: name.
+          required: true
+          type: string
+      produces:
+        - application/json
+      responses:
+        200:
+          description: keyPair interceptor.
+          schema:
+            $ref: '#/definitions/Result'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add keyPair not found.
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      tags:
+        - keys
+      summary: ip interceptor .
+      description: Optional extended description in Markdown.
+      operationId: DeleteByName
+      parameters:
+        - name: name
+          in: path
+          description: name.
+          required: true
+          type: string
+      produces:
+        - application/json
+      responses:
+        200:
+          description: keyPair interceptor.
+          schema:
+            $ref: '#/definitions/Result'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add keyPair not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+definitions:
+
+  UserNotebookAddressResponse:
+    type: object
+    properties:
+      notebookAddress:
+        type: string
+        description: the notebookAddress
+
+  Permission:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+        description: the id
+      name:
+        type: string
+        description: the name
+      url:
+        type: string
+        description: the remarks
+      method:
+        type: string
+        description: the name
+      remarks:
+        type: string
+        description: the remarks
+      enableFlag:
+        type: integer
+        format: int64
+        description: the enableFlag
+      operateTime:
+        type: string
+        description: the remarks
+
+  RolePermission:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+        description: the id
+      roleId:
+        type: integer
+        format: int64
+        description: the id
+      permissionId:
+        type: integer
+        format: int64
+        description: the id
+      enableFlag:
+        type: integer
+        format: int64
+        description: the id
+      operateTime:
+        type: string
+        description: the remarks
+
+  KeyPairRequest:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+        description: the id
+      name:
+        type: string
+        description: the name
+      remarks:
+        type: string
+        description: the remarks
+
+  Keypair:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+        description: the id
+      name:
+        type: string
+        description: the name
+      apiKey:
+        type: string
+        description: the apiKey
+      secretKey:
+        type: string
+        description: the secretKey
+      remarks:
+        type: string
+        description: the remarks
+      enableFlag:
+        type: integer
+        format: int64
+        description: the enableFlag
+
+  LoginResult:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int64
+        description: the token
+      desc:
+        type: string
+        description: the desc
+      id:
+        type: string
+        description: the userId
+      org:
+        type: string
+        description: the org
+      dept:
+        type: string
+        description: the dept
+      actype:
+        type: integer
+        format: int64
+        description: the actype
+      email:
+        type: string
+        description: the email
+      userName:
+        type: string
+        description: the userName
+
+
+  AuthResult:
+    type: object
+    properties:
+      retCode:
+        type: integer
+        format: int64
+        description: the appid
+      id:
+        type: string
+        description: the token
+      tok:
+        type: string
+        description: the auth
+      auth:
+        type: string
+        description: the expTime
+
+  IMSAlert:
+    type: object
+    properties:
+      alert_info:
+        type: string
+        description: the alertInfo
+      alert_ip:
+        type: string
+        description: the alertIp
+      alert_level:
+        type: integer
+        format: int64
+        description: the alertLevel
+      alert_obj:
+        type: string
+        description: the alertObj
+      alert_title:
+        type: string
+        description: the alertTitle
+      sub_system_id:
+        type: integer
+        format: int64
+        description: the subSystemId
+      remark_info:
+        type: string
+        description: the remarkInfo
+      alert_way:
+        type: string
+        description: the alertWay
+      alert_receiver:
+        type: string
+        description: the alertReceiver
+
+  JobRequest:
+    type: object
+    properties:
+      userID:
+        type: string
+        description: the userID
+      jobNamespace:
+        type: string
+        description: the jobNamespace
+      jobName:
+        type: string
+        description: the jobName
+      trainingID:
+        type: string
+        description: the trainingID
+      jobStatus:
+        type: string
+        description: the jobStatus
+      alertReason:
+        type: string
+        description: the alertReason
+      alertLevel:
+        type: string
+        description: the alertLevel
+      startTime:
+        type: string
+        description: the startTime
+      endTime:
+        type: string
+        description: the endTime
+      receiver:
+        type: string
+        description: the receiver
+
+  Role:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+        description: the id of role
+      name:
+        type: string
+        description: the role
+      remarks:
+        type: string
+        description: the remarks of role
+      enableFlag:
+        type: integer
+        format: int64
+        description: Whether the data is valid
+
+  UserNamespaceAccessResponse:
+    type: object
+    properties:
+      username:
+        type: string
+        description: the username
+      namespace:
+        type: string
+        description: the namespace
+      accessible:
+        type: boolean
+        description: the accessible
+
+  #  SuperAdmin:
+  #    type: object
+  #    properties:
+  #      id:
+  #        type: integer
+  #        format: int64
+  #        description: the id of user
+  #      name:
+  #        type: string
+  #        description: the username
+  #      remarks:
+  #        type: string
+  #        description: the remarks of user
+  #      operateTime:
+  #        type: string
+  #        description: the operateTime remarks user
+  #      enableFlag:
+  #        type: integer
+  #        format: int64
+  #        description: Whether the data is valid
+
+
+  LabelsResponse:
+    type: object
+    properties:
+      ipAddress:
+        type: string
+        description: the ip of node
+      labels:
+        type: object
+        additionalProperties:
+          type: string
+        description: the labels of node
+
+  PageLabelsResponseList:
+    type: object
+    properties:
+      models:
+        type: array
+        items:
+          $ref: '#/definitions/LabelsResponse'
+      pageNumber:
+        type: integer
+        format: int64
+      total:
+        type: integer
+        format: int64
+      pageSize:
+        type: integer
+        format: int64
+      totalPage:
+        type: integer
+        format: int64
+
+  LabelsRequest:
+    type: object
+    properties:
+      ipAddress:
+        type: string
+        description: the ip of node
+      lbBusType:
+        type: string
+        description: the lbBusType of nameSpace
+      lbGpuModel:
+        type: string
+        description: the lbGpuModel of nameSpace
+      namespace:
+        type: string
+        description: the nameSpace name
+
+  UserGroup:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+        description: the id of UserGroup
+      userId:
+        type: integer
+        format: int64
+        description: the UserGroup
+      RoleId:
+        type: integer
+        format: int64
+        description: the roleId of UserGroup
+      GroupId:
+        type: integer
+        format: int64
+        description: the GroupId of UserGroup
+      remarks:
+        type: string
+        description: the remarks UserGroup
+      enableFlag:
+        type: integer
+        format: int64
+        description: Whether the data is valid
+
+  UserGroupRes:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+        description: the id of UserGroup
+      userId:
+        type: integer
+        format: int64
+        description: the UserGroup
+      username:
+        type: string
+        description: the username
+      roleId:
+        type: integer
+        format: int64
+        description: the roleId of UserGroup
+      roleName:
+        type: string
+        description: the roleName
+      groupId:
+        type: integer
+        format: int64
+        description: the GroupId of UserGroup
+      groupName:
+        type: string
+        description: the groupId
+      groupType:
+        type: string
+        description: the groupId
+      remarks:
+        type: string
+        description: the remarks UserGroup
+      enableFlag:
+        type: integer
+        format: int64
+        description: Whether the data is valid
+
+  PageUserGroupResList:
+    type: object
+    properties:
+      models:
+        type: array
+        items:
+          $ref: '#/definitions/UserGroupRes'
+      pageNumber:
+        type: integer
+        format: int64
+      total:
+        type: integer
+        format: int64
+      pageSize:
+        type: integer
+        format: int64
+      totalPage:
+        type: integer
+        format: int64
+
+  Storage:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+        description: the id of Storage
+      path:
+        type: string
+        description: the path of storage
+      type:
+        type: string
+        description: the type of storage
+      remarks:
+        type: string
+        description: the uid remarks storage
+      enableFlag:
+        type: integer
+        format: int64
+        description: Whether the data is valid
+
+  ResourcesQuota:
+    type: object
+    properties:
+      namespace:
+        type: string
+        description: the id of GroupStorage
+      cpu:
+        type: string
+        description: the cpu
+      gpu:
+        type: string
+        description: the gpu
+      memory:
+        type: object
+        additionalProperties:
+          type: string
+        description: the annotations of namespace
+
+  GroupNamespace:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+        description: the id of GroupStorage
+      groupId:
+        type: integer
+        format: int64
+        description: the groupId
+      namespaceId:
+        type: integer
+        format: int64
+        description: the namespaceId
+      namespace:
+        type: string
+        description: the name of namespace
+      remarks:
+        type: string
+        description: the remarks UserGroup
+      enableFlag:
+        type: integer
+        format: int64
+        description: Whether the data is valid
+
+  GroupNamespaceRes:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+        description: the id of GroupStorage
+      groupId:
+        type: integer
+        format: int64
+        description: the groupId
+      groupName:
+        type: string
+        description: the groupId
+      groupType:
+        type: string
+        description: the groupId
+      namespaceId:
+        type: integer
+        format: int64
+        description: the namespaceId
+      namespace:
+        type: string
+        description: the name of namespace
+      remarks:
+        type: string
+        description: the remarks UserGroup
+      enableFlag:
+        type: integer
+        format: int64
+        description: Whether the data is valid
+
+  PageGroupNamespaceResList:
+    type: object
+    properties:
+      models:
+        type: array
+        items:
+          $ref: '#/definitions/GroupNamespaceRes'
+      pageNumber:
+        type: integer
+        format: int64
+      total:
+        type: integer
+        format: int64
+      pageSize:
+        type: integer
+        format: int64
+      totalPage:
+        type: integer
+        format: int64
+
+  GroupStorage:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+        description: the id of GroupStorage
+      groupId:
+        type: integer
+        format: int64
+        description: the groupId
+      storageId:
+        type: integer
+        format: int64
+        description: the storageId
+      path:
+        type: string
+        description: the path of storage
+      permissions:
+        type: string
+        description: the permissions of storage
+      type:
+        type: string
+        description: thr type of storage
+      remarks:
+        type: string
+        description: the remarks UserGroup
+      enableFlag:
+        type: integer
+        format: int64
+        description: Whether the data is valid
+
+  GroupStorageRes:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+        description: the id of GroupStorage
+      groupId:
+        type: integer
+        format: int64
+        description: the groupId
+      groupName:
+        type: string
+        description: the groupId
+      groupType:
+        type: string
+        description: the groupId
+      storageId:
+        type: integer
+        format: int64
+        description: the storageId
+      path:
+        type: string
+        description: the path of storage
+      permissions:
+        type: string
+        description: the permissions of storage
+      type:
+        type: string
+        description: thr type of storage
+      remarks:
+        type: string
+        description: the remarks UserGroup
+      enableFlag:
+        type: integer
+        format: int64
+        description: Whether the data is valid
+
+  PageGroupStorageResList:
+    type: object
+    properties:
+      models:
+        type: array
+        items:
+          $ref: '#/definitions/GroupStorageRes'
+      pageNumber:
+        type: integer
+        format: int64
+      total:
+        type: integer
+        format: int64
+      pageSize:
+        type: integer
+        format: int64
+      totalPage:
+        type: integer
+        format: int64
+
+  User:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+        description: the id of user
+      name:
+        type: string
+        description: the username
+      gid:
+        type: integer
+        format: int64
+        description: the gid of user
+      uid:
+        type: integer
+        format: int64
+        description: the uid of user
+      token:
+        type: string
+        description: the client_token of user
+      type:
+        type: string
+        description: the type of user, user or system
+      remarks:
+        type: string
+        description: the uid remarks user
+      enableFlag:
+        type: integer
+        format: int64
+        description: Whether the data is valid
+      guidCheck:
+        type: string
+        description: true or false
+  LoginRequest:
+    type: object
+    properties:
+      username:
+        type: string
+        description: Login Username
+      password:
+        type: string
+        description: Login Password
+  UserRequest:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+        description: the id of user
+      name:
+        type: string
+        description: the username
+      gid:
+        type: integer
+        format: int64
+        description: the gid of user
+      uid:
+        type: integer
+        format: int64
+        description: the uid of user
+      token:
+        type: string
+        description: the client_token of user
+      type:
+        type: string
+        description: the type of user, user or system
+      remarks:
+        type: string
+        description: the uid remarks user
+      enableFlag:
+        type: integer
+        format: int64
+        description: Whether the data is valid
+      guidCheck:
+        type: string
+        description: true or false
+      clusterName:
+        type: string
+        description: the clusterName of group
+
+  Group:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+        description: the id of group
+      name:
+        type: string
+        description: the groupName
+      groupType:
+        type: string
+        description: the type of group
+      subsystemId:
+        type: integer
+        format: int64
+        description: the systemId of group
+      subsystemName:
+        type: string
+        description: the systemName of group
+      remarks:
+        type: string
+        description: the uid remarks user
+      enableFlag:
+        type: integer
+        format: int64
+        description: Whether the data is valid
+      departmentId:
+        type: integer
+        format: int64
+        description: the departmentId of group
+      departmentName:
+        type: string
+        description: the departmentId of group
+      clusterName:
+        type: string
+        description: the clusterName of group
+
+  #  Annotations:
+  #    type: object
+  #    properties:
+  #      lb-gpu-model:
+  #        type: string
+  #        description: the namespace name
+  #      lb-bus-type:
+  #        type: string
+  #        description: the remarks of namespace
+
+  SessionUser:
+    type: object
+    properties:
+      userId:
+        type: string
+        description: the userId
+      orgCode:
+        type: string
+        description: the orgCode
+      deptCode:
+        type: string
+        description: deptCode
+      email:
+        type: string
+        description: the email
+      userName:
+        type: string
+        description: the userName
+      expDate:
+        type: string
+        description: the expDate
+      accountType:
+        type: integer
+        format: int64
+        description: the accountType
+      isSuperadmin:
+        type: boolean
+        description: true or false
+
+  NamespaceRequest:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+        description: the id of namespace
+      namespace:
+        type: string
+        description: the namespace name
+      platformNamespace:
+        type: string
+        description: the namespace platformNamespace
+      remarks:
+        type: string
+        description: the remarks of namespace
+      annotations:
+        type: object
+        additionalProperties:
+          type: string
+        description: the annotations of namespace
+      enableFlag:
+        type: integer
+        format: int64
+        description: Whether the data is valid
+
+  NamespaceResponse:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+        description: the id of namespace
+      namespace:
+        type: string
+        description: the namespace name
+      platformNamespace:
+        type: string
+        description: the namespace platformNamespace
+      remarks:
+        type: string
+        description: the remarks of namespace
+      annotations:
+        type: object
+        additionalProperties:
+          type: string
+        description: the annotations of namespace
+      hard:
+        type: object
+        additionalProperties:
+          type: object
+        description: the annotations of namespace
+      enableFlag:
+        type: integer
+        format: int64
+        description: Whether the data is valid
+
+  Namespace:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+        description: the id of namespace
+      namespace:
+        type: string
+        description: the namespace name
+      remarks:
+        type: string
+        description: the remarks of namespace
+      enableFlag:
+        type: integer
+        format: int64
+        description: Whether the data is valid
+
+  PageNamespaceList:
+    type: object
+    properties:
+      models:
+        type: array
+        items:
+          $ref: '#/definitions/NamespaceResponse'
+      pageNumber:
+        type: integer
+        format: int64
+      total:
+        type: integer
+        format: int64
+      pageSize:
+        type: integer
+        format: int64
+      totalPage:
+        type: integer
+        format: int64
+
+  PageStorageList:
+    type: object
+    properties:
+      models:
+        type: array
+        items:
+          $ref: '#/definitions/Storage'
+      pageNumber:
+        type: integer
+        format: int64
+      total:
+        type: integer
+        format: int64
+      pageSize:
+        type: integer
+        format: int64
+      totalPage:
+        type: integer
+        format: int64
+
+  PageGroupList:
+    type: object
+    properties:
+      models:
+        type: array
+        items:
+          $ref: '#/definitions/Group'
+      pageNumber:
+        type: integer
+        format: int64
+      total:
+        type: integer
+        format: int64
+      pageSize:
+        type: integer
+        format: int64
+      totalPage:
+        type: integer
+        format: int64
+
+  PageUserList:
+    type: object
+    properties:
+      models:
+        type: array
+        items:
+          $ref: '#/definitions/User'
+      pageNumber:
+        type: integer
+        format: int64
+      total:
+        type: integer
+        format: int64
+      pageSize:
+        type: integer
+        format: int64
+      totalPage:
+        type: integer
+        format: int64
+
+  UserList:
+    type: object
+    properties:
+      userList:
+        type: array
+        items:
+          $ref: '#/definitions/User'
+
+  Result:
+    type: object
+    properties:
+      code:
+        type: string
+      message:
+        type: string
+      result:
+        type: object
+
+  Cluster:
+    type: object
+    properties:
+      clusterName:
+        type: string
+
+  Error:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int32
+        description: the code of response
+      msg:
+        type: string
+        description: the message of error
+      error:
+        type: string
+        description: the message of error
