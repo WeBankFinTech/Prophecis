@@ -1,0 +1,503 @@
+swagger: "2.0"
+info:
+  description: Jupyter Notebook Service
+  version: 1.0.0
+  title: jupyter-server
+host: gateway.mlss.aide
+basePath: /
+schemes:
+  - https
+consumes:
+  - application/json
+produces:
+  - application/json
+paths:
+  /aide/v1/namespaces/{namespace}/notebooks:
+    get:
+      summary: Get the list of Notebooks in the given Namespace
+      description: Get Notebooks.
+      operationId: getNamespacedNotebooks
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          type: string
+          format: string
+        - name: clusterName
+          in: query
+          type: string
+          format: string
+          default: ""
+        - name: page
+          in: query
+          type: string
+          format: string
+          default: "1"
+        - name: size
+          in: query
+          type: string
+          format: string
+          default: "10"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/GetNotebooksResponse'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Notebook cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: Create a Notebook in the given Namesapce
+      description: Post Notebooks.
+      operationId: postNamespacedNotebook
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          type: string
+          format: string
+        - in: body
+          name: notebook
+          description: The Notebook Request
+          required: true
+          schema:
+            $ref: '#/definitions/NewNotebookRequest'
+      responses:
+        200:
+          description: OK
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Notebook create failed
+          schema:
+            $ref: '#/definitions/Error'
+    patch:
+      summary: Patch a Notebook in the given Namesapce, Update Yarn Resource Setting
+      description: Post Notebooks.
+      operationId: PatchNamespacedNotebook
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          type: string
+          format: string
+        - in: body
+          name: notebook
+          description: The Patch Notebook Request
+          required: true
+          schema:
+            $ref: '#/definitions/PatchNotebookRequest'
+      responses:
+        200:
+          description: OK
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Notebook create failed
+          schema:
+            $ref: '#/definitions/Error'
+
+  /aide/v1/namespaces/{namespace}/notebooks/{notebook}:
+    delete:
+      summary: Delete a Notebook in the given Namespace
+      description: Delete Notebook.
+      operationId: deleteNamespacedNotebook
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          type: string
+          format: string
+        - name: notebook
+          in: path
+          required: true
+          type: string
+          format: string
+      responses:
+        200:
+          description: OK
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Notebook cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+  /aide/v1/namespaces/{namespace}/user/{user}/notebooks:
+    get:
+      summary: Get the list of Notebooks in the given Namespace belongs to a User
+      description: Get Notebooks.
+      operationId: getNamespacedUserNotebooks
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          type: string
+          format: string
+        - name: user
+          in: path
+          required: true
+          type: string
+          format: string
+        - name: workDir
+          in: query
+          required: false
+          type: string
+          format: string
+          default: ""
+        - name: clusterName
+          in: query
+          type: string
+          format: string
+          default: ""
+        - name: page
+          in: query
+          type: string
+          format: string
+          default: "1"
+        - name: size
+          in: query
+          type: string
+          format: string
+          default: "10"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/GetNotebooksResponse'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Notebook cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+  /aide/v1/user/{user}/notebooks:
+    get:
+      summary: Get the list of Notebooks belongs to a User
+      description: Get Notebooks.
+      operationId: getUserNotebooks
+      parameters:
+        - name: user
+          in: path
+          required: true
+          type: string
+          format: string
+        - name: clusterName
+          in: query
+          type: string
+          format: string
+          default: ""
+        - name: page
+          in: query
+          type: string
+          format: string
+          default: "1"
+        - name: size
+          in: query
+          type: string
+          format: string
+          default: "10"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/GetNotebooksResponse'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Notebook cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+  /aide/v1/dashboards:
+    get:
+      summary: Get the dashboard belongs to a User
+      description: Get dashboard.
+      operationId: getDashboards
+      parameters:
+        - name: clusterName
+          in: query
+          type: string
+          format: string
+          default: ""
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/GetDashboardsResponse'
+        403:
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The dashboard cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+securityDefinitions:
+  basicAuth:
+    description: Basic Athentication credentials for using the API
+    type: basic
+definitions:
+  NewNotebookRequest:
+    type: object
+    properties:
+      name:
+        type: string
+        description: Notebook name
+      namespace:
+        type: string
+        description: Kubernetes Namespace where notebook will be created
+      image:
+        $ref: '#/definitions/Image'
+      cpu:
+        type: number
+        format: double
+        description: Specify the total amount of CPU reserved by user's Notebook. For CPU-Intensive workloads,user can choose more than 1 CPU (e.g 1.5)
+      memory:
+        $ref: '#/definitions/Memory'
+      workspaceVolume:
+        $ref: '#/definitions/MountInfo'
+      dataVolume:
+        $ref: '#/definitions/MountInfo'
+      extraResources:
+        type: string
+        description: |
+          Reserve additional resources,for example, to reserve 2 GPUs: {"nvidia.com/gup": 2}
+      queue:
+        type: string
+        description: |
+          BDAP Yarn Queue Setting
+      executorCores:
+        type: string
+        description: User excutor core setting in BDAP Yarn Cluster
+      executorMemory:
+        type: string
+        description: User excutor memory setting in BDAP Yarn Cluster
+      executors:
+        type: string
+        description: User excutors setting in BDAP Yarn Cluster
+      driverMemory:
+        type: string
+        description: User driver memory in BDAP Yarn Cluster
+    required:
+      - name
+      - namespace
+      - image
+      - cpu
+      - memory
+  Image:
+    type: object
+    properties:
+      imageType:
+        type: string
+        description: |
+          Docker Image Type (default: Standard)
+        default: Standard
+        enum:
+          - Standard
+          - Custom
+      imageName:
+        type: string
+        description: Docker Image Name
+    required:
+      - imageName
+  Memory:
+    type: object
+    properties:
+      memoryAmount:
+        type: number
+        format: double
+        description: Amount of memory required
+      memoryUnit:
+        type: string
+        description: |
+          Memory unit (default: Mi)
+        enum:
+          - Mi
+          - M
+          - Gi
+          - G
+    required:
+      - memoryAmount
+  MountInfo:
+    type: object
+    properties:
+      mountType:
+        type: string
+        description: Mount type
+        enum:
+          - New
+          - Existing
+          - None
+      localPath:
+        type: string
+        description: Local Path or Kubernetes PV/PVC
+      subPath:
+        type: string
+        description: subPath of localpath
+      size:
+        type: integer
+        description: Storage capacity
+      mountPath:
+        type: string
+        description: Container path
+      accessMode:
+        type: string
+        description: Data access mode
+        default: ReadWriteOnce
+        enum:
+          - ReadWriteOnce
+          - ReadWriteMany
+          - ReadOnlyMany
+    required:
+      - mountType
+      - localPath
+      - size
+      - mountPath
+  GetNotebooksResponse:
+    type: object
+    properties:
+      notebooks:
+        type: array
+        items:
+          $ref: '#/definitions/Notebook'
+      pages:
+        type: string
+        format: string
+        description: page number
+      total:
+        type: string
+        format: string
+        description: page size
+    required:
+      - notebooks
+      - pages
+      - total
+  GetDashboardsResponse:
+    type: object
+    properties:
+      totalInstances:
+        type: string
+        description: total number of instances.
+      runningInstances:
+        type: string
+        description: number of running instances.
+      cpus:
+        type: string
+        description: number of cpu.
+  Notebook:
+    type: object
+    properties:
+      name:
+        type: string
+        description: Notebook name
+      user:
+        type: string
+        description: Notebook Owner
+      namespace:
+        type: string
+        description: Namesapce where notebook has been created
+      cpu:
+        type: string
+        description: CPU used
+      gpu:
+        type: string
+        description: GPU used
+      memory:
+        type: string
+        description: Memory used
+      image:
+        type: string
+        description: Docker Image used
+      srtImage:
+        type: string
+        description: Image short name
+      uptime:
+        type: string
+        description: Notebook create time
+      volumns:
+        type: string
+        description: Notebook volumns mounted
+      dataVolume:
+        type: array
+        items:
+          $ref: '#/definitions/MountInfo'
+        description: Notebook data volumns mounted
+      workspaceVolume:
+        type: object
+        $ref: '#/definitions/MountInfo'
+        description: Notebook workspace volumns mounted
+      status:
+        type: string
+        description: Pod status
+      pods:
+        type: string
+        description: Notebook pods
+      service:
+        type: string
+        description: Notebook services
+      queue:
+        type: string
+        description: BDAP Yarn Queue Setting
+      executorCores:
+        type: string
+        description: User excutor core setting in BDAP Yarn Cluster
+      executorMemory:
+        type: string
+        description: User excutor memory setting in BDAP Yarn Cluster
+      executors:
+        type: string
+        description: User excutors setting in BDAP Yarn Cluster
+      driverMemory:
+        type: string
+        description: User driver memory in BDAP Yarn Cluster
+  Error:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int32
+      error:
+        type: string
+      message:
+        type: string
+  PatchNotebookRequest:
+    type: object
+    properties:
+      name:
+        type: string
+        description: Notebook name
+      namespace:
+        type: string
+        description: Namesapce where notebook has been created
+      queue:
+        type: string
+        description: BDAP Yarn Queue Setting
+      executorCores:
+        type: string
+        description: User excutor core setting in BDAP Yarn Cluster
+      executorMemory:
+        type: string
+        description: User excutor memory setting in BDAP Yarn Cluster
+      executors:
+        type: string
+        description: User excutors setting in BDAP Yarn Cluster
+      driverMemory:
+        type: string
+        description: User driver memory in BDAP Yarn Cluster
+    required:
+      - namespace
+      - name

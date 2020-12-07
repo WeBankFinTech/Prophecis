@@ -20,13 +20,20 @@ docker pull wedatasphere/prophecis:cc-gateway-v0.1.0
 docker pull wedatasphere/prophecis:notebook-controller-v0.1.0
 ```
 ####  三、数据库更新
-
+使用MYSQL DB插入对应的表结构和更新API权限
 ```shell
 source prophecis.sql #结构
 source prophecis-data.sql #permission数据
 ```
 
-#### 三、修改配置
+####  四、部署Notebook Controller
+- Notebook Controller的部署可参考(版本为0.4.0)：
+[Kubflow Notebook Controller](https://github.com/kubeflow/kubeflow/tree/master/components/notebook-controller)
+
+- Prophecis对Kubeflow提供的Notebook Controller进行NodePort SVC的扩展，用于PySpark Session的创建，如需使用可从wedatasphere仓库拉取。
+
+
+#### 五、修改配置
 
 - 修改ui nginx反向代理配置（values.yml文件，host ip + nodeport）：
 
@@ -55,7 +62,7 @@ cc:
 kubectl label nodes prophecis01 mlss-node-role=platform
 ```
 
-#### 四、部署命令
+#### 六、部署命令
 
 ```shell
 kubectl create namespace prophecis
@@ -64,7 +71,7 @@ kubectl create namespace prophecis
 helm install prophecis .
 ```
 
-#### 五、关键配置解释
+#### 七、关键配置解释
 - platformNodeSelectors：prophecis服务运行label
 
 - cc:
