@@ -16,12 +16,18 @@
 package controller
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
+	"fmt"
 	"github.com/go-ldap/ldap/v3"
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/middleware"
+	"github.com/spf13/viper"
 	"mlss-controlcenter-go/pkg/common"
 	"mlss-controlcenter-go/pkg/logger"
 	"mlss-controlcenter-go/pkg/models"
@@ -30,6 +36,11 @@ import (
 	"mlss-controlcenter-go/pkg/umclient"
 	"net/http"
 	"strings"
+)
+
+const (
+	ldapPubKey  = "ldapPubKey"
+	ldapPrivKey = "ldapPrivKey"
 )
 
 func UMLogin(params logins.UMLoginParams) middleware.Responder {
@@ -93,13 +104,34 @@ func UMLogin(params logins.UMLoginParams) middleware.Responder {
 
 func LDAPLogin(params logins.LDAPLoginParams) middleware.Responder {
 	username := params.LoginRequest.Username
-	password := params.LoginRequest.Password
+	decodeBytes, err := base64.StdEncoding.DecodeString(params.LoginRequest.Password)
+	if err != nil {
+		logger.Logger().Error("failed to login, base64 decode failed:%v", err.Error())
+		return ResponderFunc(http.StatusInternalServerError, "failed to login, base64 decode failed:", err.Error())
+	}
+	decryptPassword, err := RsaDecrypt(decodeBytes)
+	if err != nil {
+		logger.Logger().Error("failed to login, rsa decrypt failed:%v", err.Error())
+		return ResponderFunc(http.StatusInternalServerError, "failed to login, rsa decrypt failed:", err.Error())
+	}
 
-	isAccess, err := LDAPAuth(username, password)
-	if err != nil || isAccess == false {
+	isAccess := false
+	if username == common.GetAppConfig().Application.Admin.User {
+		if string(decryptPassword) == common.GetAppConfig().Application.Admin.Password {
+			isAccess = true
+		}
+	} else {
+		isAccess, err = LDAPAuth(username, string(decryptPassword))
+		if err != nil {
+			logger.Logger().Error("Failed to login, LDAP Auth Error:", err.Error())
+			return ResponderFunc(http.StatusBadRequest, "Failed to login, LDAP auth failed:", err.Error())
+		}
+	}
+	if isAccess == false {
 		return ResponderFunc(http.StatusBadRequest, "failed to login", "failed to login")
 	}
 
+	// Check system permission
 	p, err := service.CheckUserPermission(username)
 	if err != nil {
 		return ResponderFunc(http.StatusInternalServerError, "failed to login", err.Error())
@@ -108,13 +140,13 @@ func LDAPLogin(params logins.LDAPLoginParams) middleware.Responder {
 		return ResponderFunc(http.StatusUnauthorized, "failed to login, ", "User does not have system permissions")
 	}
 
+	//Set Session User for Return
+	isSA := service.GetSAByName(username).Name == username
 	sessionUser := models.SessionUser{
 		UserName:     username,
-		IsSuperadmin: service.GetSAByName(username).Name == username,
+		IsSuperadmin: isSA,
 	}
-
 	logger.Logger().Debugf("sessionUser: %v", sessionUser)
-
 	marshal, _ := json.Marshal(sessionUser)
 	var result = models.Result{
 		Code:    "200",
@@ -122,7 +154,6 @@ func LDAPLogin(params logins.LDAPLoginParams) middleware.Responder {
 		Result:  json.RawMessage(marshal),
 	}
 
-	//authcache.TokenCache.Set(token, sessionUser, cache.DefaultExpiration)
 	return middleware.ResponderFunc(func(w http.ResponseWriter, _ runtime.Producer) {
 		cookie := service.LDAPLogin(w, common.GetAppConfig().Core.Cookie.Path, sessionUser)
 		http.SetCookie(w, &cookie)
@@ -132,29 +163,60 @@ func LDAPLogin(params logins.LDAPLoginParams) middleware.Responder {
 }
 
 func LDAPAuth(username string, password string) (bool, error) {
-	l, err := ldap.DialURL(common.GetAppConfig().Application.LDAP)
+	address := common.GetAppConfig().Application.LDAP.Address
+	baseDN := common.GetAppConfig().Application.LDAP.BaseDN
+
+	//Dial LDAP Server
+	l, err := ldap.DialURL(address)
 	if err != nil {
-		logger.Logger().Errorf("ldap server dial error" + err.Error())
+		logger.Logger().Errorf("LDAP Dial Fail:%v",err.Error())
 		return false, err
 	}
 	if l == nil {
-		logger.Logger().Errorf("ldap server dial error, connection is nil")
 		return false, errors.New("ldap server dial error,connection is nil")
 	}
 
-	passwordDecode, err := base64.StdEncoding.DecodeString(password)
+	//Search User in LDAP Server
+	nsr := ldap.NewSearchRequest(baseDN, ldap.ScopeBaseObject, ldap.NeverDerefAliases,
+		0, 0, false,
+		fmt.Sprintf("(&(objectClass=organizationalPerson)(uid=%s))", username), []string{"dn"}, nil)
+	sr, err := l.Search(nsr)
 	if err != nil {
-		logger.Logger().Errorf("Password decode Error" + err.Error())
+		logger.Logger().Errorf("LDAP Search Fail:%v",err.Error())
+		return false, err
 	}
 
-	_, err = l.SimpleBind(&ldap.SimpleBindRequest{
-		Username: username,
-		Password: string(passwordDecode),
-	})
+	//Auth User Password
+	userDN := sr.Entries[0].DN
+	err = l.Bind(userDN, password)
 	if err != nil {
-		logger.Logger().Errorf("LDAP Server Auth Error: %s\n", err)
 		return false, err
 	}
 	defer l.Close()
-	return true, err
+	return true, nil
+}
+
+func GetRsaPubKey(params logins.GetRsaPubKeyParams) middleware.Responder {
+	return middleware.ResponderFunc(func(w http.ResponseWriter, _ runtime.Producer) {
+		var result = models.Result{
+			Code:    "200",
+			Message: "success",
+			Result:  viper.GetString(ldapPubKey),
+		}
+		payload, _ := json.Marshal(result)
+		w.Write(payload)
+	})
+}
+
+func RsaDecrypt(context []byte) ([]byte, error) {
+	privateKey := viper.GetString(ldapPrivKey)
+	block, _ := pem.Decode([]byte(privateKey))
+	if block == nil {
+		return nil, errors.New("private key error")
+	}
+	priv, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+	return rsa.DecryptPKCS1v15(rand.Reader, priv, context)
 }

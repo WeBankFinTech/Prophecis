@@ -367,35 +367,6 @@ func CheckUserGetNamespace(admin string, username string) (*models.UserNoteBook,
 		return userNotebook, nil
 	}
 
-	//userByAdmin, err := repo.GetUserByName(admin, db)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//if userByAdmin == nil || admin != userByAdmin.Name {
-	//	return nil, errors.New("admin not exist")
-	//}
-
-	//userByName, err := repo.GetUserByName(username, db)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//if userByName == nil || admin != userByAdmin.Name {
-	//	return nil, errors.New("admin not exist")
-	//}
-
-	//saByName, err := repo.GetSAByName(username)
-	//if err != nil {
-	//	logger.Logger().Errorf("GetSAByName error:%v", err.Error())
-	//	return nil, err
-	//}
-	//if username != userByName.Name && username != saByName.Name {
-	//	return nil, errors.New("user not exist")
-	//}
-
-	//var userIds []int64
-	//userIds = append(userIds, userByAdmin.ID)
-	//userIds = append(userIds, userByName.ID)
-
 	user,err := repo.GetUserByName(username,db)
 	if err != nil {
 		logger.Logger().Errorf("GetUserByName error:%v",err.Error())
@@ -427,8 +398,6 @@ func CheckUserGetNamespace(admin string, username string) (*models.UserNoteBook,
 		Role: "GA",
 		Namespaces: namespaceList,
 	}
-	//userNotebook.Role = "GA"
-	//userNotebook.Namespaces = namespaces.SortList()
 
 	return userNotebook, nil
 }

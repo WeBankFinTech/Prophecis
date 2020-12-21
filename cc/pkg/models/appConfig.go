@@ -42,7 +42,15 @@ type Application struct {
 		Port     string `yaml:"port"`
 		Db       string `yaml:"db"`
 	}
-	LDAP string  `yaml:"ldap"`
+	Admin struct{
+		User   string `yaml:"user"`
+		Password string `yaml:"password"`
+
+	}
+	LDAP struct{
+		Address string `yaml:"server"`
+		BaseDN  string `yaml:"baseDN"`
+	}
 }
 
 type Server struct {
@@ -60,26 +68,6 @@ type Interceptor struct {
 	DefaultTimestampTimeout string              `yaml:"defaultTimestampTimeout"`
 }
 
-// Yaml2 struct of yaml
-//type Yaml2 struct {
-//	Mysql `yaml:"mysql,inline"`
-//	authcache `yaml:"authcache,inline"`
-//}
-
-// Mysql struct of mysql conf
-//type Mysql struct {
-//	User string `yaml:"user"`
-//	Host string `yaml:"host"`
-//	Password string `yaml:"password"`
-//	Port string `yaml:"port"`
-//	Name string `yaml:"name"`
-//}
-
-// authcache struct of authcache conf
-//type authcache struct {
-//	Enable bool `yaml:"enable"`
-//	List []string `yaml:"list,flow"`
-//}
 type InterceptorConfig struct {
 	Name    string   `yaml:"name"`
 	Add     []string `yaml:"add,flow"`
@@ -126,12 +114,6 @@ type NamespacedResourceConfig struct {
 	DefaultRQMem  string `yaml:"defaultRQMem"`
 	DefaultRQGpu  string `yaml:"defaultRQGpu"`
 }
-
-//type Gateway struct {
-//	BdpAddress      string `yaml:"bdpAddress"`
-//	BdapAddress     string `yaml:"bdapAddress"`
-//	BdapsafeAddress string `yaml:"bdapsafeAddress"`
-//}
 
 type AuthAddress struct {
 	User string `yaml:"user"`

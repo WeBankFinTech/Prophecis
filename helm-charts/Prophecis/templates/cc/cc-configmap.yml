@@ -5,6 +5,29 @@ metadata:
   namespace: {{.Values.namespace}}
 data:
   application-yml: |
+    ldapPubkey: |
+      -----BEGIN PUBLIC KEY-----
+      MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDek0HXRWqYvbL7Z6UfL11Sxycj
+      AjC3aioE8CIB7cUbIElroWgf5+AYbuVD7UuZfVCvvyQULH7O25+3eKJdgUVAY4h1
+      eWZveagauDKAtMgqYrwgii523/kI3FqskDuGsL5JhkIZfO2Ab+N/5HiWUzfLvVCG
+      k1TeUu0wUCgK/nbXswIDAQAB
+      -----END PUBLIC KEY-----
+    ldapPrivkey: |
+      ***REMOVED***----
+      MIICXAIBAAKBgQDek0HXRWqYvbL7Z6UfL11SxycjAjC3aioE8CIB7cUbIElroWgf
+      5+AYbuVD7UuZfVCvvyQULH7O25+3eKJdgUVAY4h1eWZveagauDKAtMgqYrwgii52
+      3/kI3FqskDuGsL5JhkIZfO2Ab+N/5HiWUzfLvVCGk1TeUu0wUCgK/nbXswIDAQAB
+      AoGAKY/6BYby5t7Vo1ixXudrV9/UkRcBnd53RkDJOO77lZsr2qtjVEHqeOWMbmjL
+      azgZbxgUVqgQbfRZGNuwBiHzmj9NYEEzmGRxXeeYKC+fmNXAtzmG8JImSQIVXhK4
+      V8PxadGtUZj1hklr8tluDpQSP5ikGw4aUzzBZqpXZ78gDyECQQDoXsqq/c/5N1mG
+      5o0yJfiJQupd+L5hD0LlPO3wzmc7ro9Ea+myFUg9819ovFHX41Rzv0ICqERtJU6u
+      dK/v2/SrAkEA9TV5d+9Yq8ncKEI1MuWgUAG/Lve3Yp0P4iXmSEVziyBs63Yk82cm
+      b7nmjV8jbYxd9RrgMazzHPNHQkTniMXZGQJASr/DfkHrlwXBHO4pWYpxauZFsjkE
+      NQDNyiRRfndHKiG7II1+PbUu6g7SEEUUJtiQIDPULjqm2F159BDBT+13xQJASo3F
+      rteQ6Dppu7vVnPIAOhMt48PheBQ0/hdz2slzBfwH4dd8CJ12LEYjeRxSEz64Wouf
+      Wrsw975oDhgRJZ6yEQJBAMTG5iSWMEtxE86rYmAuTTXAuvmTr3J7kPQ0bDQTOaVG
+      mdssiil0LCpxNTO+4sloilVu85quwCKtLQk/G+YMArY=
+      -----END RSA PRIVATE KEY-----
     application:
       profile: dev
       platformNS: {{.Values.namespace}}
@@ -16,7 +39,12 @@ data:
         ip: {{.Values.cc.db.server}}
         port: {{.Values.cc.db.port}}
         db: {{.Values.cc.db.name}}
-      ldap: {{.Values.cc.ldap.address}}
+      admin:
+        user: {{.Values.cc.admin.user}}
+        password: {{.Values.cc.admin.password}}
+      ldap: 
+        server: {{.Values.cc.ldap.address}}
+        baseDN: {{.Values.cc.ldap.baseDN}}
     server:
       port: 6666
       servlet:
@@ -84,7 +112,6 @@ data:
       cookie:
         defaultTime: 86400
         path: "/"
-
 
   logback-spring-xml: |
     <?xml version="1.0" encoding="UTF-8"?>
@@ -227,4 +254,3 @@ data:
     CB8vT/N7IEL9IjjmYo2JMNYiqMHmS9rTId8e9tdTgi8AAkYupkDGIqMkUeewgnxx
     k+1+nsLxQD6MWoNiquRPPAL+bt/KV3FWMB4FsOK1cW3XrD/UrF1Dlg==
     -----END RSA PRIVATE KEY-----
-

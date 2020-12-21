@@ -9,7 +9,7 @@ log:
 cc:
   image:
     repository: wedatasphere/prophecis
-    tag: cc-apiserver-v0.1.0
+    tag: cc-apiserver-v0.1.1
     pullPolicy: Always
   containerPort:
     portHttp: 6666
@@ -27,21 +27,23 @@ cc:
     name: prophecis
     user: prophecis
     pwd: password2020
+  admin:
+    user: admin
+    password: admin
   gateway:
     address:
-      bdp: http://127.0.0.1:30789
       bdap: http://127.0.0.1:30803
-      bdapsafe : http://127.0.0.1:30798
   spec:
     volumes:
       hostPath:
         path: /appcom/log/controlcenter
   ldap:
     address: ldap://127.0.0.1:1389/
+    baseDN: dc=webank,dc=com
 ccGateway:
   image:
     repository: wedatasphere/prophecis
-    tag: cc-apigateway-v0.1.0
+    tag: cc-apigateway-v0.1.1
     pullPolicy: Always
   service:
     type: NodePort
@@ -51,7 +53,7 @@ ccGateway:
 aide:
   image:
     repository: wedatasphere/prophecis
-    tag: mllabis-v0.1.0
+    tag: mllabis-v0.1.1
     pullPolicy: Always
   service:
     type: NodePort
@@ -80,7 +82,7 @@ aide:
 ui:
   image:
     repository: wedatasphere/prophecis
-    tag: ui-v0.1.0
+    tag: ui-v0.1.1
     pullPolicy: Always
   service:
     bdap:
@@ -107,7 +109,7 @@ ui:
   aide:
     server: 127.0.0.1:30778
     image:
-      repository: wedatasphere/mlss-aide
+      repository: wedatasphere/mllabis
       notebookTags:
       - name: Prophecis_1.8.0_tensorflow-2.0.0-jupyterlab-gpu-v0.5.0
       - name: Prophecis_1.8.0_tensorflow-1.13.1-jupyterlab-cpu-v0.5.0
