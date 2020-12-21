@@ -19,6 +19,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"mlss-controlcenter-go/pkg/common"
 	"mlss-controlcenter-go/pkg/constants"
+	"mlss-controlcenter-go/pkg/logger"
 )
 
 func AuthInterceptor() gin.HandlerFunc {

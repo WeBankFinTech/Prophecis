@@ -20,17 +20,24 @@ docker pull wedatasphere/prophecis:cc-gateway-v0.1.0
 docker pull wedatasphere/prophecis:notebook-controller-v0.1.0
 ```
 ####  三、数据库更新
-使用MYSQL DB插入对应的表结构和更新API权限
+- 安装Mysql DB，使用MYSQL DB插入对应的表结构和更新API权限
+- SQL文件位于./cc/sql目录下
+
 ```shell
 source prophecis.sql #结构
 source prophecis-data.sql #permission数据
 ```
 
 ####  四、部署Notebook Controller
-- Notebook Controller的部署可参考(版本为0.4.0)：
-[Kubflow Notebook Controller](https://github.com/kubeflow/kubeflow/tree/master/components/notebook-controller)
+- Notebook Controller可见(版本为0.4.0)：
+  [Kubflow Notebook Controller](https://github.com/kubeflow/kubeflow/tree/master/components/notebook-controller)
 
 - Prophecis对Kubeflow提供的Notebook Controller进行NodePort SVC的扩展，用于PySpark Session的创建，如需使用可从wedatasphere仓库拉取。
+
+  ```
+  cd ./helm-charts/notebook-controller
+  helm install notebook-controller .
+  ```
 
 
 #### 五、修改配置
@@ -55,6 +62,12 @@ cc:
     user: prophecis
     pwd: password
 ```
+- 登录采用通过LDAP方案，需要配置values中的ldap address和baseDN变量：
+```shell
+    ldap:
+      address: ldap://127.0.0.1:1389/
+      baseDN: dc=webank,dc=com
+```
 
 - 对运行服务的节点打上对应的label
 
@@ -62,7 +75,12 @@ cc:
 kubectl label nodes prophecis01 mlss-node-role=platform
 ```
 
-#### 六、部署命令
+#### 六、管理员用户
+
+- 默认的管理员用户为admin，账号密码通过values中的admin进行配置。
+- 若需要新增SA用户，需要在t_superadmin和t_user中增加对应的用户记录；
+
+#### 七、部署命令
 
 ```shell
 kubectl create namespace prophecis
@@ -71,10 +89,14 @@ kubectl create namespace prophecis
 helm install prophecis .
 ```
 
-#### 七、关键配置解释
+#### 八、关键配置解释
 - platformNodeSelectors：prophecis服务运行label
 
 - cc:
+
+  - ldap：用于登录验证用户密码的LDAP Server;
+  - db：
+  - gateway：配置转发到各个服务相关
 
 - aide：
   - startport & endPort:  notebook创建的server会从改nodeport范围获取对应的端口好，该端口用于连接Spark集群。
