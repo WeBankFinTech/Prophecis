@@ -201,6 +201,9 @@ func NewMlssCcAPI(spec *loads.Document) *MlssCcAPI {
 		RolesGetRolesHandler: roles.GetRolesHandlerFunc(func(params roles.GetRolesParams) middleware.Responder {
 			return middleware.NotImplemented("operation RolesGetRoles has not yet been implemented")
 		}),
+		LoginsGetRsaPubKeyHandler: logins.GetRsaPubKeyHandlerFunc(func(params logins.GetRsaPubKeyParams) middleware.Responder {
+			return middleware.NotImplemented("operation LoginsGetRsaPubKey has not yet been implemented")
+		}),
 		UsersGetSAByNameHandler: users.GetSAByNameHandlerFunc(func(params users.GetSAByNameParams) middleware.Responder {
 			return middleware.NotImplemented("operation UsersGetSAByName has not yet been implemented")
 		}),
@@ -410,6 +413,8 @@ type MlssCcAPI struct {
 	RolesGetRoleByNameHandler roles.GetRoleByNameHandler
 	// RolesGetRolesHandler sets the operation handler for the get roles operation
 	RolesGetRolesHandler roles.GetRolesHandler
+	// LoginsGetRsaPubKeyHandler sets the operation handler for the get rsa pub key operation
+	LoginsGetRsaPubKeyHandler logins.GetRsaPubKeyHandler
 	// UsersGetSAByNameHandler sets the operation handler for the get s a by name operation
 	UsersGetSAByNameHandler users.GetSAByNameHandler
 	// StoragesGetStorageByPathHandler sets the operation handler for the get storage by path operation
@@ -723,6 +728,10 @@ func (o *MlssCcAPI) Validate() error {
 
 	if o.RolesGetRolesHandler == nil {
 		unregistered = append(unregistered, "roles.GetRolesHandler")
+	}
+
+	if o.LoginsGetRsaPubKeyHandler == nil {
+		unregistered = append(unregistered, "logins.GetRsaPubKeyHandler")
 	}
 
 	if o.UsersGetSAByNameHandler == nil {
@@ -1176,6 +1185,11 @@ func (o *MlssCcAPI) initHandlerCache() {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
 	o.handlers["GET"]["/cc/v1/roles"] = roles.NewGetRoles(o.context, o.RolesGetRolesHandler)
+
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
+	o.handlers["GET"]["/cc/v1/getrsapubkey"] = logins.NewGetRsaPubKey(o.context, o.LoginsGetRsaPubKeyHandler)
 
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
