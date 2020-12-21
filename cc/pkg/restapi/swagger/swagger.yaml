@@ -50,7 +50,24 @@ paths:
           description: the url to login not found.
           schema:
             $ref: '#/definitions/Error'
-
+  /cc/v1/getrsapubkey:
+    get:
+      tags:
+        - Logins
+      summary: rsa pubkey
+      description: get LDAP login's rsa public key
+      operationId: GetRsaPubKey
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Result'
+        404:
+          description: the url is not found.
+          schema:
+            $ref: '#/definitions/Error'
   /cc/v1/logout:
     get:
       tags:

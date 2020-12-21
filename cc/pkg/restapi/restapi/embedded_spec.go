@@ -508,6 +508,33 @@ func init() {
         }
       }
     },
+    "/cc/v1/getrsapubkey": {
+      "get": {
+        "description": "get LDAP login's rsa public key",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Logins"
+        ],
+        "summary": "rsa pubkey",
+        "operationId": "GetRsaPubKey",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result"
+            }
+          },
+          "404": {
+            "description": "the url is not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/cc/v1/groups": {
       "get": {
         "description": "Optional extended description in Markdown.",
@@ -5060,6 +5087,33 @@ func init() {
           },
           "404": {
             "description": "url to add namespace not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/cc/v1/getrsapubkey": {
+      "get": {
+        "description": "get LDAP login's rsa public key",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Logins"
+        ],
+        "summary": "rsa pubkey",
+        "operationId": "GetRsaPubKey",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result"
+            }
+          },
+          "404": {
+            "description": "the url is not found.",
             "schema": {
               "$ref": "#/definitions/Error"
             }

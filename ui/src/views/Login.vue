@@ -38,7 +38,7 @@
 </template>
 <script>
 import loginSvg from '../assets/images/login.svg'
-import base64Encode from '../util/base64'
+import JSEncrypt from 'jsencrypt'
 export default {
   data () {
     return {
@@ -49,6 +49,7 @@ export default {
       },
       disabled: false,
       loginSvg: loginSvg,
+      publicKeyData: '',
       ruleInline: {
         username: [
           { required: true, message: this.$t('login.usernameReq'), trigger: 'blur' }
@@ -59,16 +60,36 @@ export default {
       }
     }
   },
+  created () {
+    this.getPublicKey()
+  },
   methods: {
+    // 获取公钥接口
+    getPublicKey () {
+      this.FesApi.fetch(`/cc/${this.FesEnv.ccApiVersion}/getrsapubkey`, 'get').then((res) => {
+        this.publicKeyData = res
+      })
+    },
     handleSubmit () {
       this.$refs.loginForm.validate((valid) => {
         if (valid) {
           this.disabled = true
-          let param = {
-            username: this.loginForm.username,
-            password: base64Encode(this.loginForm.password)
+          let params = {}
+          if (this.publicKeyData) {
+            const encryptor = new JSEncrypt()
+            encryptor.setPublicKey(this.publicKeyData)
+            const password = encryptor.encrypt(this.loginForm.password)
+            params = {
+              username: this.loginForm.username,
+              password: password
+            }
+          } else {
+            params = {
+              username: this.loginForm.username,
+              password: this.loginForm.password
+            }
           }
-          this.FesApi.fetch(`/cc/${this.FesEnv.ccApiVersion}/LDAPlogin`, param, 'post').then((res) => {
+          this.FesApi.fetch(`/cc/${this.FesEnv.ccApiVersion}/LDAPlogin`, params, 'post').then((res) => {
             this.disabled = false
             localStorage.setItem('userId', res.userName)
             res.isSuperadmin && localStorage.setItem('superAdmin', res.isSuperadmin)

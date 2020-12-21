@@ -1,7 +1,6 @@
 import Vue from 'vue'
 import App from './App.vue'
 import router from './router'
-import store from './store'
 import VueI18n from 'vue-i18n'
 import api from './services'
 import messages from '../i18n-config.json'
@@ -99,7 +98,6 @@ window.$i18n = i18n
 locale.use(lang)
 var app = new Vue({
   router,
-  store,
   i18n,
   render: h => h(App)
 }).$mount('#app')

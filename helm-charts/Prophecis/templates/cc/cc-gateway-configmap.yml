@@ -26,6 +26,7 @@ data:
           except POST /cc/v1/alerts  /cc/v1/alerts/training
           except GET /cc/v1/inter/user
           except POST /cc/v1/LDAPlogin
+          except GET /cc/v1/getrsapubkey
         }
 
         #check {

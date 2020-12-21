@@ -291,7 +291,9 @@ func configureAPI(api *operations.MlssCcAPI) http.Handler {
 	api.LoginsLDAPLoginHandler = logins.LDAPLoginHandlerFunc(func(params logins.LDAPLoginParams) middleware.Responder {
 		return controller.LDAPLogin(params)
 	})
-
+	api.LoginsGetRsaPubKeyHandler = logins.GetRsaPubKeyHandlerFunc(func(params logins.GetRsaPubKeyParams) middleware.Responder {
+		return controller.GetRsaPubKey(params)
+	})
 	api.ServerShutdown = func() {}
 
 	return setupGlobalMiddleware(api.Serve(setupMiddlewares))
