@@ -79,7 +79,7 @@ data:
           "base_url":"{{.Values.linkis.address}}",
           "headers": {
                 "Token-User":"hadoop",
-                "Token-Code": "{{.Values.linkis.tokenCode}}"
+                "Token-Code": "{{.Values.linkis.tokenCode}}",
                 "Content-Type":"application/json"
           },
           "session_configs": {
