@@ -4,7 +4,7 @@ metadata:
   name: controlcenter-gateway-deployment
   namespace: {{.Values.namespace}}
   labels:
-    app: controlcenter-gateway-deployment
+    app: controlcenter-gateway
 spec:
   replicas: 1
   selector:

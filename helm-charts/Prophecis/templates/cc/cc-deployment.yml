@@ -4,7 +4,7 @@ metadata:
   name: controlcenter-go-deployment
   namespace: {{.Values.namespace}}
   labels: 
-    app: controlcenter-go-deployment
+    app: controlcenter-go
 spec:
   replicas: 1
   selector:
