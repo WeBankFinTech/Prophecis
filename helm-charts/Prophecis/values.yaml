@@ -69,15 +69,15 @@ aide:
       repository: wedatasphere/prophecis
       tag: metacontroller-v0.3.1
       pullPolicy: IfNotPresent
-  startPort: "32768"
-  endPort: "50000"
+  startPort: "30000"
+  endPort: "32767"
   hadoop:
     enable: "false"
     installPath: "/data/Install"
     commonlibPath: "/data/commonlib"
     configPath: "/data/config"
     javaPath: "/data/jdk1.8.0_141"
-    sourceConfigPath: "/data/config/env.sh"
+    sourceConfigPath: "/data/config/Notebook_ENV.sh"
     hostFilePath: "/data/config/MLSS-config/MLSS_AIDE-config/HOST_ENV.sh"
 ui:
   image:
