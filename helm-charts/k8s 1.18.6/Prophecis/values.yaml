@@ -1,0 +1,123 @@
+namespace: prophecis
+env: prod
+platformNodeSelectors:
+  mlss-node-role: platform
+services:
+  expose_node_port: false
+log:
+  level: DEBUG
+cc:
+  image:
+    repository: wedatasphere/prophecis
+    tag: cc-apiserver-v0.1.1
+    pullPolicy: Always
+  containerPort:
+    portHttp: 6666
+    portHttps: 443
+  service:
+    type: NodePort
+    port: 6666
+    targetPort: 6666
+    portHttps: 443
+    targetPortHttps: 443
+    nodePort: 30801
+  db:
+    server: 127.0.0.1
+    port: 3306
+    name: prophecis
+    user: prophecis
+    pwd: prophecis2020
+  admin:
+    user: admin
+    password: admin
+  gateway:
+    address:
+      bdap: http://127.0.0.1:30803
+  spec:
+    volumes:
+      hostPath:
+        path: /appcom/log/controlcenter
+  ldap:
+    address: ldap://127.0.0.1:1389/
+    baseDN: dc=webank,dc=com
+ccGateway:
+  image:
+    repository: wedatasphere/prophecis
+    tag: cc-apigateway-v0.1.1
+    pullPolicy: Always
+  service:
+    type: NodePort
+    port: 8081
+    targetPort: 8081
+    nodePort: 30778
+aide:
+  image:
+    repository: wedatasphere/prophecis
+    tag: mllabis-v0.1.1
+    pullPolicy: Always
+  service:
+    type: NodePort
+    port: 8080
+    targetPort: 8080
+    nodePort: 30784
+  controller:
+    notebook:
+      repository: wedatasphere/prophecis
+      tag: notebook-controller-v20190401-v0.4.0-rc.1-308-g33618cc9-e3b0c4
+      pullPolicy: IfNotPresent
+    meta:
+      repository: wedatasphere/prophecis
+      tag: metacontroller-v0.3.1
+      pullPolicy: IfNotPresent
+  startPort: "30000"
+  endPort: "32767"
+  hadoop:
+    enable: "false"
+    installPath: "/data/Install"
+    commonlibPath: "/data/commonlib"
+    configPath: "/data/config"
+    javaPath: "/data/jdk1.8.0_141"
+    sourceConfigPath: "/data/config/Notebook_ENV.sh"
+    hostFilePath: "/data/config/MLSS-config/MLSS_AIDE-config/HOST_ENV.sh"
+ui:
+  image:
+    repository: wedatasphere/prophecis
+    tag: ui-v0.1.1
+    pullPolicy: Always
+  service:
+    bdap:
+      type: NodePort
+      port: 80
+      targetPort: 80
+      nodePort: 30803
+  spec:
+    volumes:
+      hostPath:
+        bdapPath: /appcom/log/ui-bdap
+  aideApiVersion: v1
+  ccApiVersion: v1
+  grafana:
+    url: ""
+  dashboard:
+    url: ""
+  prometheus:
+    url: ""
+  kibana:
+    url: ""
+  cc:
+    server: 127.0.0.1:30778
+  aide:
+    server: 127.0.0.1:30778
+    image:
+      repository: wedatasphere/mllabis
+      notebookTags:
+      - name: Prophecis_1.8.0_tensorflow-2.0.0-jupyterlab-gpu-v0.5.0
+      - name: Prophecis_1.8.0_tensorflow-1.13.1-jupyterlab-cpu-v0.5.0
+      - name: Prophecis_1.8.0_tensorflow-1.13.1-jupyterlab-gpu-v0.5.0
+      - name: Prophecis_1.8.0_tensorflow-1.12.0-jupyterlab-gpu-v0.5.0
+      - name: Prophecis_1.8.0_tensorflow-1.12.0-jupyterlab-cpu-v0.5
+linkis:
+  address: 127.0.0.1:8088
+  tokenCode: MLSS
+livy:
+  address: http://127.0.0.1:8998
