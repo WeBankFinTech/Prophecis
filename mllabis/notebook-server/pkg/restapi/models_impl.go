@@ -32,7 +32,7 @@ import (
 	"webank/AIDE/notebook-server/pkg/restapi/operations"
 )
 
-func getSuperadmin(r *http.Request) string {
+func getSuperAdmin(r *http.Request) string {
 	return r.Header.Get(mw.CcAuthSuperadmin)
 }
 
@@ -60,7 +60,6 @@ func postNamespacedNotebook(params operations.PostNamespacedNotebookParams) midd
 	}
 	//check notebook request
 	//err = client.PostNotebookRequestCheck(params.HTTPRequest.Header.Get(ccClient.CcAuthToken), params.Notebook)
-	//FIXME MLSS Change: change Description to Message
 	err = utils.CheckNotebook(params)
 	if err != nil {
 		logger.Logger().Errorf("PostNotebookRequestCheck failed: %s, token: %s, userName: %s, Notebook: %v", err.Error(), params.HTTPRequest.Header.Get(ccClient.CcAuthToken), currentUserId, params.Notebook)
@@ -90,19 +89,20 @@ func postNamespacedNotebook(params operations.PostNamespacedNotebookParams) midd
 			w.Write(payload)
 		})
 	}
+	logger.Logger().Infof("gid: %s, uid: %s", *gid, *uid)
 	ncClient := utils.GetNBCClient()
 
 	// Create Notebook
 	err = ncClient.CreateYarnResourceConfigMap(params.Notebook, currentUserId)
 	if err != nil {
 		logger.Logger().Errorf("User %v CreateNotebook configmap failed:%v", currentUserId, err.Error())
-		var error = models.Error{
+		var err = models.Error{
 			Code:    500,
 			Error:   "create notebook failed",
 			Message: err.Error(),
 		}
 		return middleware.ResponderFunc(func(w http.ResponseWriter, _ runtime.Producer) {
-			payload, _ := json.Marshal(error)
+			payload, _ := json.Marshal(err)
 			w.WriteHeader(500)
 			w.Write(payload)
 		})
@@ -179,7 +179,16 @@ func deleteNamespacedNotebook(params operations.DeleteNamespacedNotebookParams) 
 	}
 
 	configFromK8s, err := ncClient.GetNBConfigMaps(namespace)
+	if err != nil {
+		logger.Logger().Errorf("GetNBConfigMaps failed. %v", err.Error())
+		return operations.NewPostNamespacedNotebookNotFound().WithPayload(&models.Error{
+			Code:    500,
+			Error:   err.Error(),
+			Message: "GetNBConfigMaps failed.",
+		})
+	}
 	res := models.ParseToNotebookRes(*notebookFromK8s, *configFromK8s)
+
 	//filter books
 	var role string
 	err = models.GetResultData(body, &role)
@@ -224,7 +233,6 @@ func deleteNamespacedNotebook(params operations.DeleteNamespacedNotebookParams) 
 	return middleware.ResponderFunc(func(w http.ResponseWriter, _ runtime.Producer) {
 		payload, _ := json.Marshal(result)
 		w.Write(payload)
-		//w.WriteHeader(200)
 	})
 }
 
@@ -247,7 +255,7 @@ func getNamespacedNotebooks(params operations.GetNamespacedNotebooksParams) midd
 	currentUserId := params.HTTPRequest.Header.Get(mw.UserIDHeader)
 	logger.Logger().Infof("Get Notebooks in namespace %s.", namespace)
 	client := ccClient.GetCcClient(viper.GetString(config.CCAddress))
-	// TODO check if user is SA or user has GA/GU access to namespace
+	//Check if user is SA or user has GA/GU access to namespace
 	body, err := client.CheckNamespace(params.HTTPRequest.Header.Get(ccClient.CcAuthToken), namespace)
 	if err != nil {
 		logger.Logger().Errorf("CheckNamespace failed: %s, token: %s, namespace: %s", err.Error(), params.HTTPRequest.Header.Get(ccClient.CcAuthToken), namespace)
@@ -290,9 +298,6 @@ func getNamespacedNotebooks(params operations.GetNamespacedNotebooksParams) midd
 
 	res := models.ParseToNotebookRes(*notebookFromK8s, *configFromK8s)
 	var finalResult []*models.Notebook
-	//todo filter books
-	//roleJsonStr := string(body)
-	//var resultMap map[string]string
 	var role string
 	err = models.GetResultData(body, &role)
 	if err != nil {
@@ -317,10 +322,6 @@ func getNamespacedNotebooks(params operations.GetNamespacedNotebooksParams) midd
 		logger.Logger().Infof("res == nil")
 		res = make([]*models.Notebook, 0)
 	}
-	//add clusterName to filter notebook
-	//clusterName := params.ClusterName
-	//logger.Logger().Debugf("namespace_userId clusterName: %v", clusterName)
-	//res = getNoteBookByClusterName(*clusterName, res)
 
 	//pagination
 	//string to int
@@ -330,21 +331,6 @@ func getNamespacedNotebooks(params operations.GetNamespacedNotebooksParams) midd
 	subList, err := utils.GetSubListByPageAndSize(res, page, size)
 	pages := utils.GetPages(len(res), size)
 	logger.Logger().Debugf("utils.GetPages(len(res), size): %v", pages)
-
-	//int to string
-	//pagesStr := strconv.Itoa(pages)
-	//totalStr := strconv.Itoa(len(res))
-	//return operations2.NewGetNamespacedUserNotebooksOK().WithPayload(&models.GetNotebooksResponse{
-	//	Notebooks: subList,
-	//	Pages:     &pagesStr,
-	//	Total:     &totalStr,
-	//})
-
-	//response := &models.GetNotebooksResponse{
-	//	Notebooks: subList,
-	//	Pages:     &pagesStr,
-	//	Total:     &totalStr,
-	//}
 
 	list := models.PageListVO{
 		List:  subList,
@@ -361,7 +347,6 @@ func getNamespacedNotebooks(params operations.GetNamespacedNotebooksParams) midd
 	return middleware.ResponderFunc(func(w http.ResponseWriter, _ runtime.Producer) {
 		payload, _ := json.Marshal(result)
 		w.Write(payload)
-		//w.WriteHeader(200)
 	})
 
 }
@@ -396,7 +381,7 @@ func getNamespacedUserNotebooks(params operations.GetNamespacedUserNotebooksPara
 
 	namespace := params.Namespace
 	//currentUserId := params.HTTPRequest.Header.Get(mw.UserIDHeader)
-	superadmin := getSuperadmin(params.HTTPRequest)
+	superadmin := getSuperAdmin(params.HTTPRequest)
 	const TRUE = "true"
 	userId := params.User
 	workDir := ""
@@ -407,6 +392,7 @@ func getNamespacedUserNotebooks(params operations.GetNamespacedUserNotebooksPara
 	client := ccClient.GetCcClient(viper.GetString(config.CCAddress))
 	var listFromK8s interface{}
 	ncClient := utils.GetNBCClient()
+
 	// TODO check if user is SA
 	if superadmin == TRUE && namespace == "null" && userId == "null" {
 		logger.Logger().Debugf("getNamespacedUserNotebooks debug is SA: %v", superadmin)
@@ -642,7 +628,7 @@ func parseNotebookFromK8s(listFromK8s interface{}) (*models.NotebookFromK8s, err
 func getDashboards(params operations.GetDashboardsParams) middleware.Responder {
 	currentUserId := params.HTTPRequest.Header.Get(mw.UserIDHeader)
 	logger.Logger().Infof("Get Dashboards of user %s.", currentUserId)
-	superadmin := getSuperadmin(params.HTTPRequest)
+	superadmin := getSuperAdmin(params.HTTPRequest)
 	const TRUE = "true"
 	var err error
 	var listFromK8s interface{}
@@ -656,7 +642,7 @@ func getDashboards(params operations.GetDashboardsParams) middleware.Responder {
 		listFromK8s, err = ncClient.GetNotebooks("", "", "")
 	} else {
 		client := ccClient.GetCcClient(viper.GetString(config.CCAddress))
-		if client == nil{
+		if client == nil {
 			return operations.NewGetDashboardsNotFound().WithPayload(&models.Error{
 				Code:    500,
 				Error:   "CC Client init Error",
@@ -665,7 +651,7 @@ func getDashboards(params operations.GetDashboardsParams) middleware.Responder {
 		}
 		nsResFromCC, err := client.
 			CheckUserGetNamespace(params.HTTPRequest.Header.Get(ccClient.CcAuthToken), currentUserId)
-		if err != nil{
+		if err != nil {
 			return operations.NewGetDashboardsNotFound().WithPayload(&models.Error{
 				Code:    500,
 				Error:   "CC Client init Error",
@@ -674,9 +660,9 @@ func getDashboards(params operations.GetDashboardsParams) middleware.Responder {
 		}
 		err = models.GetResultData(nsResFromCC, &userNotebookVOFromCC)
 
-		if userNotebookVOFromCC.Role == "GU"{
+		if userNotebookVOFromCC.Role == "GU" {
 			listFromK8s, err = ncClient.GetNotebooks("", currentUserId, "")
-		}else{
+		} else {
 			role = "GA"
 			listFromK8s, err = ncClient.GetNotebooks("", "", "")
 		}
@@ -703,7 +689,7 @@ func getDashboards(params operations.GetDashboardsParams) middleware.Responder {
 	res := models.ParseToNotebookRes(*notebookFromK8s, *configFromK8s)
 
 	var finalResult []*models.Notebook
-	if role == "GA"{
+	if role == "GA" {
 		namespaceList := userNotebookVOFromCC.NamespaceList
 		for _, v := range res {
 			if v.User == currentUserId {
@@ -785,18 +771,17 @@ func patchNamespacedNotebook(params operations.PatchNamespacedNotebookParams) mi
 	err = ncClient.PatchYarnSettingConfigMap(params.Notebook)
 	if err != nil {
 		logger.Logger().Errorf("CreateNotebook failed: %s, Code: %s", err.Error())
-		var error = models.Error{
+		var reError = models.Error{
 			Code:    500,
 			Error:   "create notebook failed",
 			Message: err.Error(),
 		}
 		return middleware.ResponderFunc(func(w http.ResponseWriter, _ runtime.Producer) {
-			payload, _ := json.Marshal(error)
+			payload, _ := json.Marshal(reError)
 			w.WriteHeader(500)
 			w.Write(payload)
 		})
 	}
-	//return operations.NewPostNamespacedNotebookOK()
 
 	var result = models.Result{
 		Code:    "200",
@@ -806,7 +791,6 @@ func patchNamespacedNotebook(params operations.PatchNamespacedNotebookParams) mi
 	return middleware.ResponderFunc(func(w http.ResponseWriter, _ runtime.Producer) {
 		payload, _ := json.Marshal(result)
 		w.Write(payload)
-		//w.WriteHeader(200)
 	})
 
 }

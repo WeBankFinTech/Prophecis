@@ -48,7 +48,6 @@ type UserResponse struct {
 
 const CcAuthToken = "MLSS-Token"
 
-// FIXME MLSS Change: get models filter by username and namespace
 const CcSuperadmin = "MLSS-Superadmin"
 
 var once sync.Once

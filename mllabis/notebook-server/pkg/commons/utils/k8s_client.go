@@ -59,11 +59,11 @@ var PlatformNamespace = viper.GetString(cfg.PlatformNamespace)
 
 func GetNBCClient() *NotebookControllerClient {
 	ncClientInitOnce.Do(func() {
-		cfg, err := config.InClusterConfig()
+		config, err := config.InClusterConfig()
 		if err != nil {
 			panic(err.Error())
 		}
-		tokenValue := cfg.DefaultHeader[MistakenTokenHeader]
+		tokenValue := config.DefaultHeader[MistakenTokenHeader]
 		if len(tokenValue) == 0 {
 			tv, err := ioutil.ReadFile(SATokenPath)
 			if err != nil {
@@ -72,10 +72,10 @@ func GetNBCClient() *NotebookControllerClient {
 			tokenValue = TokenValuePrefix + string(tv)
 		}
 		defaultHeader := map[string]string{CorrectTokenHeader: tokenValue}
-		cfg.DefaultHeader = defaultHeader
+		config.DefaultHeader = defaultHeader
 		// creates the clientset
 		ncClient = &NotebookControllerClient{}
-		ncClient.k8sClient = client.NewAPIClient(cfg)
+		ncClient.k8sClient = client.NewAPIClient(config)
 	})
 	return ncClient
 }
@@ -92,7 +92,9 @@ func (*NotebookControllerClient) CreateNotebook(notebook *models.NewNotebookRequ
 	var localPath string
 	if nil != notebook.WorkspaceVolume {
 		localPath = *notebook.WorkspaceVolume.LocalPath
-		if userId != stringsUtil.Split(localPath[1:], "/")[3] {
+		if len(userId) >len(localPath){
+			gid = viper.GetString(cfg.MLSSGroupId)
+		}else if userId != localPath[len(localPath)-len(userId):]{
 			gid = viper.GetString(cfg.MLSSGroupId)
 		}
 		subPath := notebook.WorkspaceVolume.SubPath
@@ -134,9 +136,11 @@ func (*NotebookControllerClient) CreateNotebook(notebook *models.NewNotebookRequ
 
 	}
 	if nil != notebook.DataVolume {
-		//for i, dv := range notebook.DataVolume {
 		localPath := *notebook.DataVolume.LocalPath
-		if userId != stringsUtil.Split(localPath[1:], "/")[3] {
+		// if local path directory is end with user Id, this directory will be considered as a common directory.
+		if len(userId) >len(localPath){
+			gid = viper.GetString(cfg.MLSSGroupId)
+		}else if userId != localPath[len(localPath)-len(userId):]{
 			gid = viper.GetString(cfg.MLSSGroupId)
 		}
 		subPath := notebook.DataVolume.SubPath
@@ -161,7 +165,6 @@ func (*NotebookControllerClient) CreateNotebook(notebook *models.NewNotebookRequ
 			},
 		}
 		nbVolumes = append(nbVolumes, dvForNb)
-		//}
 	}
 
 	if viper.GetString(cfg.HadoopEnable) == "true" {
@@ -225,7 +228,6 @@ func (*NotebookControllerClient) CreateNotebook(notebook *models.NewNotebookRequ
 			},
 		})
 
-	//}
 	nbForK8s.Spec.Template.Spec.Volumes = append(nbForK8s.Spec.Template.Spec.Volumes, nbVolumes...)
 
 	/*** 3. container ***/
@@ -602,7 +604,6 @@ func createK8sNBTemplate() *models.K8sNotebook {
 }
 
 func createK8sNBServiceTemplate(notebook *models.NewNotebookRequest) (*client.V1Service, [2]int, error) {
-
 	ServiceName := *(notebook.Name) + "-service"
 	nbService := &client.V1Service{
 		Metadata: &client.V1ObjectMeta{
@@ -647,8 +648,6 @@ func createK8sNBServiceTemplate(notebook *models.NewNotebookRequest) (*client.V1
 }
 
 func getNodePort(startPort int, endPort int) (error, [2]int) {
-
-	logger.Logger().Info("ConfigMap")
 	clusterService, _, err := ncClient.k8sClient.CoreV1Api.ListServiceForAllNamespaces(context.Background(), nil)
 
 	portLen := (endPort - startPort) + 1
@@ -707,8 +706,8 @@ func (*NotebookControllerClient) CreateYarnResourceConfigMap(notebook *models.Ne
 		logger.Logger().Error("json linkismagic configmap error:%v", err.Error())
 		return err
 	}
-	//logr.Info("testtsetststest1:" + yarnConfigmap["fatal_error_suggestion"].(string))
 	yarnConfigmap["session_configs"].(map[string]interface{})["proxyUser"] = userId
+	// if yarn resource is not set, set default values.
 	if "" != notebook.Queue {
 		yarnConfigmap["session_configs"].(map[string]interface{})["queue"] = notebook.Queue
 		linkismagicCM["session_configs"].(map[string]interface{})["wds.linkis.yarnqueue"] = notebook.Queue
@@ -764,13 +763,12 @@ func (*NotebookControllerClient) PatchYarnSettingConfigMap(notebook *models.Patc
 	namespace := *notebook.Namespace
 	nbName := *notebook.Name
 	configmap, _, err := ncClient.k8sClient.CoreV1Api.ReadNamespacedConfigMap(context.Background(), nbName+"-"+"yarn-resource-setting", namespace, nil)
-
-	logger.Logger().Info("read configmap from notebook" + nbName)
-	logger.Logger().Info("update yarn resource 1、 queue: " + notebook.Queue)
 	if err != nil {
 		logrus.Error("get configmap errror:" + err.Error())
 		return err
 	}
+
+	//Unmarshal Yarn Config & LinkisMagic Config
 	var yarnConfigmap map[string]interface{}
 	var linkismagicConfigmap map[string]interface{}
 	err = json.Unmarshal([]byte(configmap.Data["config.json"]), &yarnConfigmap)
@@ -783,9 +781,8 @@ func (*NotebookControllerClient) PatchYarnSettingConfigMap(notebook *models.Patc
 		logrus.Error("unmarshal linkismagic json error" + err.Error())
 		return err
 	}
-	configJsonStr := ""
-	lmConfigJsonStr := ""
 
+	// Update resource Msg in Yarn Configmap Map
 	if "" != notebook.Queue {
 		yarnConfigmap["session_configs"].(map[string]interface{})["queue"] = notebook.Queue
 		linkismagicConfigmap["session_configs"].(map[string]interface{})["wds.linkis.yarnqueue"] = notebook.Queue
@@ -816,10 +813,12 @@ func (*NotebookControllerClient) PatchYarnSettingConfigMap(notebook *models.Patc
 		logrus.Error("marshal linkismagic error" + err.Error())
 		return err
 	}
-	configJsonStr = string(configByte)
-	lmConfigJsonStr = string(linkismagicByte)
-	logger.Logger().Info("read configmap from configJsonStr" + configJsonStr)
-	opr_map := []map[string]interface{}{
+
+	//set update k8s config oprMap
+	configJsonStr := string(configByte)
+	lmConfigJsonStr := string(linkismagicByte)
+	logger.Logger().Debugf("read configmap from configJsonStr" + configJsonStr)
+	oprMap := []map[string]interface{}{
 		{"op": "replace",
 			"path": "/data",
 			"value": map[string]interface{}{
@@ -828,7 +827,7 @@ func (*NotebookControllerClient) PatchYarnSettingConfigMap(notebook *models.Patc
 			}},
 	}
 
-	_, _, err = ncClient.k8sClient.CoreV1Api.PatchNamespacedConfigMap(context.Background(), nbName+"-"+"yarn-resource-setting", namespace, opr_map, nil)
+	_, _, err = ncClient.k8sClient.CoreV1Api.PatchNamespacedConfigMap(context.Background(), nbName+"-"+"yarn-resource-setting", namespace, oprMap, nil)
 	if err != nil {
 		logrus.Error("PatchNamespacedConfigMap" + err.Error())
 		return err
@@ -884,4 +883,9 @@ func (*NotebookControllerClient) GetNBConfigMaps(namespace string) (*map[string]
 		configs[configmap.Metadata.Namespace+"-"+configmap.Metadata.Name] = yarnConfigmap
 	}
 	return &configs, err
+}
+
+func (*NotebookControllerClient) DeleteNBYarnConfigMap(namespace string, nbName string) error {
+	err := deleteK8sNBConfigMap(namespace, nbName+"-"+"yarn-resource-setting")
+	return err
 }
