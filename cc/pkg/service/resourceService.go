@@ -16,7 +16,6 @@
 package service
 
 import (
-	"errors"
 	"k8s.io/api/core/v1"
 	"math"
 	"mlss-controlcenter-go/pkg/common"
@@ -113,15 +112,15 @@ func AddLabels(labels models.LabelsRequest) (map[string]string, error) {
 		return nil, err
 	}
 
-	isMasterNode, isMasterNodeErr := IsMasterNode(nodeName)
-	if nil != isMasterNodeErr {
-		return nil, isMasterNodeErr
-	}
+	//isMasterNode, isMasterNodeErr := IsMasterNode(nodeName)
+	//if nil != isMasterNodeErr {
+	//	return nil, isMasterNodeErr
+	//}
 
-	if isMasterNode {
-		logger.Logger().Errorf("failed to add labels for node: %v", nodeName)
-		return nil, errors.New("the labels of master node is not allowed to changed")
-	}
+	//if isMasterNode {
+	//	logger.Logger().Errorf("failed to add labels for node: %v", nodeName)
+	//	return nil, errors.New("the labels of master node is not allowed to changed")
+	//}
 
 	var namespace = labels.Namespace
 	var lbBussType = labels.LbBusType
@@ -159,16 +158,16 @@ func AddLabels(labels models.LabelsRequest) (map[string]string, error) {
 }
 
 func RemoveNodeLabel(label string, nodeName string) (map[string]string, error) {
-	isMasterNode, isMasterNodeErr := IsMasterNode(nodeName)
-	if nil != isMasterNodeErr {
-		return nil, isMasterNodeErr
-	}
-
-	if isMasterNode {
-		logger.Logger().Errorf("failed to update labels for node: %v", nodeName)
-		return nil, errors.New("the labels of master node is not allowed to changed")
-
-	}
+	//isMasterNode, isMasterNodeErr := IsMasterNode(nodeName)
+	//if nil != isMasterNodeErr {
+	//	return nil, isMasterNodeErr
+	//}
+	//
+	//if isMasterNode {
+	//	logger.Logger().Errorf("failed to update labels for node: %v", nodeName)
+	//	return nil, errors.New("the labels of master node is not allowed to changed")
+	//
+	//}
 
 	split := strings.Split(label, ",")
 
@@ -183,15 +182,15 @@ func UpdateLabels(labels models.LabelsRequest) (map[string]string, error) {
 		return nil, err
 	}
 
-	isMasterNode, isMasterNodeErr := IsMasterNode(nodeName)
-	if nil != isMasterNodeErr {
-		return nil, isMasterNodeErr
-	}
-
-	if isMasterNode {
-		logger.Logger().Errorf("failed to update labels for node: %v", nodeName)
-		return nil, errors.New("the labels of master node is not allowed to changed")
-	}
+	//isMasterNode, isMasterNodeErr := IsMasterNode(nodeName)
+	//if nil != isMasterNodeErr {
+	//	return nil, isMasterNodeErr
+	//}
+	//
+	//if isMasterNode {
+	//	logger.Logger().Errorf("failed to update labels for node: %v", nodeName)
+	//	return nil, errors.New("the labels of master node is not allowed to changed")
+	//}
 
 	var namespace = labels.Namespace
 	var lbBussType = labels.LbBusType

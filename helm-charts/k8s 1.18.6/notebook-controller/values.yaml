@@ -1,0 +1,24 @@
+namespace: prophecis
+platformNodeSelectors:
+  mlss-node-role: platform
+services:
+  expose_node_port: true
+mllabis:
+  image:
+    repository: wedatasphere/prophecis
+    tag: latest
+    pullPolicy: Always
+  service:
+    type: NodePort
+    port: 8080
+    targetPort: 8080
+    nodePort: 30791
+  controller:
+    notebook:
+      repository: wedatasphere/prophecis
+      tag: notebook-controller-v0.1.0
+      pullPolicy: IfNotPresent
+    meta:
+      repository: wedatasphere/prophecis
+      tag: metacontroller-v0.3.1
+      pullPolicy: IfNotPresent
