@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: controlcenter-go-deployment
+  namespace: {{.Values.namespace}}
+  labels: 
+    app: controlcenter-go-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: controlcenter-go
+  minReadySeconds: 5
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: controlcenter-go
+    spec:
+      serviceAccountName: cc-go-sa
+      containers:
+      - name: cc
+        image: {{.Values.cc.image.repository}}:{{.Values.cc.image.tag}}
+        imagePullPolicy: {{.Values.cc.image.pullPolicy}}
+        ports:
+        - containerPort: {{.Values.cc.containerPort.portHttp}}
+        - containerPort: {{.Values.cc.containerPort.portHttps}}
+        command:
+        - /bin/bash
+        - -c
+        - "./mlss-controlcenter-go --host=0.0.0.0 --scheme=http --port={{.Values.cc.containerPort.portHttp}} --scheme=https --tls-port={{.Values.cc.containerPort.portHttps}} --tls-certificate=/etc/config/server.crt --tls-key=/etc/config/server.key"
+        env:
+        - name: UM_SA_PWD
+          value: sa
+        - name: UM_OTHER_PWD
+          value: other
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/config
+        - name: log-volume
+          mountPath: /var/log/controlcenter
+        - name: timezone-volume
+          mountPath: /etc/localtime
+      imagePullSecrets:
+      - name: hubsecret-go
+      volumes:
+      - name: config-volume
+        configMap:
+          name: cc-go-config
+          items:
+          - key: application-yml
+            path: application.yml
+          - key: logback-spring-xml
+            path: logback-spring.xml
+          - key: server-crt
+            path: server.crt
+          - key: server-key
+            path: server.key
+      - name: log-volume
+        hostPath:
+          path: {{.Values.cc.spec.volumes.hostPath.path}}/{{.Values.namespace}}
+      - name: timezone-volume
+        hostPath:
+          path: /usr/share/zoneinfo/Asia/Shanghai
+          type: File
+      nodeSelector:
+        {{range $key,$val := .Values.platformNodeSelectors}}
+          {{$key}}: {{$val}}
+        {{end}}
