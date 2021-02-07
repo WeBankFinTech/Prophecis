@@ -34,15 +34,15 @@ Prophecis 是微众银行自研的一站式机器学习平台，集成多种开�
 - **机器学习应用部署、运维、实验的综合管理平台**：基于社区开源方案定制，提供完整的、可靠的、高度灵活的企业级机器学习应用发布、监控、服务治理、日志收集和查询等管理工具，全方位实现对机器学习应用的管控，满足企业对于机器学习应用在线上生产环境的所有工作要求。
 
 ## Quick Start Guide
-- 快速部署Prophecis服务，请参考 [Quick Start Guide](https://github.com/WeBankFinTech/Prophecis/blob/master/docs/zh_CN/Quick%20Start%20Guide.md) 文档。
+- 快速部署Prophecis服务，请参考 [Quick Start Guide](https://github.com/WeBankFinTech/Prophecis/blob/master/docs/zh_CN/QuickStartGuide.md) 文档。
 
-- 关于配置解释，可参考[Quick Start Guide](https://github.com/WeBankFinTech/Prophecis/blob/master/docs/zh_CN/Quick%20Start%20Guide.md) 中的关键配置解释部分。
+- 关于配置解释，可参考[Quick Start Guide](https://github.com/WeBankFinTech/Prophecis/blob/master/docs/zh_CN/QuickStartGuide.md) 中的关键配置解释部分。
 
 ## Developing
-- 编译Prophecis，请参考 [Develop Guide](https://github.com/WeBankFinTech/Prophecis/blob/master/docs/zh_CN/Developing%20Guide.md)  文档。
+- 编译Prophecis，请参考 [Develop Guide](https://github.com/WeBankFinTech/Prophecis/blob/master/docs/zh_CN/DevelopGuide.md)  文档。
 
 ## Roadmap
-- 关于Prophecis后续的Roadmap，可查看 [Roadmap](https://github.com/WeBankFinTech/Prophecis/blob/master/docs/zh_CN/RoadMap.md) 文档，欢迎大家持续关注！
+- 关于Prophecis后续的Roadmap，可查看 [Roadmap](https://github.com/WeBankFinTech/Prophecis/blob/master/docs/zh_CN/Roadmap.md) 文档，欢迎大家持续关注！
 
 ## Contributing
 
