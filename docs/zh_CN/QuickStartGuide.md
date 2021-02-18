@@ -13,11 +13,12 @@
 ####  二、镜像拉取
 
 ```shell
-docker pull wedatasphere/prophecis:ui-v0.1.0
-docker pull wedatasphere/prophecis:mllabis-v0.1.0
-docker pull wedatasphere/prophecis:cc-v0.1.0
-docker pull wedatasphere/prophecis:cc-gateway-v0.1.0
+docker pull wedatasphere/prophecis:ui-v0.1.1
+docker pull wedatasphere/prophecis:mllabis-v0.1.1
+docker pull wedatasphere/prophecis:cc-apigateway-v0.1.1
+docker pull wedatasphere/prophecis:cc-apiserver-v0.1.1
 docker pull wedatasphere/prophecis:notebook-controller-v0.1.0
+docker pull wedatasphere/prophecis:metacontroller-v0.3.1
 ```
 ####  三、数据库更新
 - 安装Mysql DB，使用MYSQL DB插入对应的表结构和更新API权限
