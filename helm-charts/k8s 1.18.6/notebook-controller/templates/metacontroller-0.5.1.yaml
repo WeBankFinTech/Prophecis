@@ -99,8 +99,8 @@ spec:
         - -v=4
         - --discovery-interval=20s
 #        image: metacontroller/metacontroller:v0.3.1
-        image: {{.Values.aide.controller.meta.repository}}:{{.Values.aide.controller.meta.tag}}
-        imagePullPolicy: {{.Values.aide.controller.meta.pullPolicy}}
+        image: {{.Values.mllabis.controller.meta.repository}}:{{.Values.mllabis.controller.meta.tag}}
+        imagePullPolicy: {{.Values.mllabis.controller.meta.pullPolicy}}
         name: metacontroller
         ports:
         - containerPort: 2345
