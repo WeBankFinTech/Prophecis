@@ -31,6 +31,9 @@ data:
     upstream aide {
         server {{.Values.ui.aide.server}};
     }
+    upstream di {
+        server {{.Values.ui.di.server}};
+    }
     server {
       listen 80;
       # should be real domain
@@ -116,13 +119,38 @@ data:
         proxy_http_version 1.1;
         proxy_pass http://cc;
       }
+      location = /linkis/upload {
+        proxy_set_header MLSS-Token $cookie_PROPHECIS;
+        proxy_set_header Authorization "Basic dGVkOndlbGNvbWUx";
+        proxy_set_header Cookie $http_cookie;
+        proxy_set_header MLSS-RealIP $remote_addr;
+        set $mlss_userid $http_mlss_userid;
+        if ($request_uri ~* (mlss-userid=([\w-]*)) ) {
+          set $mlss_userid $2;
+        }
+        proxy_set_header MLSS-Userid $mlss_userid;
+        proxy_set_header MLSS-Auth-Type $http_mlss_auth_type;
+        proxy_set_header MLSS-Ticket $http_mlss_ticket;
+        proxy_set_header MLSS-UIURL $http_mlss_uiurl;
+        proxy_set_header MLSS-Passwd $http_mlss_passwd;
+        proxy_set_header MLSS-APPID $http_mlss_appid;
+        proxy_set_header MLSS-APPTimestamp $http_mlss_apptimestamp;
+        proxy_set_header MLSS-APPSignature $http_mlss_appsignature;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $http_connection;
+
+        proxy_set_header Token-User $mlss_userid;
+        proxy_set_header Token-Code {{.Values.linkis.tokenCode}};
+
+        proxy_pass http://{{.Values.linkis.address}}/api/rest_j/v1/bml/upload;
+      }
       location /aide {
         proxy_set_header MLSS-Token $cookie_PROPHECIS;
         proxy_set_header MLSS-RealIP $remote_addr;
         proxy_set_header MLSS-Userid $http_mlss_userid;
         proxy_set_header MLSS-Auth-Type $http_mlss_auth_type;
         proxy_set_header MLSS-Ticket $http_mlss_ticket;
-        proxy_set_header MLSS-UIURL $http_mlss_iurl;
+        proxy_set_header MLSS-UIURL $http_mlss_uiurl;
         proxy_set_header MLSS-Passwd $http_mlss_passwd;
         proxy_set_header MLSS-APPID $http_mlss_appid;
         proxy_set_header MLSS-APPTimestamp $http_mlss_apptimestamp;
@@ -132,7 +160,22 @@ data:
         proxy_http_version 1.1;
         proxy_pass http://aide;
       }
-
+      location /di {
+        proxy_set_header MLSS-Token $cookie_PROPHECIS;
+        proxy_set_header MLSS-RealIP $remote_addr;
+        proxy_set_header MLSS-Userid $http_mlss_userid;
+        proxy_set_header MLSS-Auth-Type $http_mlss_auth_type;
+        proxy_set_header MLSS-Ticket $http_mlss_ticket;
+        proxy_set_header MLSS-UIURL $http_mlss_uiurl;
+        proxy_set_header MLSS-Passwd $http_mlss_passwd;
+        proxy_set_header MLSS-APPID $http_mlss_appid;
+        proxy_set_header MLSS-APPTimestamp $http_mlss_apptimestamp;
+        proxy_set_header MLSS-APPSignature $http_mlss_appsignature;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $http_connection;
+        proxy_http_version 1.1;
+        proxy_pass http://di;
+      }
       location / {
           root /var/www/html;
           index index.html;
@@ -148,6 +191,11 @@ data:
             'AIDE': {
                 'defineImage': '{{.Values.ui.aide.image.repository}}',
                 'imageOption': [{{range .Values.ui.aide.image.notebookTags}}'{{.name}}',{{end}}]
+            },
+            'DI': {
+                'defineImage': '{{.Values.ui.di.image.repository}}',
+                'imageOption': [{{range .Values.ui.di.image.trainingTags}}'{{.name}}',{{end}}],
+                'cookieExpires': 8
             },
             'basisPlatform': {
                 'grafanaUrl': '{{.Values.ui.grafana.url}}',
