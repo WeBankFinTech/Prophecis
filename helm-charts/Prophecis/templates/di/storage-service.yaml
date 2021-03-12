@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: di-storage-rpc
+  namespace: {{.Values.namespace}}
+  labels:
+    service: di-storage-rpc
+    environment: {{.Values.env}}
+spec:
+{{ if .Values.services.expose_node_port }}
+  type: NodePort
+{{ end }}
+  ports:
+  - name: grpc
+    port: 80
+    targetPort: 8443
+{{ if .Values.services.expose_node_port }}
+    nodePort: {{.Values.storage.port}}
+{{ end }}
+  selector:
+    service: di-storage
+

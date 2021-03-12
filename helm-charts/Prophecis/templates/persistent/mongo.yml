@@ -1,0 +1,35 @@
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: mongo-pv-{{.Values.namespace}}
+  labels:
+    type: local
+    pv: mongo-pv-{{.Values.namespace}}
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 100Gi
+  accessModes:
+    - ReadWriteMany
+  #nfs:
+    #server: 127.0.0.1
+    #path: {{.Values.persistent.mongo.nfsPath}} 
+  hostPath:
+    path: {{.Values.persistent.mongo.path}}
+---
+
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: mongo-pvc-{{.Values.namespace}}
+  namespace: {{.Values.namespace}}
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Gi
+  selector:
+    matchLabels:
+      pv: mongo-pv-{{.Values.namespace}}
