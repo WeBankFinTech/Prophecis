@@ -1,0 +1,135 @@
+/*
+ * Copyright 2017-2018 IBM Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+syntax = "proto3";
+
+package service;
+import "trainer.proto";
+option go_package = "webank/DI/commons/service";
+
+service LifecycleManager {
+  rpc DeployTrainingJob (JobDeploymentRequest) returns (JobDeploymentResponse) {}
+  rpc KillTrainingJob (JobKillRequest) returns (JobKillResponse) {}
+  rpc HaltTrainingJob (JobHaltRequest) returns (JobHaltResponse) {}
+}
+
+
+message ResourceRequirements {
+  double cpus = 1;
+  double gpus = 2;
+  double memory = 3;
+  MemoryUnit memory_unit = 4;
+  int32 learners = 5;
+  string schedpolicy = 6;
+  string topology = 7;
+  string architecture = 8;
+  double storage = 9;
+  MemoryUnit storage_unit = 10;
+  string gpu_type = 11;
+
+  // TODO add more fields as required
+
+  enum MemoryUnit {
+    MB = 0;
+    MiB = 1;
+    GB = 2;
+    GiB = 3;
+    TB = 4;
+    TiB = 5;
+  }
+}
+
+message User {
+  string id = 1;
+  repeated string roles = 2;
+  string firstname = 3;
+  string lastname = 4;
+  string email = 5;
+}
+
+enum StatusMessages {
+  NORMAL_OPERATION = 0;
+  INTERNAL_ERROR = 10;
+  INSUFFICIENT_RESOURCES = 20;
+}
+
+message JobDeploymentRequest {
+  string name = 1;
+  service.ResourceRequirements resources = 2;
+  map<string, string> env_vars = 3;
+  map<string, string> labels = 4;
+  string user_id = 5;
+  string training_id = 6;
+  string framework = 7;
+  string version =8;
+  string evaluation_metrics_spec = 9;
+  string image_tag = 10;
+  ImageLocation image_location = 11;
+  string job_namespace = 12;
+  repeated grpc_trainer_v2.Datastore data_stores = 13;
+  grpc_trainer_v2.ModelDefinition model_definition = 14;
+  grpc_trainer_v2.Training training = 15;
+  grpc_trainer_v2.TrainingStatus training_status = 16;
+  string job_alert = 17;
+  string code_selector = 18;
+  string data_path = 19;
+  string job_type = 20;
+  string p_ss = 21;
+  string p_s_c_p_u = 22;
+  string p_s_image = 23;
+  string p_s_memory = 24;
+  string t_fos_request = 25;
+  string exp_run_id = 26;
+  string exp_name = 27;
+  string file_name = 28;
+  string file_path = 29;
+}
+
+message ImageLocation {
+    string registry = 1; // the server name for the docker registry
+    string namespace = 2; // namespace within the registry
+    string access_token = 3; // Token used to access images stored in the registry+namespace
+    string email = 4; // Email address associated with the account
+}
+
+message JobDeploymentResponse {
+  string name = 1;
+  string status = 2; // TODO remove
+}
+
+message JobKillRequest {
+  string name = 1;
+  string training_id = 2;
+  string user_id = 3;
+  // FIXME MLSS Change: for kill job on specific namespace
+  string job_namespace = 4;
+}
+
+message JobKillResponse {
+  // placeholder for further messages
+}
+
+message JobHaltRequest {
+  string name = 1;
+  string training_id = 2;
+  string user_id = 3;
+  // FIXME MLSS Change: for halt job on specific namespace
+  string job_namespace = 4;
+}
+
+message JobHaltResponse {
+  // placeholder for further messages
+}
