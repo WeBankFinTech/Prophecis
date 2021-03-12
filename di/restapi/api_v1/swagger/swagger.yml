@@ -1,0 +1,863 @@
+#
+# Copyright 2017-2018 IBM Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+
+swagger: '2.0'
+info:
+  title: Prophecis Rest Service
+  description: |
+    Prophecis Rest Service
+  version: "1.0.0"
+host: di.prophecis.com
+schemes:
+  - https
+basePath: /
+consumes:
+  - application/json
+produces:
+  - application/json
+
+paths:
+  /di/v1/models:
+    post:
+      tags:
+        - Models
+      summary: Trains a new deep learning model.
+      description: |
+        Trains a deep neural network written in a DL framework supported by the DLaaS platform (such as Caffe, Tensorflow, etc.). The model code has to be uploaded and configuration parameters have to be provided.
+      operationId: postModel
+      consumes:
+        - multipart/form-data
+      produces:
+        - application/json
+      parameters:
+        - name: model_definition
+          in: formData
+          description: The deep learning model code as compressed archive (ZIP).
+          required: false
+          type: file
+        - name: manifest
+          in: formData
+          description: The manifest providing configuration for the deep learning model, the training data and the training execution.
+          required: true
+          type: file
+        - name: version
+          in: query
+          description: The release date of the version of the API you want to use. Specify dates in YYYY-MM-DD format.
+          required: true
+          type: string
+          default: "2017-02-13"
+      responses:
+        201:
+          description: Deep learning model successfully accepted.
+          schema:
+            $ref: "#/definitions/BasicNewModel"
+          headers:
+            Location:
+              description: Location header containing the model id.
+              type: string
+        400:
+          description: Error in the the model_definition or manifest.
+          schema:
+            $ref: '#/definitions/Error'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+    get:
+      tags:
+        - Models
+      summary: Get a list of available deep learning models.
+      description: |
+        Get a list of all available deep learning models and their configuration that a user can see.
+      operationId: listModels
+      parameters:
+        - name: version
+          in: query
+          description: The release date of the version of the API you want to use. Specify dates in YYYY-MM-DD format.
+          required: true
+          type: string
+          default: "2017-02-13"
+        - name: userid
+          in: query
+          description: owner's userid.
+          required: false
+          type: string
+          default: ""
+        - name: namespace
+          in: query
+          description: job's namespace.
+          required: false
+          type: string
+          default: ""
+        - name: page
+          in: query
+          description: page number.
+          required: false
+          type: string
+          default: ""
+        - name: size
+          in: query
+          description: entity number per page.
+          required: false
+          type: string
+          default: ""
+        - name: clusterName
+          in: query
+          description: entity clusterName
+          required: false
+          type: string
+          default: ""
+        - name: exp_id
+          in: query
+          description: experiment's id.
+          required: false
+          type: string
+          default: ""
+        - name: exp_run_id
+          in: query
+          description: experiment run's id.
+          required: false
+          type: string
+          default: ""
+      responses:
+        200:
+          description: List of deep learning models.
+          schema:
+            $ref: '#/definitions/ModelList'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+
+  /di/v1/models/{model_id}:
+    get:
+      tags:
+        - Models
+      summary: Get detailed information about a model.
+      description: |
+        Get detailed information about a model such as training status.
+      parameters:
+        - name: model_id
+          in: path
+          description: The id of the model.
+          required: true
+          type: string
+        - name: version
+          in: query
+          description: The release date of the version of the API you want to use. Specify dates in YYYY-MM-DD format.
+          required: true
+          type: string
+          default: "2017-02-13"
+      operationId: getModel
+      responses:
+        200:
+          description: Detailed model and training information.
+          schema:
+            $ref: '#/definitions/Model'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model with the given ID not found.
+          schema:
+            $ref: '#/definitions/Error'
+    patch:
+      tags:
+        - Models
+      summary: Changes the status of the training progress.
+      description: Changes the status of the training progress to the given `status` value (currently `halt` only). Halt means the training will be stopped and the last snapshot will be stored and can be retrieved.
+      operationId: patchModel
+      parameters:
+        - name: model_id
+          in: path
+          description: The id of the model.
+          required: true
+          type: string
+        - name: payload
+          in: body
+          description: Currently accepts "halt" as the only valid value.
+          required: true
+          schema:
+            $ref: '#/definitions/TrainingUpdate'
+        - name: version
+          in: query
+          description: The release date of the version of the API you want to use. Specify dates in YYYY-MM-DD format.
+          required: true
+          type: string
+          default: "2017-02-13"
+      responses:
+        202:
+          description: Training successfully halted.
+          schema:
+            $ref: '#/definitions/BasicModel'
+        400:
+          description: Incorrect status specified.
+          schema:
+            $ref: '#/definitions/Error'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model with the given ID not found.
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      tags:
+        - Models
+      summary: Deletes an existing model
+      description: |
+        Deletes an existing model. It does not delete any data in the user's data store.
+      parameters:
+        - name: model_id
+          description: The id of the model.
+          in: path
+          required: true
+          type: string
+          format: string
+        - name: version
+          in: query
+          description: The release date of the version of the API you want to use. Specify dates in YYYY-MM-DD format.
+          required: true
+          type: string
+          default: "2017-02-13"
+      operationId: deleteModel
+      responses:
+        200:
+          description: Model deleted successfully.
+          schema:
+            $ref: '#/definitions/BasicModel'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The model cannot be found.
+          schema:
+            $ref: '#/definitions/Error'
+  /di/v1/models/{model_id}/export:
+    get:
+      tags:
+        - Models
+      summary: Export the model definition.
+      description: Export the model definition
+      operationId: exportModel
+      produces:
+        - application/octet-stream
+      parameters:
+        - name: model_id
+          description: The id of the model.
+          in: path
+          required: true
+          type: string
+          format: string
+      responses:
+        200:
+          description: Model definition
+          schema:
+            type: string
+            format: binary
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The model cannot be found.
+          schema:
+            $ref: '#/definitions/Error'
+  /di/v1/models/{model_id}/definition:
+    get:
+      tags:
+        - Models
+      summary: Downloads the model definition.
+      description: Downloads the model definition that was initial used for training as ZIP archive.
+      operationId: downloadModelDefinition
+      produces:
+        - application/octet-stream
+      parameters:
+        - name: model_id
+          description: The id of the model.
+          in: path
+          required: true
+          type: string
+          format: string
+        - name: version
+          in: query
+          description: The release date of the version of the API you want to use. Specify dates in YYYY-MM-DD format.
+          required: true
+          type: string
+          default: "2017-02-13"
+      responses:
+        200:
+          description: Model definition
+          schema:
+            type: string
+            format: binary
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The model cannot be found.
+          schema:
+            $ref: '#/definitions/Error'
+  /di/v1/models/{model_id}/trained_model:
+    get:
+      tags:
+        - Models
+      summary: Downloads the trained model.
+      description: Downloads the trained model as ZIP archive.
+      produces:
+        - application/octet-stream
+      operationId: downloadTrainedModel
+      parameters:
+        - name: model_id
+          description: The id of the model.
+          in: path
+          required: true
+          type: string
+          format: string
+        - name: version
+          in: query
+          description: The release date of the version of the API you want to use. Specify dates in YYYY-MM-DD format.
+          required: true
+          type: string
+          default: "2017-02-13"
+      responses:
+        200:
+          description: Model definition
+          schema:
+            type: string
+            format: binary
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The trained model cannot be found.
+          schema:
+            $ref: '#/definitions/Error'
+        410:
+          description: If the trained model storage time has expired and it has been deleted. It only gets deleted if it not stored on an external data store.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /di/v1/models/{model_id}/logs:
+    get:
+      security: [] # disable basic auth b/c basic auth is not supported in the browser
+      tags:
+        - Models
+      summary: |
+        Get training logs as websocket stream.
+      description: |
+        Get training logs for the given model as websocket stream. Each message can contain one or more log lines.
+      produces:
+        - application/octet-stream
+      parameters:
+        - name: model_id
+          description: The id of the model.
+          in: path
+          required: true
+          type: string
+          format: string
+        - name: follow
+          description: Follow the log stream if true. Default false.
+          in: query
+          required: false
+          default: false
+          type: boolean
+          format: boolean
+        - name: since_time
+          description: An RFC3339 timestamp from which to show logs. If this value precedes the time a pod was started, only logs since the pod start will be returned.  If this value is in the future, no logs will be returned.
+          in: query
+          required: false
+          default: ""
+          type: string
+          format: string
+        - name: version
+          in: query
+          description: The release date of the version of the API you want to use. Specify dates in YYYY-MM-DD format.
+          required: true
+          type: string
+          default: "2017-02-13"
+      operationId: getLogs
+      responses:
+        200:
+          description: Dump of the training log to-date
+          schema:
+            type: string
+            format: binary
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The model cannot be found.
+          schema:
+            $ref: '#/definitions/Error'
+  /di/v1/logs/{model_id}/loglines:
+    get:
+      summary: Get loglines, based on query
+      responses:
+        200:
+          description: "(streaming responses)"
+          schema:
+            "$ref": "#/definitions/v1LogLinesList"
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+      operationId: getLoglines
+      parameters:
+        - name: model_id
+          description: The id of the model.
+          in: path
+          required: true
+          type: string
+          format: string
+        - name: searchType
+          in: query
+          required: false
+          type: string
+          enum:
+            - TERM
+            - NESTED
+            - MATCH
+          default: TERM
+        - name: since_time
+          description: 'Time from which to show logs. If this value precedes the time a pod was started,
+            only logs since the pod start will be returned.
+            If this value is in the future, no logs will be returned. If this value is a raw integer, it represents
+            the time that the metric occured: representing the number of milliseconds since midnight January 1, 1970.
+            If this value is a negative integer, it represents the number of lines to count backwards.
+            If this value is empty, the logs since the beginning of the job will be returned'
+          in: query
+          required: false
+          default: ""
+          type: string
+          format: string
+        - name: pagesize
+          description: 'Number of lines to output.'
+          in: query
+          required: false
+          type: integer
+          format: int32
+        - name: pos
+          description: 'If positive, line number from start, if negative line counting from end'
+          in: query
+          required: false
+          type: integer
+          format: int64
+        - name: version
+          in: query
+          description: The release date of the version of the API you want to use. Specify dates in YYYY-MM-DD format.
+          required: false
+          type: string
+          default: "2017-10-01"
+      tags:
+        - TrainingData
+
+
+  /di/v1/dashboards:
+    get:
+      summary: Get the dashboard belongs to a User
+      description: Get dashboard.
+      operationId: getDashboards
+      parameters:
+        - name: clusterName
+          in: query
+          description: entity clusterName
+          required: false
+          type: string
+          default: ""
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/GetDashboardsResponse'
+        403:
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The dashboard cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+  /di/v1/codeUpload:
+      post:
+        summary: upload code to s3
+        description: upload code.zip to s3
+        operationId: codeUpload
+        tags:
+          - Experiments
+        consumes:
+          - multipart/form-data
+        produces:
+          - application/json
+        parameters:
+          - name: file
+            in: formData
+            required: true
+            type: file
+        responses:
+          200:
+            description: OK
+            schema:
+              $ref: '#/definitions/CodeUploadResponse'
+          401:
+            description: Unauthorized
+            schema:
+              $ref: '#/definitions/Error'
+          404:
+            description: Code ZIP upload failed
+            schema:
+              $ref: '#/definitions/Error'
+definitions:
+  Endpoint:
+    type: object
+    properties:
+      id:
+        type: string
+        description: the id of the endpoint
+      url:
+        type: string
+        description: the url of the endpoint
+
+  EndpointList:
+    type: object
+    properties:
+      endpoints:
+        type: array
+        items:
+          $ref: '#/definitions/Endpoint'
+
+
+  BasicModel:
+    type: object
+    properties:
+      model_id:
+        type: string
+        description: A unique id of the deep learning model.
+  BasicNewModel:
+    allOf:
+      - $ref: '#/definitions/BasicModel'
+      - properties:
+          location:
+            type: string
+            description: Location of the model to retrieve it.
+  Model:
+    allOf:
+      - $ref: '#/definitions/BasicNewModel'
+      - properties:
+          name:
+            type: string
+            description: The name of the deep learning model.
+          description:
+            type: string
+            description: Detailed description of deep learning model.
+          framework:
+            $ref: '#/definitions/Framework'
+          training:
+            $ref: '#/definitions/Training'
+          data_stores:
+            type: array
+            items:
+              $ref: '#/definitions/Datastore'
+          job_namespace:
+            type: string
+            description: job's namespace.
+          user_id:
+            type: string
+            description: user name.
+          pss:
+            type: string
+            description: Count of Param Server
+          ps_cpu:
+            type: string
+            description: Count of Param Server
+          ps_image:
+            type: string
+            description: Count of Param Server
+          ps_memory:
+            type: string
+            description: Count of Param Server
+          JobAlert:
+            type: string
+            description: Job Alert String.
+          JobType:
+            type: string
+            description: Job Type.
+          expRunId:
+            type: string
+            description: Experiment Run Id
+          expName:
+            type: string
+            description: Experiment Name
+          fileName:
+            type: string
+            description: Code File's Name
+          filePath:
+            type: string
+            description: Code File's Path
+          submission_timestamp:
+            type: string
+            description: submission timestamp of the job.
+          completed_timestamp:
+            type: string
+            description: completed timestamp of the job
+          TFosRequest:
+            $ref: '#/definitions/TFosRequest'
+            description: TFosRequest
+
+  Framework:
+    type: object
+    properties:
+      name:
+        type: string
+        description: the name of the deep learning framework (e.g. caffe, torch, tensorflow)
+      version:
+        type: string
+        description: the version of the specific framework to use.
+
+  Training:
+    type: object
+    properties:
+      command:
+        type: string
+        description: the command invoked for running the training. This is specific to the DL framework
+      size:
+        type: string
+        description: the pre-configured deployment size to used for training. The is used instead of directly specifying CPU, GPU, memory and learners.
+      cpus:
+        type: number
+        format: double
+        description: Number of CPUs required
+      gpus:
+        type: number
+        format: double
+        description: Number of CPUs required
+      memory:
+        type: number
+        format: double
+        description: Amount of memory required
+      memory_unit:
+        type: string
+        description: |
+          Memory unit (default: MiB)
+        enum:
+          - MiB
+          - MB
+          - GiB
+          - GB
+        default: MiB
+      learners:
+        type: integer
+        format: int32
+        description: Number of learners required.
+      input_data:
+        type: array
+        description: Input data to the training, such as training data, pre-trained model. The input is specified as references to the data_store ids that contain the data.
+        items:
+          type: string
+          description: Reference to a data store id.
+      output_data:
+        type: array
+        description: Output data of the training, such as trained models. The output is specified as references to the data_store ids that contain the data.
+        items:
+          type: string
+          description: Reference to a data store id.
+      training_status:
+        $ref: '#/definitions/TrainingStatus'
+  Datastore:
+    type: object
+    properties:
+      data_store_id:
+        type: string
+        description: the id of the data store as defined in the manifest.
+      type:
+        type: string
+        description: the type of the data store as defined in the manifest.
+      connection:
+        type: object
+        additionalProperties:
+          type: string
+  ModelList:
+    type: object
+    properties:
+      models:
+        type: array
+        items:
+          $ref: '#/definitions/Model'
+      pages:
+        type: integer
+      total:
+        type: integer
+  TrainingStatus:
+    type: object
+    properties:
+      status:
+        description: Status of the training.
+        type: string
+      status_description:
+        description: Description of the training status.
+        type: string
+      submitted:
+        description: |
+          Training submission timestamp (Format: yyyy-MM-dd'T'HH:mm:ss.SSS'Z')
+        type: string
+      completed:
+        description: |
+          Training completion timestamp (Format: yyyy-MM-dd'T'HH:mm:ss.SSS'Z')
+        type: string
+      status_message:
+        description: A human readable message description of the training status.
+        type: string
+      error_code:
+        description: A code identifying the cause of a status message.
+        type: string
+  TrainingUpdate:
+    type: object
+    properties:
+      status:
+        description: The status action to be executed on the training job. (Currently only `halt` is supported.)
+        type: string
+  Error:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int32
+      error:
+        type: string
+      msg:
+        type: string
+  v1LogLine:
+    type: object
+    properties:
+      meta:
+        "$ref": "#/definitions/v1MetaInfo"
+      line:
+        type: string
+  v1LogLinesList:
+    type: object
+    properties:
+      models:
+        type: array
+        items:
+          $ref: '#/definitions/v1LogLine'
+  v1MetaInfo:
+    type: object
+    properties:
+      training_id:
+        type: string
+        title: Unique id identifying the training job
+      user_id:
+        type: string
+        title: Unique id identifying the user
+      time:
+        type: number
+        format: int64
+        description: 'Time that the metric occured: representing the number of millisecond
+          since midnight January 1, 1970.'
+      rindex:
+        type: number
+        format: int64
+        title: sequential index
+  GetDashboardsResponse:
+    type: object
+    properties:
+      totalInstances:
+        type: string
+        description: total number of instances.
+      runningInstances:
+        type: string
+        description: number of running instances.
+      cpus:
+        type: string
+        description: number of cpu.
+  TFosRequest:
+    type: object
+    properties:
+      py_file:
+        type: array
+        description:  PyFiles Fields.
+        items:
+          $ref: '#/definitions/Fields'
+      Archives:
+        type: array
+        description:  Archives Fields.
+        items:
+          $ref: '#/definitions/Fields'
+      EntryPoint:
+        $ref: '#/definitions/Fields'
+        description: EntryPoint Fields.
+      TensorflowEnv:
+        $ref: '#/definitions/Fields'
+        description: Tensorflow Env Files.
+      Executors:
+        type: string
+        description: Queue Setting Executor Number.
+      ExecutorCores:
+        type: string
+        description: Queue Setting Executor Cores.
+      ExecutorMemory:
+        type: string
+        description:  Queue Setting Executor Memory.
+      Queue:
+        type: string
+        description: Queue Setting.
+      DriverMemory:
+        type: string
+        description: Queue Setting Driver Memory.
+      Command:
+        type: string
+        description: Experiment Description.
+  Fields:
+    type: object
+    description: TFOS Archives & PyFile Fields
+    properties:
+      hdfs:
+        type: string
+        description:  HDFS Path.
+      resource_id:
+        type: string
+        description:  BML Resource ID.
+      version:
+        type: string
+        description: BML Resource Version.
+  User:
+    properties:
+      id:
+        type: number
+        format: int64
+        description: Flag of Delete.
+      Name:
+        type: string
+        description: Flag of Delete.
+      Remarks:
+        type: string
+        description: Flag of Delete.
+    required:
+      - id
+  CodeUploadResponse:
+      type: object
+      properties:
+        s3Path:
+          type: string
+          format: int64
+          description: S3 Path
