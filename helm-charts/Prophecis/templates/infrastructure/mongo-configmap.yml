@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mongo-config
+  namespace: {{.Values.namespace}}
+data:
+  init-auth-sh: |
+    mongod --smallfiles --fork --logpath=/data/db/init.log
+    echo "waiting for mongo start 5s"
+    sleep 5
+    echo "initing auth"
+    mongo /init-mongo/init-auth.js
+    echo "waiting for kill mongo 5s"
+    pkill mongod
+    sleep 5
+    mongod --smallfiles --auth
+
+  
+  init-auth-js: |
+    try{
+      // var db = connect('test');
+      var admindb = connect('admin');
+      if(admindb.system.users.find({'user':'{{.Values.mongo.username}}','db':'admin'}).count() == 0){
+          print('Ready to addUser...');
+          admindb.createUser({user:'{{.Values.mongo.username}}',pwd:'{{.Values.mongo.password}}',roles:["userAdminAnyDatabase","readWriteAnyDatabase"]});
+      }else{
+        print('Already exist user, updating now.');
+        admindb.updateUser('{{.Values.mongo.username}}',{pwd:'{{.Values.mongo.password}}', roles:["userAdminAnyDatabase","readWriteAnyDatabase"]});
+      }
+    }catch(err){
+      print('Error occured:' + err);
+    }

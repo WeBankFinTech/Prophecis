@@ -1,0 +1,32 @@
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: etcd-pv-{{.Values.namespace}}
+  labels:
+    type: local
+    pv: etcd-pv-{{.Values.namespace}}
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 100Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: {{.Values.persistent.etcd.path}}
+---
+
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: etcd-pvc-{{.Values.namespace}}
+  namespace: {{.Values.namespace}}
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Gi
+  selector:
+    matchLabels:
+      pv: etcd-pv-{{.Values.namespace}}

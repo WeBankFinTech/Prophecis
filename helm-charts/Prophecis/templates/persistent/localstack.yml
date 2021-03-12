@@ -1,0 +1,32 @@
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: localstack-pv-{{.Values.namespace}}
+  labels:
+    type: local
+    pv: localstack-pv-{{.Values.namespace}}
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 100Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: {{.Values.persistent.localstack.path}}
+---
+
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: localstack-pvc-{{.Values.namespace}}
+  namespace: {{.Values.namespace}}
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Gi
+  selector:
+    matchLabels:
+      pv: localstack-pv-{{.Values.namespace}}
