@@ -99,9 +99,7 @@ data:
         learnerIndex: dlaas_learner_data
         dateIndex: logstash-
       gateway:
-        bdpAddress: {{.Values.cc.gateway.address.bdp}}
         bdapAddress: {{.Values.cc.gateway.address.bdap}}
-        bdapsafeAddress: {{.Values.cc.gateway.address.bdapsafe}}
       authAddress:
         user: http://controlcenter-go:6666/cc/v1/inter/user
         auth: http://controlcenter-go:6666/cc/v1/inter/auth
@@ -205,7 +203,6 @@ data:
             <appender-ref ref="FILE_ERROR"/>
         </root>
     </configuration>
-
 
   server-crt: |
     -----BEGIN CERTIFICATE-----

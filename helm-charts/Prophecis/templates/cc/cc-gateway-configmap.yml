@@ -21,6 +21,7 @@ data:
       auth_request {
         check {
           path /cc/v1/*
+          path /di/v1/*
           api /userOrAuthInterceptor
           except GET /cc/v1/login /cc/v1/logout /cc/v1/auth/access/namespaces/*/notebooks/*
           except POST /cc/v1/alerts  /cc/v1/alerts/training
@@ -79,7 +80,7 @@ data:
         header_upstream MLSS-Token {MLSS-Token}
         header_upstream MLSS-RealIP {remote}
         header_upstream X-Real-IP {remote}
-        header_upstream MLSS-Userid {MLSS-Userid}
+        header_upstream MLSS-UserID {MLSS-UserID}
         header_upstream MLSS-Auth-Type {MLSS-Auth-Type}
         header_upstream MLSS-UIURL {MLSS-UIURL}
         header_upstream MLSS-Passwd {MLSS-Passwd}
@@ -127,3 +128,4 @@ data:
     lnGyr00Jcoj26dwN8bxDmgrmkbJKeVgqUXgys9Hc2Vl1c9jv0NGbrI7YcAxCwHxj
     NW/H5Z/FuR0A0ifTo5UgziamPGj0sB/OmZE/TPOSTFsaiM2IudAjwE8S32ihgJzo
     -----END CERTIFICATE-----
+ 
