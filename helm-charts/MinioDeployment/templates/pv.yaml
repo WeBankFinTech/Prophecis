@@ -1,0 +1,14 @@
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: minio
+  labels:
+    type: local
+spec:
+  storageClassName: "{{ .Values.persistence.storageClass }}" 
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - {{ .Values.persistence.accessMode | quote }}
+  hostPath:
+    path: {{ .Values.pv.hostPath }}
