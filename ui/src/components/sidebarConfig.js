@@ -7,6 +7,11 @@ export default {
       icon: 'icon-shouye'
     },
     {
+      index: '/DI',
+      title: 'trainingJob',
+      icon: 'icon-moxingshu'
+    },
+    {
       index: '/AIDE',
       title: 'Notebook',
       icon: 'icon-jichengkaifa'
