@@ -1,4 +1,6 @@
 module.exports = {
+  productionSourceMap: false,
+  publicPath: process.env.NODE_ENV === 'production' ? '././' : './',
   devServer: {
     port: 5000 // 此处修改你想要的端口号，
   },

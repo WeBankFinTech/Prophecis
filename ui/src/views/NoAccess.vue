@@ -15,7 +15,7 @@ export default {
   methods: {
     logout () {
       this.FesApi.fetchUT(`/cc/${this.FesEnv.ccApiVersion}/logout`, 'get').then(() => {
-        window.location.href = window.encodeURI(`${this.FesEnv.ssoLogoutUrl}?service=${window.location.origin + '/index.html'}`)
+        this.$router.push('/home')
       }, (error) => {
         error.message && this.$message.error(error.message)
       })
