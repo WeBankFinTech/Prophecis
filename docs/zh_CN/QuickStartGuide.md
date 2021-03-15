@@ -35,13 +35,26 @@ source prophecis-data.sql #permission数据
 
 - Prophecis对Kubeflow提供的Notebook Controller进行NodePort SVC的扩展，用于PySpark Session的创建，如需使用可从wedatasphere仓库拉取。
 
-  ```
+  ```shell
   cd ./helm-charts/notebook-controller
   helm install notebook-controller .
   ```
 
+#### 五、部署MinIO及Log Collector
 
-#### 五、修改配置
+- MinIO
+  ```shell
+  cd ./helm-charts/MinioDeployment
+  helm install minio-prophecis --namespace prophecis .
+  ```
+
+- Log Collector
+    ```shell
+    cd ./helm-charts/
+    kubectl apply -f ./LogCollectorDS
+    ```
+
+#### 六、修改配置
 
 - 修改ui nginx反向代理配置（values.yml文件，host ip + nodeport）：
 
@@ -50,9 +63,11 @@ cc:
 	server: 127.0.0.1:30778
 aide:
 	server: 127.0.0.1:30778
+di:
+    server: 127.0.0.1:30778
 ```
 
-- 修改数库配置（values.yml文件）：
+- 修改数库配置（values.yml文件，db配置一致即可）：
 
 ```shell
 cc:
@@ -62,6 +77,14 @@ cc:
     name: prophecis_db
     user: prophecis
     pwd: prophecis
+datasource:
+  userName: prophecis
+  userPwd: prophecis
+  url: 127.0.0.1
+  port: 3306
+  db: prophecis_db
+  encryptPwd: ""
+  privKey: ""
 ```
 - 登录采用通过LDAP方案，需要配置values中的ldap address和baseDN变量：
 ```shell
@@ -76,12 +99,12 @@ cc:
 kubectl label nodes prophecis01 mlss-node-role=platform
 ```
 
-#### 六、管理员用户
+#### 七、管理员用户
 
 - 默认的管理员用户为admin，账号密码通过values中的admin进行配置。
 - 若需要新增SA用户，需要在t_superadmin和t_user中增加对应的用户记录；
 
-#### 七、部署命令
+#### 八、部署命令
 
 ```shell
 kubectl create namespace prophecis
@@ -90,7 +113,7 @@ kubectl create namespace prophecis
 helm install prophecis .
 ```
 
-#### 八、关键配置解释
+#### 九、关键配置解释
 - platformNodeSelectors：prophecis服务运行label
 
 - cc:
