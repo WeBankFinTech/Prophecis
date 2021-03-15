@@ -1,106 +1,56 @@
 <template>
   <div>
     <breadcrumb-nav></breadcrumb-nav>
-    <el-form ref="queryValidate"
-             :model="query"
-             :rules="ruleValidate"
-             class="query"
-             label-width="85px">
+    <el-form ref="queryValidate" :model="query" :rules="ruleValidate" class="query" label-width="85px">
       <el-row>
         <el-col :span="6">
-          <el-form-item :label="$t('ns.nameSpace')"
-                        prop="namespace">
-            <el-select v-model="query.namespace"
-                       filterable
-                       :placeholder="$t('ns.nameSpacePro')">
-              <el-option v-for="item in spaceOptionList"
-                         :key="item"
-                         :value="item"
-                         :label="item">
+          <el-form-item :label="$t('ns.nameSpace')" prop="namespace">
+            <el-select v-model="query.namespace" filterable :placeholder="$t('ns.nameSpacePro')">
+              <el-option v-for="item in spaceOptionList" :key="item" :value="item" :label="item">
               </el-option>
             </el-select>
           </el-form-item>
         </el-col>
         <el-col :span="6">
-          <el-form-item :label="$t('user.user')"
-                        prop="userName">
-            <el-select v-model="query.userName"
-                       filterable
-                       clearable
-                       :placeholder="$t('user.userPro')">
-              <el-option v-for="item in userOptionList"
-                         :key="item.id"
-                         :value="item.name"
-                         :label="item.name">
+          <el-form-item :label="$t('user.user')" prop="userName">
+            <el-select v-model="query.userName" filterable clearable :placeholder="$t('user.userPro')">
+              <el-option v-for="item in userOptionList" :key="item.id" :value="item.name" :label="item.name">
               </el-option>
             </el-select>
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-button type="primary"
-                     class="margin-l30"
-                     icon="el-icon-search"
-                     @click="filterListData">
+          <el-button type="primary" class="margin-l30" icon="el-icon-search" @click="filterListData">
             {{ $t("common.filter") }}
           </el-button>
-          <el-button type="warning"
-                     icon="el-icon-refresh-left"
-                     @click="resetListData">
+          <el-button type="warning" icon="el-icon-refresh-left" @click="resetListData">
             {{ $t("common.reset") }}
           </el-button>
-          <el-button type="primary"
-                     icon="plus-circle-o"
-                     @click="showCreateDialog">
+          <el-button type="primary" icon="plus-circle-o" @click="showCreateDialog">
             {{ $t("AIDE.createNotebook") }}
           </el-button>
         </el-col>
       </el-row>
     </el-form>
-    <el-table :data="dataList"
-              border
-              style="width: 100%"
-              :empty-text="$t('common.noData')">
-      <el-table-column prop="name"
-                       :label="$t('DI.name')"
-                       min-width="100" />
-      <el-table-column prop="user"
-                       :label="$t('user.user')" />
-      <el-table-column prop="namespace"
-                       :label="$t('ns.nameSpace')"
-                       min-width="220" />
-      <el-table-column prop="cpu"
-                       :label="$t('AIDE.cpu')"
-                       min-width="50" />
-      <el-table-column prop="gpu"
-                       :label="$t('AIDE.gpu')"
-                       min-width="50" />
-      <el-table-column prop="memory"
-                       :label="$t('AIDE.memory1')"
-                       min-width="70" />
-      <el-table-column prop="image"
-                       :label="$t('DI.image')"
-                       min-width="300" />
-      <el-table-column prop="status"
-                       :label="$t('DI.status')">
+    <el-table :data="dataList" border style="width: 100%" :empty-text="$t('common.noData')">
+      <el-table-column prop="name" :label="$t('DI.name')" min-width="100" />
+      <el-table-column prop="user" :label="$t('user.user')" />
+      <el-table-column prop="namespace" :label="$t('ns.nameSpace')" min-width="220" />
+      <el-table-column prop="cpu" :label="$t('AIDE.cpu')" min-width="50" />
+      <el-table-column prop="gpu" :label="$t('AIDE.gpu')" min-width="50" />
+      <el-table-column prop="memory" :label="$t('AIDE.memory1')" min-width="70" />
+      <el-table-column prop="image" :label="$t('DI.image')" min-width="300" />
+      <el-table-column prop="status" :label="$t('DI.status')">
         <template slot-scope="scope">
-          <status-tag :status="scope.row.status"
-                      :statusObj="statusObj"></status-tag>
+          <status-tag :status="scope.row.status" :statusObj="statusObj"></status-tag>
         </template></el-table-column>
-      <el-table-column prop="uptime"
-                       :label="$t('DI.createTime')"
-                       min-width="125" />
-      <el-table-column :label="$t('common.operation')"
-                       min-width="85">
+      <el-table-column prop="uptime" :label="$t('DI.createTime')" min-width="125" />
+      <el-table-column :label="$t('common.operation')" min-width="85">
         <template slot-scope="scope">
-          <el-dropdown size="medium"
-                       @command="handleCommand">
-            <el-button type="text"
-                       class="multi-operate-btn"
-                       icon="el-icon-more"
-                       round></el-button>
+          <el-dropdown size="medium" @command="handleCommand">
+            <el-button type="text" class="multi-operate-btn" icon="el-icon-more" round></el-button>
             <el-dropdown-menu slot="dropdown">
-              <el-dropdown-item :command="beforeHandleCommand('visitNotebook',scope.row)"
-                                :disabled="scope.row.status!=='Ready'">{{$t('AIDE.access')}}</el-dropdown-item>
+              <el-dropdown-item :command="beforeHandleCommand('visitNotebook',scope.row)" :disabled="scope.row.status!=='Ready'">{{$t('AIDE.access')}}</el-dropdown-item>
               <el-dropdown-item :command="beforeHandleCommand('deleteItem',scope.row)">{{$t('common.delete')}}</el-dropdown-item>
               <el-dropdown-item :command="beforeHandleCommand('copyJob',scope.row)">{{$t('common.copy')}}</el-dropdown-item>
               <el-dropdown-item :command="beforeHandleCommand('editYarn',scope.row)">{{$t('AIDE.editYarn')}}</el-dropdown-item>
@@ -109,108 +59,65 @@
         </template>
       </el-table-column>
     </el-table>
-    <el-pagination @size-change="handleSizeChange"
-                   @current-change="handleCurrentChange"
-                   :current-page="pagination.pageNumber"
-                   :page-sizes="sizeList"
-                   :page-size="pagination.pageSize"
-                   layout="total, sizes, prev, pager, next, jumper"
-                   :total="pagination.totalPage"
-                   background>
+    <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page="pagination.pageNumber" :page-sizes="sizeList" :page-size="pagination.pageSize" layout="total, sizes, prev, pager, next, jumper" :total="pagination.totalPage" background>
     </el-pagination>
-    <el-dialog :title="$t('AIDE.createNotebook')"
-               :visible.sync="dialogVisible"
-               @close="clearDialogForm1"
-               custom-class="dialog-style"
-               :close-on-click-modal="false"
-               width="1150px">
-      <step :step="currentStep"
-            :step-list="stepList" />
-      <el-form ref="formValidate"
-               :model="form"
-               class="add-node-form"
-               :rules="ruleValidate"
-               label-width="155px">
-        <div v-if="currentStep===0"
-             key="step0">
+    <el-dialog :title="$t('AIDE.createNotebook')" :visible.sync="dialogVisible" @close="clearDialogForm1" custom-class="dialog-style" :close-on-click-modal="false" width="1150px">
+      <step :step="currentStep" :step-list="stepList" />
+      <el-form ref="formValidate" :model="form" class="add-node-form" :rules="ruleValidate" label-width="155px">
+        <div v-if="currentStep===0" key="step0">
           <div class="subtitle">
             {{ $t('DI.basicSettings') }}
           </div>
           <el-row>
             <el-col :span="24">
-              <el-form-item :label="$t('AIDE.NotebookName')"
-                            prop="name"
-                            maxlength="225">
-                <el-input v-model="form.name"
-                          :placeholder="$t('AIDE.NotebookPro')" />
+              <el-form-item :label="$t('AIDE.NotebookName')" prop="name" maxlength="225">
+                <el-input v-model="form.name" :placeholder="$t('AIDE.NotebookPro')" />
               </el-form-item>
             </el-col>
           </el-row>
         </div>
-        <div v-if="currentStep===1"
-             key="step1">
+        <div v-if="currentStep===1" key="step1">
           <div class="subtitle">
             {{ $t('DI.imageSettings') }}
           </div>
           <el-row>
-            <el-form-item :label="$t('DI.imageType')"
-                          prop="image.imageType">
-              <el-radio-group v-model="form.image.imageType"
-                              @change="changeImageType">
+            <el-form-item :label="$t('DI.imageType')" prop="image.imageType">
+              <el-radio-group v-model="form.image.imageType" @change="changeImageType">
                 <el-radio label="Standard">{{ $t('DI.standard') }}</el-radio>
                 <el-radio label="Custom">{{ $t('DI.custom') }}</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-row>
           <el-row>
-            <el-form-item v-if="!isCustom"
-                          :label="$t('DI.imageSelection')"
-                          prop="image.imageOption">
+            <el-form-item v-if="!isCustom" :label="$t('DI.imageSelection')" prop="image.imageOption">
               <span>&nbsp;{{ defineImage }}&nbsp;&nbsp;</span>
-              <el-select v-model="form.image.imageOption"
-                         :placeholder="$t('DI.imagePro')">
-                <el-option v-for="(item,index) in imageOptionList"
-                           :label="item"
-                           :key="index"
-                           :value="item">
+              <el-select v-model="form.image.imageOption" :placeholder="$t('DI.imagePro')">
+                <el-option v-for="(item,index) in imageOptionList" :label="item" :key="index" :value="item">
                 </el-option>
               </el-select>
             </el-form-item>
-            <el-form-item v-if="isCustom"
-                          key="imageInput"
-                          :label="$t('DI.imageSelection')"
-                          prop="image.imageInput">
+            <el-form-item v-if="isCustom" key="imageInput" :label="$t('DI.imageSelection')" prop="image.imageInput">
               <span>&nbsp;{{ defineImage }}&nbsp;&nbsp;</span>
-              <el-input v-model="form.image.imageInput"
-                        :placeholder="$t('DI.imageInputPro')" />
+              <el-input v-model="form.image.imageInput" :placeholder="$t('DI.imageInputPro')" />
             </el-form-item>
           </el-row>
         </div>
-        <div v-if="currentStep===2"
-             key="step2">
+        <div v-if="currentStep===2" key="step2">
           <div class="subtitle">
             {{ $t('DI.computingResource') }}
           </div>
           <el-row>
             <el-col :span="12">
-              <el-form-item :label="$t('ns.nameSpace')"
-                            prop="namespace">
-                <el-select v-model="form.namespace"
-                           filterable
-                           :placeholder="$t('ns.nameSpacePro')">
-                  <el-option v-for="item in spaceOptionList"
-                             :label="item"
-                             :key="item"
-                             :value="item">
+              <el-form-item :label="$t('ns.nameSpace')" prop="namespace">
+                <el-select v-model="form.namespace" filterable :placeholder="$t('ns.nameSpacePro')">
+                  <el-option v-for="item in spaceOptionList" :label="item" :key="item" :value="item">
                   </el-option>
                 </el-select>
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item :label="$t('AIDE.cpu')"
-                            prop="cpu">
-                <el-input v-model="form.cpu"
-                          :placeholder="$t('AIDE.CPUPro')">
+              <el-form-item :label="$t('AIDE.cpu')" prop="cpu">
+                <el-input v-model="form.cpu" :placeholder="$t('AIDE.CPUPro')">
                   <span slot="append">Core</span>
                 </el-input>
               </el-form-item>
@@ -218,19 +125,15 @@
           </el-row>
           <el-row>
             <el-col :span="12">
-              <el-form-item :label="$t('AIDE.memory')"
-                            prop="memory">
-                <el-input v-model="form.memory"
-                          :placeholder="$t('AIDE.memoryPro')">
+              <el-form-item :label="$t('AIDE.memory')" prop="memory">
+                <el-input v-model="form.memory" :placeholder="$t('AIDE.memoryPro')">
                   <span slot="append">Gi</span>
                 </el-input>
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item :label="$t('AIDE.gpu')"
-                            prop="extraResources">
-                <el-input v-model="form.extraResources"
-                          :placeholder="$t('AIDE.gpuPro')">
+              <el-form-item :label="$t('AIDE.gpu')" prop="extraResources">
+                <el-input v-model="form.extraResources" :placeholder="$t('AIDE.gpuPro')">
                   <span slot="append">{{$t('AIDE.block')}}</span>
                 </el-input>
               </el-form-item>
@@ -241,54 +144,38 @@
             </el-switch>
           </el-form-item>
           <el-row v-if="form.cluster===true">
-            <el-form-item :label="$t('DI.YARNQueue')"
-                          prop="queue">
-              <el-input v-model="form.queue"
-                        maxlength="225"
-                        :placeholder="$t('DI.queuePro')" />
+            <el-form-item :label="$t('DI.YARNQueue')" prop="queue">
+              <el-input v-model="form.queue" maxlength="225" :placeholder="$t('DI.queuePro')" />
             </el-form-item>
             <el-col :span="12">
-              <el-form-item :label="$t('DI.driverMemory')"
-                            prop="driverMemory">
-                <el-input v-model="form.driverMemory"
-                          maxlength="10"
-                          :placeholder="$t('DI.driverMemoryPro')">
+              <el-form-item :label="$t('DI.driverMemory')" prop="driverMemory">
+                <el-input v-model="form.driverMemory" maxlength="10" :placeholder="$t('DI.driverMemoryPro')">
                   <span slot="append">Gi</span>
                 </el-input>
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item :label="$t('DI.executorInstances')"
-                            prop="executorCores">
-                <el-input v-model="form.executorCores"
-                          maxlength="10"
-                          :placeholder="$t('DI.executorInstancesPro')">
+              <el-form-item :label="$t('DI.executorInstances')" prop="executorCores">
+                <el-input v-model="form.executorCores" maxlength="10" :placeholder="$t('DI.executorInstancesPro')">
                   <span slot="append">Core</span>
                 </el-input>
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item :label="$t('DI.executorMemory')"
-                            prop="executorMemory">
-                <el-input v-model="form.executorMemory"
-                          maxlength="10"
-                          :placeholder="$t('DI.executorMemoryPro')">
+              <el-form-item :label="$t('DI.executorMemory')" prop="executorMemory">
+                <el-input v-model="form.executorMemory" maxlength="10" :placeholder="$t('DI.executorMemoryPro')">
                   <span slot="append">Gi</span>
                 </el-input>
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item :label="$t('DI.linkisInstance')"
-                            prop="executors">
-                <el-input v-model="form.executors"
-                          maxlength="10"
-                          :placeholder="$t('DI.linkisInstancePro')" />
+              <el-form-item :label="$t('DI.linkisInstance')" prop="executors">
+                <el-input v-model="form.executors" maxlength="10" :placeholder="$t('DI.linkisInstancePro')" />
               </el-form-item>
             </el-col>
           </el-row>
         </div>
-        <div v-if="currentStep===3"
-             key="step3">
+        <div v-if="currentStep===3" key="step3">
           <el-row>
             <el-form-item :label="$t('AIDE.settingType')">
               <el-radio-group v-model="storageDefalut">
@@ -302,80 +189,52 @@
               {{ $t("AIDE.workspace") }}
             </div>
             <el-row>
-              <el-form-item :label="$t('DI.localPath')"
-                            prop="workspaceVolume.localPath">
+              <el-form-item :label="$t('DI.localPath')" prop="workspaceVolume.localPath">
                 <!-- <el-input v-model="item.localPath" :placeholder="$t('AIDE.workLocalPathNodePro')" /> -->
-                <el-select v-model="form.workspaceVolume.localPath"
-                           filterable
-                           :placeholder="$t('AIDE.workLocalPathNodePro')">
-                  <el-option v-for="(item,index) in localPathList"
-                             :label="item"
-                             :key="index"
-                             :value="item">
+                <el-select v-model="form.workspaceVolume.localPath" filterable :placeholder="$t('AIDE.workLocalPathNodePro')">
+                  <el-option v-for="(item,index) in localPathList" :label="item" :key="index" :value="item">
                   </el-option>
                 </el-select>
               </el-form-item>
-              <el-form-item :label="$t('AIDE.mountPath')"
-                            prop="workspaceVolume.mountPath">
-                <el-input v-model="form.workspaceVolume.mountPath"
-                          :placeholder="$t('AIDE.mountPathPro')"
-                          disabled />
+              <el-form-item :label="$t('AIDE.mountPath')" prop="workspaceVolume.mountPath">
+                <el-input v-model="form.workspaceVolume.mountPath" :placeholder="$t('AIDE.mountPathPro')" disabled />
               </el-form-item>
             </el-row>
           </div>
-          <div class="subtitle data-space"
-               v-if="storageDefalut=='false'">
+          <div class="subtitle data-space" v-if="storageDefalut=='false'">
             {{ $t("AIDE.dataStorageSettings") }}
           </div>
           <div v-if="storageDefalut=='false'">
-            <div v-for="(item,index) in form.dataVolume"
-                 :key="`dataVolume${index}`">
+            <div v-for="(item,index) in form.dataVolume" :key="`dataVolume${index}`">
               <el-row>
-                <el-form-item :label="$t('DI.localPath')"
-                              :prop="`dataVolume[${index}].localPath`">
-                  <el-select v-model="item.localPath"
-                             filterable
-                             :placeholder="$t('AIDE.dataLocalPathNodePro')">
-                    <el-option v-for="(item,index) in localPathList"
-                               :label="item"
-                               :key="index"
-                               :value="item">
+                <el-form-item :label="$t('DI.localPath')" :prop="`dataVolume[${index}].localPath`">
+                  <el-select v-model="item.localPath" filterable :placeholder="$t('AIDE.dataLocalPathNodePro')">
+                    <el-option v-for="(item,index) in localPathList" :label="item" :key="index" :value="item">
                     </el-option>
                   </el-select>
                 </el-form-item>
-                <el-form-item :label="$t('AIDE.subpath')"
-                              :prop="`dataVolume[${index}].subPath`">
-                  <el-input v-model="item.subPath"
-                            :placeholder="$t('AIDE.subpathPro')" />
+                <el-form-item :label="$t('AIDE.subpath')" :prop="`dataVolume[${index}].subPath`">
+                  <el-input v-model="item.subPath" :placeholder="$t('AIDE.subpathPro')" />
                 </el-form-item>
-                <el-form-item :label="$t('AIDE.mountPath')"
-                              :prop="`dataVolume[${index}].mountPath`">
-                  <el-input v-model="item.mountPath"
-                            :placeholder="$t('AIDE.dataMountPathPro')" />
+                <el-form-item :label="$t('AIDE.mountPath')" :prop="`dataVolume[${index}].mountPath`">
+                  <el-input v-model="item.mountPath" :placeholder="$t('AIDE.dataMountPathPro')" />
                 </el-form-item>
               </el-row>
               <el-row>
                 <el-col :span="12">
-                  <el-form-item :label="$t('AIDE.mountType')"
-                                :prop="`dataVolume[${index}].mountType`">
-                    <el-select v-model="item.mountType"
-                               :placeholder="$t('AIDE.mountTypePro')">
-                      <el-option value="New"
-                                 :label="$t('AIDE.nodeDirectory')">
+                  <el-form-item :label="$t('AIDE.mountType')" :prop="`dataVolume[${index}].mountType`">
+                    <el-select v-model="item.mountType" :placeholder="$t('AIDE.mountTypePro')">
+                      <el-option value="New" :label="$t('AIDE.nodeDirectory')">
                       </el-option>
                     </el-select>
                   </el-form-item>
                 </el-col>
                 <el-col :span="12">
-                  <el-form-item :label="$t('AIDE.accessMode')"
-                                :prop="`dataVolume[${index}].accessMode`">
-                    <el-select v-model="item.accessMode"
-                               :placeholder="$t('AIDE.accessModePro')">
-                      <el-option value="ReadOnlyMany"
-                                 :label="$t('AIDE.readOnly')">
+                  <el-form-item :label="$t('AIDE.accessMode')" :prop="`dataVolume[${index}].accessMode`">
+                    <el-select v-model="item.accessMode" :placeholder="$t('AIDE.accessModePro')">
+                      <el-option value="ReadOnlyMany" :label="$t('AIDE.readOnly')">
                       </el-option>
-                      <el-option value="ReadWriteMany"
-                                 :label="$t('AIDE.readWrite')">
+                      <el-option value="ReadWriteMany" :label="$t('AIDE.readWrite')">
                       </el-option>
                     </el-select>
                   </el-form-item>
@@ -386,22 +245,14 @@
 
         </div>
       </el-form>
-      <span slot="footer"
-            class="dialog-footer">
-        <el-button v-if="currentStep>0"
-                   type="primary"
-                   @click="lastStep">
+      <span slot="footer" class="dialog-footer">
+        <el-button v-if="currentStep>0" type="primary" @click="lastStep">
           {{ $t('common.lastStep') }}
         </el-button>
-        <el-button v-if="currentStep<3"
-                   type="primary"
-                   @click="nextStep">
+        <el-button v-if="currentStep<3" type="primary" @click="nextStep">
           {{ $t('common.nextStep') }}
         </el-button>
-        <el-button v-if="currentStep===3"
-                   :disabled="btnDisabled"
-                   type="primary"
-                   @click="subInfo">
+        <el-button v-if="currentStep===3" :disabled="btnDisabled" type="primary" @click="subInfo">
           {{ $t('common.save') }}
         </el-button>
         <el-button @click="dialogVisible=false">
@@ -410,66 +261,42 @@
       </span>
     </el-dialog>
 
-    <el-dialog :title="$t('AIDE.yarnClusterResources')"
-               :visible.sync="yarnDialog"
-               custom-class="dialog-style"
-               :close-on-click-modal="false"
-               width="1100px">
-      <el-form ref="yarnForm"
-               :rules="ruleValidate"
-               :model="yarnForm"
-               label-width="190px">
+    <el-dialog :title="$t('AIDE.yarnClusterResources')" :visible.sync="yarnDialog" custom-class="dialog-style" :close-on-click-modal="false" width="1100px">
+      <el-form ref="yarnForm" :rules="ruleValidate" :model="yarnForm" label-width="190px">
         <el-row>
-          <el-form-item :label="$t('DI.YARNQueue')"
-                        prop="queue">
-            <el-input v-model="yarnForm.queue"
-                      maxlength="225"
-                      :placeholder="$t('DI.queuePro')" />
+          <el-form-item :label="$t('DI.YARNQueue')" prop="queue">
+            <el-input v-model="yarnForm.queue" maxlength="225" :placeholder="$t('DI.queuePro')" />
           </el-form-item>
           <el-col :span="12">
-            <el-form-item :label="$t('DI.driverMemory')"
-                          prop="driverMemory">
-              <el-input v-model="yarnForm.driverMemory"
-                        maxlength="10"
-                        :placeholder="$t('DI.driverMemoryPro')">
+            <el-form-item :label="$t('DI.driverMemory')" prop="driverMemory">
+              <el-input v-model="yarnForm.driverMemory" maxlength="10" :placeholder="$t('DI.driverMemoryPro')">
                 <span slot="append">Gi</span>
               </el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item :label="$t('DI.executorInstances')"
-                          prop="executorCores">
-              <el-input v-model="yarnForm.executorCores"
-                        maxlength="10"
-                        :placeholder="$t('DI.executorInstancesPro')">
+            <el-form-item :label="$t('DI.executorInstances')" prop="executorCores">
+              <el-input v-model="yarnForm.executorCores" maxlength="10" :placeholder="$t('DI.executorInstancesPro')">
                 <span slot="append">Core</span>
               </el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item :label="$t('DI.executorMemory')"
-                          prop="executorMemory">
-              <el-input v-model="yarnForm.executorMemory"
-                        maxlength="10"
-                        :placeholder="$t('DI.executorMemoryPro')">
+            <el-form-item :label="$t('DI.executorMemory')" prop="executorMemory">
+              <el-input v-model="yarnForm.executorMemory" maxlength="10" :placeholder="$t('DI.executorMemoryPro')">
                 <span slot="append">Gi</span>
               </el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item :label="$t('DI.linkisInstance')"
-                          prop="executors">
-              <el-input v-model="yarnForm.executors"
-                        maxlength="10"
-                        :placeholder="$t('DI.linkisInstancePro')" />
+            <el-form-item :label="$t('DI.linkisInstance')" prop="executors">
+              <el-input v-model="yarnForm.executors" maxlength="10" :placeholder="$t('DI.linkisInstancePro')" />
             </el-form-item>
           </el-col>
         </el-row>
       </el-form>
-      <span slot="footer"
-            class="dialog-footer">
-        <el-button type="primary"
-                   @click="saveYarnForm">
+      <span slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="saveYarnForm">
           {{ $t('common.save') }}
         </el-button>
         <el-button @click="cannelSaveYarnForm">
@@ -667,7 +494,7 @@ export default {
       this.dialogVisible = true
     },
     visitNotebook (trData) {
-      let url = `/cc/${this.FesEnv.ccApiVersion}/auth/access/namespaces/${trData.namespace}/notebooks/${trData.name}`
+      let url = `${process.env.VUE_APP_BASE_SURL}/cc/${this.FesEnv.ccApiVersion}/auth/access/namespaces/${trData.namespace}/notebooks/${trData.name}`
       let xhr = new XMLHttpRequest()
       // const mlssToken = util.getCookieVal(localStorage.getItem('cookieKey')) || 0
       xhr.open('GET', url, false)
@@ -676,7 +503,8 @@ export default {
       xhr.onreadystatechange = function (e) {
         if (this.readyState === 4 && this.status === 200) {
           let rst = JSON.parse(this.responseText).result
-          rst.notebookAddress && window.open(window.encodeURI(rst.notebookAddress))
+          const url = process.env.VUE_APP_BASE_SURL + window.encodeURI(rst.notebookAddress)
+          rst.notebookAddress && window.open(url)
         } else {
           let rst = JSON.parse(this.responseText)
           if (this.status === 401 || this.status === 403) {
