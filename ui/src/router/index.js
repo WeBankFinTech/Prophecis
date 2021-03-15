@@ -44,6 +44,26 @@ const routes = [
         import('../views/Home.vue')
     },
     {
+      path: '/DI',
+      name: 'DI',
+      meta: {
+        login: true
+      },
+      component: () =>
+        import('../views/DI/index.vue')
+    },
+    {
+      path: '/DI/log',
+      name: 'DILogDetail',
+      meta: {
+        login: true,
+        groupName: 'DI',
+        title: 'DI.viewlog'
+      },
+      component: () =>
+        import('../views/DI/DetailLog.vue')
+    },
+    {
       path: '/AIDE',
       name: 'AIDE',
       meta: {
