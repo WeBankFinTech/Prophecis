@@ -118,7 +118,7 @@ ui:
         - name: Prophecis_1.8.0_tensorflow-1.13.1-jupyterlab-cpu-v0.5.0
         - name: Prophecis_1.8.0_tensorflow-1.13.1-jupyterlab-gpu-v0.5.0
         - name: Prophecis_1.8.0_tensorflow-1.12.0-jupyterlab-gpu-v0.5.0
-        - name: Prophecis_1.8.0_tensorflow-1.12.0-jupyterlab-cpu-v0.5
+        - name: Prophecis_1.8.0_tensorflow-1.12.0-jupyterlab-cpu-v0.5.0
   di:
     server: 127.0.0.1:30778
     image:
