@@ -10,19 +10,58 @@
           {{ $t('home.introduction') }}
         </div>
       </el-row>
-      <div class="label">
-        {{ $t('home.modelTrain') }}
+      <div class="content-box">
+        <el-row>
+          <el-col :span="18" class="distributed">
+            {{ $t('trainingJob') }}<span>DI</span>
+          </el-col>
+          <el-col :span="6" class="btn-right">
+            <el-button type="primary" @click="goDistributedModel">
+              {{ $t('home.jobList') }}
+            </el-button>
+          </el-col>
+        </el-row>
+        <el-row class="center stauts-row">
+          <el-col :span="4">
+            {{ DIList.jobTotal }}
+          </el-col>
+          <el-col :span="4">
+            {{ DIList.jobRunning }}
+          </el-col>
+          <el-col :span="4">
+            {{ DIList.gpuCount }}
+          </el-col>
+        </el-row>
+        <el-row class="center img-row">
+          <el-col :span="4">
+            <img :src="containerImg">
+          </el-col>
+          <el-col :span="4">
+            <img :src="containerImg">
+          </el-col>
+          <el-col :span="4">
+            <img :src="cardImg">
+          </el-col>
+        </el-row>
+        <el-row class="center nape-text">
+          <el-col :span="4">
+            {{ $t('home.totalJob') }}
+          </el-col>
+          <el-col :span="4">
+            {{ $t('home.runjob') }}
+          </el-col>
+          <el-col :span="4">
+            {{ $t('home.cardNumber') }}
+          </el-col>
+        </el-row>
       </div>
       <div class="content-box">
         <el-row>
-          <el-col :span="18"
-                  class="notebooks">
-            Notebooks<span>MLLabis</span>
+          <el-col :span="18" class="notebooks">
+            {{$t('Notebook1')}}<span>MLLabis</span>
           </el-col>
-          <el-col :span="6"
-                  class="btn-right">
-            <el-button type="primary"
-                       @click="goNotebook">
+          <el-col :span="6" class="btn-right">
+            <el-button type="primary" @click="goNotebook">
               {{ $t('home.instanceList') }}
             </el-button>
           </el-col>
@@ -65,14 +104,22 @@
   </div>
 </template>
 <script type="text/ecmascript-6">
+import container from '../assets/images/container.png'
 import task from '../assets/images/task.png'
 import card from '../assets/images/card.png'
+import util from '../util/common.js'
 export default {
   data: function () {
     return {
+      containerImg: container,
       taskImg: task,
       cardImg: card,
-      intervalAIDEFunc: '',
+      DIList: {
+        gpuCount: 0,
+        jobRunning: 0,
+        jobTotal: 0
+      },
+      intervalFunc: null,
       AIDEList: {
         gpuCount: 0,
         nbRunning: 0,
@@ -80,18 +127,38 @@ export default {
       }
     }
   },
-  mounted () {
-    this.getAIDEList()
+  created () {
+    this.getDataList()
   },
   methods: {
-    getAIDEList () {
+    getDataList () {
+      this.getDIFunc()
       this.getAIDEFunc()
-      this.intervalAIDEFunc = setInterval(() => {
+      this.intervalFunc = setInterval(() => {
+        this.getDIFunc()
         this.getAIDEFunc()
       }, 10000)
     },
+    getDIFunc () {
+      let url = `/di/${this.FesEnv.diApiVersion}/dashboards`
+      if (this.FesEnv.filterUiServer) {
+        url = util.setUiServerUrl(url, this.FesEnv.uiServer)
+      }
+      this.FesApi.fetch(url, 'get').then(rst => {
+        this.DIList = rst
+      }, () => {
+        this.DIList = {
+          gpuCount: 0,
+          jobRunning: 0,
+          jobTotal: 0
+        }
+      })
+    },
     getAIDEFunc () {
       let url = `/aide/${this.FesEnv.aideApiVersion}/dashboards`
+      if (this.FesEnv.filterUiServer) {
+        url = util.setUiServerUrl(url, this.FesEnv.uiServer)
+      }
       this.FesApi.fetch(url, 'get').then(rst => {
         this.AIDEList = rst
       }, () => {
@@ -102,12 +169,15 @@ export default {
         }
       })
     },
+    goDistributedModel () {
+      this.$router.push('/DI')
+    },
     goNotebook () {
       this.$router.push('/AIDE')
     }
   },
   destroyed: function () {
-    clearInterval(this.intervalAIDEFunc)
+    clearInterval(this.intervalFunc)
   }
 }
 </script>

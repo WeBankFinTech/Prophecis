@@ -1,6 +1,5 @@
 <template>
-  <div class="login"
-       @keyup.enter.stop.prevent="handleSubmit('loginForm')">
+  <div class="login" @keyup.enter.stop.prevent="handleSubmit('loginForm')">
     <div class="login-img">
       <img src="../assets/images/login.svg" />
     </div>
@@ -8,37 +7,24 @@
       <div class="login-title">
         <img src="../assets/images/logo1.png" />
       </div>
-      <el-form ref="loginForm"
-               :model="loginForm"
-               :rules="ruleInline">
+      <el-form ref="loginForm" :model="loginForm" :rules="ruleInline">
         <el-form-item prop="username">
-          <el-input v-model="loginForm.username"
-                    prefix-icon="el-icon-user"
-                    type="text"
-                    :placeholder="$t('login.username')"
-                    size="large">
+          <el-input v-model="loginForm.username" prefix-icon="el-icon-user" type="text" :placeholder="$t('login.username')" size="large">
           </el-input>
         </el-form-item>
         <el-form-item prop="password">
-          <el-input v-model="loginForm.password"
-                    prefix-icon="el-icon-lock"
-                    type="password"
-                    :placeholder="$t('login.password')"
-                    size="large" />
+          <el-input v-model="loginForm.password" prefix-icon="el-icon-lock" type="password" :placeholder="$t('login.password')" size="large" />
         </el-form-item>
       </el-form>
       <div class="center">
-        <el-button :loading="loading"
-                   type="primary"
-                   :disabled="disabled"
-                   @click="handleSubmit('loginForm')">{{$t('login.signIn')}}</el-button>
+        <el-button :loading="loading" type="primary" :disabled="disabled" @click="handleSubmit('loginForm')">{{$t('login.signIn')}}</el-button>
       </div>
     </div>
   </div>
 </template>
 <script>
 import loginSvg from '../assets/images/login.svg'
-import JSEncrypt from 'jsencrypt'
+import Jsencrypt from 'jsencrypt/bin/jsencrypt.min.js'
 export default {
   data () {
     return {
@@ -76,7 +62,7 @@ export default {
           this.disabled = true
           let params = {}
           if (this.publicKeyData) {
-            const encryptor = new JSEncrypt()
+            const encryptor = new Jsencrypt()
             encryptor.setPublicKey(this.publicKeyData)
             const password = encryptor.encrypt(this.loginForm.password)
             params = {
