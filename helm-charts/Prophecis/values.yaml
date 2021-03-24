@@ -12,7 +12,7 @@ log:
 cc:
   image:
     repository: wedatasphere/prophecis
-    tag: cc-apiserver-v0.1.1
+    tag: cc-apiserver-v0.2.0
     pullPolicy: Always
   containerPort:
     portHttp: 6666
@@ -46,7 +46,7 @@ cc:
 ccGateway:
   image:
     repository: wedatasphere/prophecis
-    tag: cc-apigateway-v0.1.1
+    tag: cc-apigateway-v0.2.0
     pullPolicy: Always
   service:
     type: NodePort
@@ -85,7 +85,7 @@ aide:
 ui:
   image:
     repository: wedatasphere/prophecis
-    tag: ui-v0.1.1
+    tag: ui-v0.2.0
     pullPolicy: Always
   service:
     bdap:
