@@ -4,23 +4,13 @@
 
 
 ####  一、Prerequisites
-- Kubernetes  1.15.6+
+- Kubernetes  1.18.6+
 - Helm 3
 - Nvidia-docker (可选)
 - K8s-device-plugin (可选)
 - Cuda (可选)
 
-####  二、镜像拉取
-
-```shell
-docker pull wedatasphere/prophecis:ui-v0.1.1
-docker pull wedatasphere/prophecis:mllabis-v0.1.1
-docker pull wedatasphere/prophecis:cc-apigateway-v0.1.1
-docker pull wedatasphere/prophecis:cc-apiserver-v0.1.1
-docker pull wedatasphere/prophecis:notebook-controller-v0.1.0
-docker pull wedatasphere/prophecis:metacontroller-v0.3.1
-```
-####  三、数据库更新
+####  二、数据库更新
 - 安装Mysql DB，使用MYSQL DB插入对应的表结构和更新API权限
 - SQL文件位于./cc/sql目录下
 
@@ -29,7 +19,7 @@ source prophecis.sql #结构
 source prophecis-data.sql #permission数据
 ```
 
-####  四、部署Notebook Controller
+####  三、部署Notebook Controller
 - Notebook Controller可见(版本为0.4.0)：
   [Kubflow Notebook Controller](https://github.com/kubeflow/kubeflow/tree/master/components/notebook-controller)
 
@@ -40,7 +30,7 @@ source prophecis-data.sql #permission数据
   helm install notebook-controller .
   ```
 
-#### 五、部署MinIO及Log Collector
+#### 四、部署MinIO及Log Collector
 
 - MinIO
   ```shell
@@ -54,7 +44,7 @@ source prophecis-data.sql #permission数据
     kubectl apply -f ./LogCollectorDS
     ```
 
-#### 六、修改配置
+#### 五、修改配置
 
 - 修改ui nginx反向代理配置（values.yml文件，host ip + nodeport）：
 
@@ -93,18 +83,19 @@ datasource:
       baseDN: dc=webank,dc=com
 ```
 
-- 对运行服务的节点打上对应的label
+- 对运行服务的节点打上对应的label，GPU节点需要打上hardware-type=NVIDIAGPU；
 
 ```shell
 kubectl label nodes prophecis01 mlss-node-role=platform
+kubectl label nodes gpunode ardware-type=NVIDIAGPU
 ```
 
-#### 七、管理员用户
+#### 六、管理员用户
 
 - 默认的管理员用户为admin，账号密码通过values中的admin进行配置。
 - 若需要新增SA用户，需要在t_superadmin和t_user中增加对应的用户记录；
 
-#### 八、部署命令
+#### 七、部署命令
 
 ```shell
 kubectl create namespace prophecis
@@ -113,7 +104,7 @@ kubectl create namespace prophecis
 helm install prophecis .
 ```
 
-#### 九、关键配置解释
+#### 八、关键配置解释
 - platformNodeSelectors：prophecis服务运行label
 
 - cc:

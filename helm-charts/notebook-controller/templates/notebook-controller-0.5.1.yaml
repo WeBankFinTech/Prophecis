@@ -89,7 +89,7 @@ spec:
   selector:
     app: notebooks-controller
 ---
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
@@ -111,9 +111,12 @@ spec:
         env:
         - name: POD_LABELS
           value: gcp-cred-secret=user-gcp-sa,gcp-cred-secret-filename=user-gcp-sa.json
+#        image: gcr.io/kubeflow-images-public/notebook-controller:v20190401-v0.4.0-rc.1-308-g33618cc9-e3b0c4
         image: {{.Values.mllabis.controller.notebook.repository}}:{{.Values.mllabis.controller.notebook.tag}}
         imagePullPolicy: {{.Values.mllabis.controller.notebook.pullPolicy}}
         name: manager
+#      nodeSelector:
+#        kubernetes.io/hostname: mlssdi010007
       serviceAccountName: notebook-controller
       nodeSelector:
         {{range $key,$val := .Values.platformNodeSelectors}}
