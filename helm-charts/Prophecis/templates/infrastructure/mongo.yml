@@ -1,4 +1,4 @@
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: mongo
@@ -6,11 +6,15 @@ metadata:
 spec:
   serviceName: mongo
   replicas: 1
+  selector:
+    matchLabels:
+      app: mongo
   template:
     metadata:
       labels:
         service: mongo
         environment: local
+        app: mongo
     spec:
       terminationGracePeriodSeconds: 10
       volumes:

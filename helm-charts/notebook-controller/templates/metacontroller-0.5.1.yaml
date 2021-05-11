@@ -73,7 +73,7 @@ metadata:
   name: meta-controller-service
   namespace: {{.Values.namespace}}
 ---
-apiVersion: apps/v1beta2
+apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   labels:
@@ -98,6 +98,7 @@ spec:
         - --logtostderr
         - -v=4
         - --discovery-interval=20s
+#        image: metacontroller/metacontroller:v0.3.1
         image: {{.Values.mllabis.controller.meta.repository}}:{{.Values.mllabis.controller.meta.tag}}
         imagePullPolicy: {{.Values.mllabis.controller.meta.pullPolicy}}
         name: metacontroller
@@ -113,6 +114,8 @@ spec:
         securityContext:
           allowPrivilegeEscalation: true
           privileged: true
+#      nodeSelector:
+#        kubernetes.io/hostname: mlssdi010007
       serviceAccountName: meta-controller-service
       nodeSelector:
         {{range $key,$val := .Values.platformNodeSelectors}}
