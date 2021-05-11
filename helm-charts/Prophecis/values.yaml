@@ -99,6 +99,7 @@ ui:
         bdapPath: /appcom/log/ui-bdap
   aideApiVersion: v1
   ccApiVersion: v1
+  diApiVersion: v1
   grafana:
     url: ""
   dashboard:
