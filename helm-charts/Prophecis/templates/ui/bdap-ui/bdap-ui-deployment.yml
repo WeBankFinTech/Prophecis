@@ -1,10 +1,13 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: bdap-ui-deployment
   namespace: {{.Values.namespace}}
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: bdap-ui
   template:
     metadata:
       labels:
