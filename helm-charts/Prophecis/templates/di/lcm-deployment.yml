@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion:  apps/v1
 kind: Deployment
 metadata:
   name: ffdl-lcm
@@ -70,10 +70,8 @@ spec:
             #path: /data/nfs/charts
 ################################
 
-{{ if .Values.k8s_1dot8_or_above }}
       serviceAccount: {{.Values.docker.image_prefix}}lcm
       serviceAccountName: {{.Values.docker.image_prefix}}lcm
-{{ end }}
       containers:
       - name: ffdl-lcm-container
 #        image: {{.Values.docker.registry}}/{{.Values.docker.namespace}}/{{.Values.docker.image_prefix}}lcm:{{.Values.lcm.version}}
