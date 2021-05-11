@@ -220,7 +220,8 @@ INSERT INTO `t_superadmin` (`id`, `name`, `remarks`, `enable_flag`, `operate_tim
 	(1, 'alexwu', NULL, 1, '2020-11-25 21:32:11'),
 	(2, 'admin', NULL, 1, '2020-11-25 21:32:19');
 /*!40000 ALTER TABLE `t_superadmin` ENABLE KEYS */;
-
+INSERT INTO `t_user` (`id`, `name`, `gid`, `uid`, `token`, `type`, `remarks`, `enable_flag`, `guid_check`) VALUES
+        (25, 'admin', 20, 20, NULL, 'SYSTEM', NULL, 1, 0);
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
 /*!40014 SET FOREIGN_KEY_CHECKS=IF(@OLD_FOREIGN_KEY_CHECKS IS NULL, 1, @OLD_FOREIGN_KEY_CHECKS) */;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
