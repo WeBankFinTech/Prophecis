@@ -76,7 +76,7 @@ data:
         websocket
       }
 
-      proxy /di ffdl-restapi:80 {
+      proxy /di di-restapi:8080 {
         header_upstream MLSS-Token {MLSS-Token}
         header_upstream MLSS-RealIP {remote}
         header_upstream X-Real-IP {remote}
