@@ -67,8 +67,8 @@ spec:
         - name: DLAAS_MONGO_ADDRESS
           value: mongo:27017
         command: ["/bin/sh", "-c"]
-        #args: ["DLAAS_PORT=8080 /main"]
-        args: ["dlv --listen=:40000 --headless=true --api-version=2 exec /main -- --DLASS_PORT=8080"]
+        args: ["DLAAS_PORT=8080 /main"]
+        #args: ["dlv --listen=:40000 --headless=true --api-version=2 exec /main -- --DLASS_PORT=8080"]
         resources:
           limits:
             cpu: {{.Values.restapi.cpus}}
