@@ -109,9 +109,9 @@ ui:
   kibana:
     url: ""
   cc:
-    server: 127.0.0.1:30778
+    server: controlcenter-gateway:8081
   aide:
-    server: 127.0.0.1:30778
+    server: controlcenter-gateway:8081
     image:
       repository: wedatasphere/mllabis
       notebookTags:
@@ -121,7 +121,7 @@ ui:
         - name: Prophecis_1.8.0_tensorflow-1.12.0-jupyterlab-gpu-v0.5.0
         - name: Prophecis_1.8.0_tensorflow-1.12.0-jupyterlab-cpu-v0.5.0
   di:
-    server: 127.0.0.1:30778
+    server: controlcenter-gateway:8081
     image:
       repository: wedatasphere/prophecis
       trainingTags:
@@ -142,13 +142,13 @@ restapi:
   cpus: 2000m
   memory: 3400Mi
 trainer:
-  version: trainer-0.2.0
+  version: di-trainer-v0.2.0
   port: 0
   replicas: 1
   cpus: 5000m
   memory: 2048Mi
 storage:
-  version: storage-0.2.0
+  version: di-storage-v0.2.0
   port: 0
   replicas: 1
   cpus: 500m
@@ -156,7 +156,7 @@ storage:
   uploadHostPath: /uploaded-models
   uploadContainerPath: /uploaded-models
 lcm:
-  version: lcm-0.2.0
+  version: di-lcm-v0.2.0
   port: 0
   replicas: 1
   cpus: 1000m
@@ -169,9 +169,9 @@ lcm:
   mlssGroupId: 6002
   fluent_bit_log_path: /mlss/di/jobs/
 jm:
-  version: jobmonitor-0.2.0
+  version: di-jobmonitor-v0.2.0
 trainingdata:
-  version: metrics-0.2.0
+  version: di-metrics-v0.2.0
   port: 0
   replicas: 1
   cpus: 50m
