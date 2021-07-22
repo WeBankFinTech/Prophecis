@@ -76,7 +76,7 @@ data:
         websocket
       }
 
-      proxy /di di-restapi:8080 {
+      proxy /di di-restapi:80 {
         header_upstream MLSS-Token {MLSS-Token}
         header_upstream MLSS-RealIP {remote}
         header_upstream X-Real-IP {remote}

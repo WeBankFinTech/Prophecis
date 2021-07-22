@@ -7,13 +7,11 @@ metadata:
     service: ffdl-trainer
     environment: {{.Values.env}}
 spec:
-{{ if .Values.services.expose_node_port }}
   type: NodePort
-{{ end }}
   ports:
   - name: grpc
     port: 80
     targetPort: 8443
-    nodePort: {{.Values.trainer.port}}
+    nodePort: 0
   selector:
     service: ffdl-trainer

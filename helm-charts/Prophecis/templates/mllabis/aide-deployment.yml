@@ -21,8 +21,8 @@ spec:
       serviceAccountName: aide-web-app
       containers:
       - name: aide
-        image: {{.Values.aide.image.repository}}:{{.Values.aide.image.tag}}
-        imagePullPolicy: {{.Values.aide.image.pullPolicy}}
+        image: {{.Values.server_repository}}:{{.Values.aide.image.tag}}
+        imagePullPolicy: Always
         ports:
         - containerPort: 8080
         volumeMounts:
@@ -34,9 +34,9 @@ spec:
         - name: DLAAS_ENV
           value: {{.Values.env}}
         - name: START_PORT
-          value: "{{.Values.aide.startPort}}"
+          value: "30000"
         - name: END_PORT
-          value: "{{.Values.aide.endPort}}"
+          value: "32767"
       imagePullSecrets:
       - name: hubsecret
       volumes:

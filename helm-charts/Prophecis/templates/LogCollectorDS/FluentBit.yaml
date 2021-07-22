@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   annotations:
@@ -8,14 +8,18 @@ metadata:
     log_collector_image_short_name: fluent-bit
     service: prophecis-lhelper
   name: lhelper-f70c7b86-e700-4b6a-5760-0fceec1a93b6
-  namespace: prophecis
+  namespace: {{.Values.namespace}}
 spec:
+  selector:
+    matchLabels:
+      app: fluent-bit
   template:
     metadata:
       creationTimestamp: null
       labels:
-        log_collector_image_short_name: fluent-bit
-        service: prophecis-lhelper
+        # log_collector_image_short_name: fluent-bit
+        # service: prophecis-lhelper
+        app: fluent-bit
     spec:
       automountServiceAccountToken: false
       containers:
@@ -49,7 +53,7 @@ spec:
               xxx_nounkeyedliteral: {}
               xxx_unrecognized: []
               xxx_sizecache: 0
-        image: wedatasphere/prophecis:fluent-bit-1.2.1
+        image: {{.Values.server_repository}}:fluent-bit-1.2.1
         imagePullPolicy: Always
         name: log-collector
         resources:

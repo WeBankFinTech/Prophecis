@@ -11,7 +11,7 @@ spec:
     matchLabels:
       service: ffdl-trainer
       environment: {{.Values.env}}
-  replicas: {{.Values.trainer.replicas}}
+  replicas: 1
   template:
     metadata:
       labels:
@@ -34,11 +34,8 @@ spec:
 ############################
       containers:
       - name: ffdl-trainer-container
-#        image: {{.Values.docker.registry}}/{{.Values.docker.namespace}}/{{.Values.docker.image_prefix}}trainer:{{.Values.trainer.version}}
-        image: {{.Values.docker.registry}}/{{.Values.docker.namespace}}{{.Values.docker.image_prefix}}:{{.Values.trainer.version}}
-{{ if .Values.docker.pullPolicy }}
-        imagePullPolicy: {{.Values.docker.pullPolicy}}
-{{ end }}
+        image: {{.Values.server_repository}}:{{.Values.trainer.version}}
+        imagePullPolicy: Always
         ports:
         - containerPort: 8443
         env:
@@ -54,15 +51,15 @@ spec:
 #          value: "false"
           value: "true"
         - name: LINKIS_ADDRESS
-          value: {{.Values.linkis.address}}
+          value: 127.0.0.1:8088
         - name: LINKIS_TOKEN_CODE
-          value: {{.Values.linkis.tokenCode}}
+          value: MLSS
         - name: DLAAS_MONGO_ADDRESS
           value: mongo.$(DLAAS_POD_NAMESPACE).svc.cluster.local
         - name: DLAAS_MONGO_USERNAME
-          value: {{.Values.mongo.username}}
+          value: mlss
         - name: DLAAS_MONGO_PASSWORD
-          value: {{.Values.mongo.password}}
+          value: mlss
         - name: DLAAS_OBJECTSTORE_TYPE
           valueFrom:
             secretKeyRef:
@@ -96,8 +93,8 @@ spec:
         args: ["DLAAS_PORT=8443 /main"]
         resources:
           limits:
-            cpu: {{.Values.trainer.cpus}}
-            memory: {{.Values.trainer.memory}}
+            cpu: 1000m
+            memory: 2048Mi
         livenessProbe:
           exec:
             command:

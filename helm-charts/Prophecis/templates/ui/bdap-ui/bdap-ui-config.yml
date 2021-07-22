@@ -26,13 +26,13 @@ data:
 
   ui-conf: |
     upstream cc {
-        server {{.Values.ui.cc.server}};
+        server {{.Values.server_ui_gateway}};
     }
     upstream aide {
-        server {{.Values.ui.aide.server}};
+        server {{.Values.server_ui_gateway}};
     }
     upstream di {
-        server {{.Values.ui.di.server}};
+        server {{.Values.server_ui_gateway}};
     }
     server {
       listen 80;
@@ -140,9 +140,9 @@ data:
         proxy_set_header Connection $http_connection;
 
         proxy_set_header Token-User $mlss_userid;
-        proxy_set_header Token-Code {{.Values.linkis.tokenCode}};
+        proxy_set_header Token-Code MLSS;
 
-        proxy_pass http://{{.Values.linkis.address}}/api/rest_j/v1/bml/upload;
+        proxy_pass http://127.0.0.1:8080/api/rest_j/v1/bml/upload;
       }
       location /aide {
         proxy_set_header MLSS-Token $cookie_PROPHECIS;
@@ -185,15 +185,15 @@ data:
   env-config-js: |
     var mlssEnvConfig = {
         'production': {
-            'diApiVersion': '{{.Values.ui.diApiVersion}}',
-            'aideApiVersion': '{{.Values.ui.aideApiVersion}}',
-            'ccApiVersion': '{{.Values.ui.ccApiVersion}}',
+            'diApiVersion': 'v1',
+            'aideApiVersion': 'v1',
+            'ccApiVersion': 'v1',
             'AIDE': {
-                'defineImage': '{{.Values.ui.aide.image.repository}}',
+                'defineImage': '{{.Values.server_repository}}',
                 'imageOption': [{{range .Values.ui.aide.image.notebookTags}}'{{.name}}',{{end}}]
             },
             'DI': {
-                'defineImage': '{{.Values.ui.di.image.repository}}',
+                'defineImage': '{{.Values.server_repository}}',
                 'imageOption': [{{range .Values.ui.di.image.trainingTags}}'{{.name}}',{{end}}],
                 'cookieExpires': 8
             },

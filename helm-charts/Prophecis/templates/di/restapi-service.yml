@@ -12,7 +12,7 @@ spec:
   - name: ffdl
     port: 80
     targetPort: 8080
-    nodePort: {{.Values.restapi.port}}
+    nodePort: 30960
   - name: di-debug-port
     port: 40000
     targetPort: 40000

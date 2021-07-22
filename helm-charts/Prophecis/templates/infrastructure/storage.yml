@@ -4,9 +4,7 @@ metadata:
   name: s3
   namespace: {{.Values.namespace}}
 spec:
-{{ if .Values.services.expose_node_port }}
   type: NodePort
-{{ end }}
   selector:
     service: storage
   ports:
@@ -14,9 +12,7 @@ spec:
     protocol: TCP
     targetPort: 4572
     # newly added
-{{ if .Values.services.expose_node_port }}
     nodePort: 30797
-{{ end }}
 
 
 ---
@@ -29,9 +25,7 @@ metadata:
   labels:
     component: elasticsearch
 spec:
-{{ if .Values.services.expose_node_port }}
   type: NodePort
-{{ end }}
   selector:
     service: storage
   ports:
@@ -40,9 +34,7 @@ spec:
     targetPort: 4571
     protocol: TCP
     # newly added
-{{ if .Values.services.expose_node_port }}
     nodePort: 30880
-{{ end }}
 
 ---
 
@@ -72,12 +64,8 @@ spec:
             type: File
       containers:
         - name: storage
-#          image: localstack/localstack:0.8.6
-#          image: localstack_new:0.0.1
-          image: {{.Values.docker.registry}}/{{.Values.docker.namespace}}{{.Values.docker.image_prefix}}:localstack-latest
-{{ if .Values.docker.pullPolicy }}
-          imagePullPolicy: {{.Values.docker.pullPolicy}}
-{{ end }}
+          image: {{.Values.server_repository}}:localstack-latest
+          imagePullPolicy: Always
           env:
           - name: SERVICES
             value: s3,elasticsearch

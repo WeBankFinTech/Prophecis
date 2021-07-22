@@ -6,9 +6,9 @@ metadata:
 spec:
   selector:
     app: aide
-  type: {{.Values.aide.service.type}}
+  type: NodePort
   ports:
   - protocol: TCP
-    port: {{.Values.aide.service.port}}
-    targetPort: {{.Values.aide.service.targetPort}}
-    nodePort: {{.Values.aide.service.nodePort}}
+    port: 8080
+    targetPort: 8080
+    nodePort: 30784

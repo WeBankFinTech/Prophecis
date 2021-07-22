@@ -21,15 +21,16 @@ spec:
       serviceAccountName: cc-go-sa
       containers:
       - name: cc
-        image: {{.Values.cc.image.repository}}:{{.Values.cc.image.tag}}
-        imagePullPolicy: {{.Values.cc.image.pullPolicy}}
+        image: {{.Values.server_repository}}:{{.Values.cc.image.tag}}
+        imagePullPolicy: Always
         ports:
-        - containerPort: {{.Values.cc.containerPort.portHttp}}
-        - containerPort: {{.Values.cc.containerPort.portHttps}}
+        
+        - containerPort: 6666
+        - containerPort: 443
         command:
         - /bin/bash
         - -c
-        - "./mlss-controlcenter-go --host=0.0.0.0 --scheme=http --port={{.Values.cc.containerPort.portHttp}} --scheme=https --tls-port={{.Values.cc.containerPort.portHttps}} --tls-certificate=/etc/config/server.crt --tls-key=/etc/config/server.key"
+        - "./mlss-controlcenter-go --host=0.0.0.0 --scheme=http --port=6666 --scheme=https --tls-port=443 --tls-certificate=/etc/config/server.crt --tls-key=/etc/config/server.key"
         env:
         - name: UM_SA_PWD
           value: sa
@@ -59,7 +60,7 @@ spec:
             path: server.key
       - name: log-volume
         hostPath:
-          path: {{.Values.cc.spec.volumes.hostPath.path}}/{{.Values.namespace}}
+          path: /appcom/log/controlcenter/{{.Values.namespace}}
       - name: timezone-volume
         hostPath:
           path: /usr/share/zoneinfo/Asia/Shanghai

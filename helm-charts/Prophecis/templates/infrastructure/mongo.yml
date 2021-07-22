@@ -37,10 +37,8 @@ spec:
       containers:
         - name: mongo
 #          image: mongo:3.0
-          image: {{.Values.docker.registry}}/{{.Values.docker.namespace}}{{.Values.docker.image_prefix}}:mongo-3.0
-{{ if .Values.docker.pullPolicy }}
-          imagePullPolicy: {{.Values.docker.pullPolicy}}
-{{ end }}
+          image: {{.Values.server_repository}}:mongo-3.0
+          imagePullPolicy: Always
           command:
             - bash
             - ./init-mongo/init-auth.sh

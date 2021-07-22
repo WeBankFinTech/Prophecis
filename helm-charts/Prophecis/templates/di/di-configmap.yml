@@ -6,8 +6,6 @@ metadata:
 data:
   config-{{.Values.env}}.yml: |
     mlssVersion: v1.3.0
-    #ccAddress: http://controlcenter.{{.Values.namespace}}.svc.cluster.local:7777
-    #ccAddress: http://controlcenter-go.{{.Values.namespace}}.svc.cluster.local:6666
     ccAddress: https://controlcenter-go
     platformNamespace: {{.Values.namespace}}
     queuePollInterval: 10
@@ -17,17 +15,16 @@ data:
     linkisLogCollector:
       replicas: 2
     linkis:
-      address: {{.Values.linkis.address}}
-      tokenCode: {{.Values.linkis.tokenCode}}
+      address: 127.0.0.1:8088
+      tokenCode: MLSS
     datasource:
-      userName: {{.Values.datasource.userName}}
-      userPwd: {{.Values.datasource.userPwd}}
-      url: {{.Values.datasource.url}}
-      port: {{.Values.datasource.port}}
-      db: {{.Values.datasource.db}}
-      privKey: {{.Values.datasource.privKey}}
-      encryptPwd: {{.Values.datasource.encryptPwd}}
-    encodeFlag: {{.Values.encodeFlag}}
+      userName: {{.Values.database.user}}
+      userPwd: {{.Values.database.pwd}}
+      url: {{.Values.database.server}}
+      port: {{.Values.database.port}}
+      db: {{.Values.database.name}}
+      privKey: {{.Values.database.privKey}}
+      encryptPwd: {{.Values.database.encryptPwd}}
 
   server.crt: |
     -----BEGIN CERTIFICATE-----

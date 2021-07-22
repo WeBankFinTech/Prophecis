@@ -79,15 +79,15 @@ data:
         done
 
         # Source BDP ENV & Host & Set Yarn Resouces
-        if [ "{{.Values.aide.hadoop.enable}}"=="true" ]
+        if [ "{{.Values.aide.hadoop.enable}}" == "true" ]
         then
-            if [ "{{.Values.aide.hadoop.hostFilePath}}"!="" ]
+            if [ "{{.Values.aide.hadoop.hostFilePath}}" != "" ]
             then
                echo "sh host file."
                sh {{.Values.aide.hadoop.hostFilePath}}
             fi
 
-            if [ "{{.Values.aide.hadoop.sourceConfigPath}}"!="" ]
+            if [ "{{.Values.aide.hadoop.sourceConfigPath}}" != "" ]
             then
                echo "source env config."
                sh {{.Values.aide.hadoop.sourceConfigPath}}
@@ -107,7 +107,7 @@ data:
             ln -s /workspace/logs /appcom
         fi
 
-        if [ "{{.Values.aide.hadoop.hostFilePath}}"!="" ]
+        if [ "{{.Values.aide.hadoop.hostFilePath}}" != "" ]
         then
            echo "{{.Values.aide.hadoop.hostFilePath}}"
         fi

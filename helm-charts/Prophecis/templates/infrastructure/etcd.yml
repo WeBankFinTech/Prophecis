@@ -64,10 +64,8 @@ spec:
         - new
     #    image: quay.io/coreos/etcd:latest
     #    imagePullPolicy: IfNotPresent
-        image: {{.Values.docker.registry}}/{{.Values.docker.namespace}}{{.Values.docker.image_prefix}}:etcd-latest
-    {{ if .Values.docker.pullPolicy }}
-        imagePullPolicy: {{.Values.docker.pullPolicy}}
-    {{end}}
+        image: {{.Values.server_repository}}:etcd-latest
+        imagePullPolicy: Always
         name: etcd0
         ports:
         - containerPort: 2379

@@ -76,10 +76,10 @@ data:
 
   linkismagic.json: |
         {
-          "base_url":"{{.Values.linkis.address}}",
+          "base_url":"127.0.0.1:8088",
           "headers": {
                 "Token-User":"hadoop",
-                "Token-Code": "{{.Values.linkis.tokenCode}}",
+                "Token-Code": "MLSS",
                 "Content-Type":"application/json"
           },
           "session_configs": {

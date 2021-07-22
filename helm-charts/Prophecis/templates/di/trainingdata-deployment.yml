@@ -11,7 +11,7 @@ spec:
     matchLabels:
       service: ffdl-trainingdata
       environment: {{.Values.env}}
-  replicas: {{.Values.trainingdata.replicas}}
+  replicas: 1
   template:
     metadata:
       labels:
@@ -21,11 +21,8 @@ spec:
     spec:
       containers:
       - name: ffdl-trainingdata-container
-#        image: {{.Values.docker.registry}}/{{.Values.docker.namespace}}/{{.Values.docker.image_prefix}}metrics:{{.Values.trainingdata.version}}
-        image: {{.Values.docker.registry}}/{{.Values.docker.namespace}}{{.Values.docker.image_prefix}}:{{.Values.trainingdata.version}}
-{{ if .Values.docker.pullPolicy }}
-        imagePullPolicy: {{.Values.docker.pullPolicy}}
-{{ end }}
+        image: {{.Values.server_repository}}:{{.Values.trainingdata.version}}
+        imagePullPolicy: Always
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8443
@@ -39,9 +36,9 @@ spec:
         - name: DLAAS_LOGLEVEL
           value: {{.Values.log.level}}
         - name: DLAAS_ELASTICSEARCH_SCHEME
-          value: {{.Values.elasticsearch.scheme}}
+          value: http
         - name: DLAAS_ELASTICSEARCH_ADDRESS
-          value: {{.Values.elasticsearch.address}}
+          value: http://elasticsearch.prophecis.svc.cluster.local:9200
         volumeMounts:
         - mountPath: /etc/ssl/dlaas/
           name: ffdl-certs
@@ -54,8 +51,8 @@ spec:
         args: ["DLAAS_PORT=8443 /main"]
         resources:
           limits:
-            cpu: {{.Values.trainingdata.cpus}}
-            memory: {{.Values.trainingdata.memory}}
+            cpu: 50m
+            memory: 64Mi
       volumes:
       #- name: elasticsearch-ssl-cert
       #  secret:

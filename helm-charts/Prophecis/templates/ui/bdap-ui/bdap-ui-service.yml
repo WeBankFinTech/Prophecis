@@ -6,11 +6,10 @@ metadata:
 spec:
   selector:
     app: bdap-ui
-  type: {{.Values.ui.service.bdap.type}}
-  #type: ClusterIP
+  type: NodePort
   ports:
   - protocol: TCP
-    port: {{.Values.ui.service.bdap.port}}
-    targetPort: {{.Values.ui.service.bdap.targetPort}}
+    port: 80
+    targetPort: 80
     nodePort: {{.Values.ui.service.bdap.nodePort}}
   #externalTrafficPolicy: Local

@@ -33,15 +33,15 @@ data:
       platformNS: {{.Values.namespace}}
       datasource:
         driverClassName: com.mysql.jdbc.Driver
-        url: jdbc:mysql://{{.Values.cc.db.server}}/{{.Values.cc.db.name}}?useUnicode=true&characterEncoding=utf-8
-        username: {{.Values.cc.db.user}}
-        password: {{.Values.cc.db.pwd}}
-        ip: {{.Values.cc.db.server}}
-        port: {{.Values.cc.db.port}}
-        db: {{.Values.cc.db.name}}
+        url: jdbc:mysql://{{.Values.database.server}}/{{.Values.database.name}}?useUnicode=true&characterEncoding=utf-8
+        username: {{.Values.database.user}}
+        password: {{.Values.database.pwd}}
+        ip: {{.Values.database.server}}
+        port: {{.Values.database.port}}
+        db: {{.Values.database.name}}
       admin:
-        user: {{.Values.cc.admin.user}}
-        password: {{.Values.cc.admin.password}}
+        user: admin
+        password: admin
       ldap: 
         server: {{.Values.cc.ldap.address}}
         baseDN: {{.Values.cc.ldap.baseDN}}
@@ -99,7 +99,7 @@ data:
         learnerIndex: dlaas_learner_data
         dateIndex: logstash-
       gateway:
-        bdapAddress: {{.Values.cc.gateway.address.bdap}}
+         bdapAddress: http://127.0.0.1:30803
       authAddress:
         user: http://controlcenter-go:6666/cc/v1/inter/user
         auth: http://controlcenter-go:6666/cc/v1/inter/auth

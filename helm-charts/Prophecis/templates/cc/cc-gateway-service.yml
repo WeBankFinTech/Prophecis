@@ -6,11 +6,11 @@ metadata:
 spec:
   selector:
     app: controlcenter-gateway
-  type: {{.Values.cc.service.type}}
+  type: NodePort
   ports:
   - protocol: TCP
-    port: {{.Values.ccGateway.service.port}}
-    targetPort: {{.Values.ccGateway.service.targetPort}}
-    nodePort: {{.Values.ccGateway.service.nodePort}}
+    port: 8081
+    targetPort: 8081
+    nodePort: 30778
     name: main
 #  externalTrafficPolicy: Local

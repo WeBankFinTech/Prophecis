@@ -11,7 +11,7 @@ spec:
     matchLabels:
       service: di-storage
       environment: {{.Values.env}}
-  replicas: {{.Values.storage.replicas}}
+  replicas: 1
   template:
     metadata:
       labels:
@@ -39,10 +39,8 @@ spec:
           path: {{.Values.ceph_host_path}}/{{.Values.envir}}{{.Values.storage.uploadHostPath}}
       containers:
       - name: di-storage-rpc-server
-        image: {{.Values.docker.registry}}/{{.Values.docker.namespace}}{{.Values.docker.image_prefix}}:{{.Values.storage.version}}
-{{ if .Values.docker.pullPolicy }}
-        imagePullPolicy: {{.Values.docker.pullPolicy}}
-{{ end }}
+        image: {{.Values.server_repository}}:{{.Values.storage.version}}
+        imagePullPolicy: Always
         ports:
         - containerPort: 8443
         env:
@@ -57,15 +55,15 @@ spec:
         - name: DLAAS_PUSH_METRICS_ENABLED
           value: "true"
         - name: LINKIS_ADDRESS
-          value: {{.Values.linkis.address}}
+          value: 127.0.0.1:8088
         - name: LINKIS_TOKEN_CODE
-          value: {{.Values.linkis.tokenCode}}
+          value: MLSS
         - name: DLAAS_MONGO_ADDRESS
           value: mongo.$(DLAAS_POD_NAMESPACE).svc.cluster.local
         - name: DLAAS_MONGO_USERNAME
-          value: {{.Values.mongo.username}}
+          value: mlss
         - name: DLAAS_MONGO_PASSWORD
-          value: {{.Values.mongo.password}}
+          value: mlss
         - name: DLAAS_OBJECTSTORE_TYPE
           valueFrom:
             secretKeyRef:
@@ -87,10 +85,10 @@ spec:
               name: storage-secrets
               key: DLAAS_OBJECTSTORE_PASSWORD
         - name: DLAAS_ELASTICSEARCH_SCHEME
-          value: {{.Values.elasticsearch.scheme}}
+          value: http
 {{ if eq .Values.env "dev" }}
         - name: DLAAS_ELASTICSEARCH_ADDRESS
-          value: {{.Values.elasticsearch.address}}
+          value: http://elasticsearch.prophecis.svc.cluster.local:9200
 {{ else }}
         - name: DLAAS_ELASTICSEARCH_ADDRESS
           valueFrom:
@@ -124,8 +122,8 @@ spec:
         args: ["DLAAS_PORT=8443 /main"]
         resources:
           limits:
-            cpu: {{.Values.storage.cpus}}
-            memory: {{.Values.storage.memory}}
+            cpu: 500m
+            memory: 5000Mi
       imagePullSecrets:
       - name: hubsecret
       nodeSelector:
