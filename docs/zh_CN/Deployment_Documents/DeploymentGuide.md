@@ -1,21 +1,16 @@
-[TOC]
-
-
-
-## 1. 安装简述
+## 1. Prophecis简介
 
 ​	Prophecis 使用`helm`来进行`kubernetes`包管理，主要安装文件位于install目录下。install目录包含了三个组件`notebook-controller`, `MinioDeployment`, `Prophecis`，主体为`Prophecis`。使用前，需要初始化MySQL数据库，并挂载NFS目录来存储数据。
 
+
 ## 2. 环境准备
 
-### 2.1 机器需求
+### 2.1 机器规划
 
-- 至少两台机器完成部署(单master+service node)，单节点部署需去除master label
-
-### 2.2 前置软件
+### 2.2 软件
 
 |**软件**|**版本**|**位置**|
-|:----|:----|:----|
+|:----|:-----|:-----|
 |Helm|3.2.1|https://github.com/helm/helm/releases|
 |Kubenertes|1.18.6|https://github.com/kubernetes/kubernetes|
 |Docker|19.03.9||
@@ -37,20 +32,17 @@ Server Version: version.Info{Major:"1", Minor:"18", GitVersion:"v1.18.6", GitCom
 $ docker version
 ...
 Client: Docker Engine - Community
- Version:           19.03.9
+Version:           19.03.9
 ...
 Server: Docker Engine - Community
- Engine:
-  Version:          19.03.9
+Engine:
+Version:          19.03.9
 ```
-
 ### 2.3 目录挂载
-
-Prophecis使用nfs来存储容器运行数据，需要挂载nfs
 
 * NFS服务节点操作
 ```shell
-# NFS服务节点IP地址  NFS_SERVER_IP='127.0.0.1'
+# NFS服务节点IP地址  NFS_SERVER_IP='172.22.1.122'
 # NFS挂载目录  NFS_PATH_LOG='/mlss/di/jobs/prophecis'
 #
 # 需要挂载的目录
@@ -70,13 +62,48 @@ mkdir -p ${NFS_PATH_LOG}
 # 挂载目录
 mount ${NFS_SERVER_IP}:${NFS_PATH_LOG} ${NFS_PATH_LOG}
 ```
-## 3. 配置文件修改
+## 3. 物料准备
 
-- **修改**`./helm-charts/prophecis/values.yaml`中的信息。
+* 安装包位置：`https://github.com/WeBankFinTech/Prophecis.git`
+    * 安装包目录
+
+![图片](../image/deploy/deploy_dir_1.png)
+
+* 文件清单：
+    * Helm Chart：`./helm-charts`目录下`notebook-controller`,`MinioDeployment`,`Prophecis`
+    * SQL Script ：`./cc/sql`目录下`prophecis.sql`和`prophecis-data.sql`文件
+* 镜像列表（**安装时自动下载**）：
+```yaml
+# 版号	VERSION=v0.2.0
+# Docker仓库位置
+wedatasphere/prophecis:
+# Docker标签
+ui-${VERSION}
+trainer-${VERSION}
+restapiI-${VERSION}
+lcm-${VERSION}
+storage-${VERSION}
+cc-apiserverC_${VERSION}
+cc-apigateway-${VERSION}
+jobmonitor-${VERSION}
+mllabis-v0.1.1
+master-97
+
+wedatasphere/mllabis:
+Prophecis_1.8.0_tensorflow-2.0.0-jupyterlab-gpu-v0.5.0
+Prophecis_1.8.0_tensorflow-1.13.1-jupyterlab-cpu-v0.5.0
+Prophecis_1.8.0_tensorflow-1.13.1-jupyterlab-gpu-v0.5.0
+Prophecis_1.8.0_tensorflow-1.12.0-jupyterlab-gpu-v0.5.0
+Prophecis_1.8.0_tensorflow-1.12.0-jupyterlab-cpu-v0.5.0
+```
+## 4. 配置文件修改
+
+**需要修改****`./helm-charts/prophecis/values.yaml`****中的信息。**
+
+### 4.1 配置数据库访问的信息
 
 ```yaml
-## 配置数据库访问的信息
-# MySQLIP地址   DATABASE_IP='127.0.0.1'
+# MySQLIP地址   DATABASE_IP='172.22.1.128'
 # MySQL端口号    DATABASE_PORT='3306'
 # MySQL数据库名  DATABASE_DB='mlss_db'
 # MySQL用户名    DATABASE_USERNAME='mlss'
@@ -87,27 +114,33 @@ database:
     name: ${DATABASE_DB}
     user: ${DATABASE_USERNAME}
     pwd: ${DATABASE_PASSWORD}
-    
-## 配置UI的URL访问路径
-# 网页访问地址  SERVER_IP='127.0.0.1'
+```
+### 4.2 配置UI的URL访问路径
+
+```yaml
+# 网页访问地址  SERVER_IP='172.22.1.68'
 # 网页访问端口  SERVER_PORT='30803'
 server_ui_gateway: ${SERVER_IP}:30778
 ui:
     service:
         bdap:
             nodePost: ${SERVER_PORT}
+```
+### 4.3 配置LDAP
 
-## Prophecis使用LDAP来负责统一认证
-# LDAP的服务地址  LDAP_ADDRESS='ldap://127.0.0.1:1389/' 
-# LDAP的DNS解析地址  LDAP_BASE_DN='dc=prophecis,dc=com'
+Prophecis使用LDAP来负责统一认证
+
+```yaml
+# LDAP的服务地址  LDAP_ADDRESS='ldap://172.22.1.122:1389/' 
+# LDAP的DNS解析地址 LDAP_BASE_DN='dc=webank,dc=com'
 cc:
     ldap:
         address: ${LDAP_ADDRESS}
         baseDN: ${LDAP_BASE_DN}
 ```
-## 4. 操作序列
+## 5. 操作序列
 
-### 4.1 数据库初始化
+### 5.1 数据库更新
 
 **需要在MySQL命令行内载入文件**
 
@@ -117,37 +150,45 @@ cc:
 source prophecis.sql
 source prophecis-data.sql
 ```
-### 4.2 服务部署
+### 5.2 创建`namespace`
+
+Prophecis默认使用`kubernetes`的命名空间`prophecis`，需要创建
+
+```shell
+kubectl create namespace prophecis
+```
+### 5.3 给运行节点标签
+
+Prophecis使用`kubernetes`的节点标签来识别用途
+
+```shell
+# 服务节点的标签  LABEL_CPU='mlsskf010001 mlsskf010002'
+# GPU节点的标签  LABEL_GPU='mlsskf010003 mlsskf010004'
+
+kubectl label nodes ${LABEL_CPU} mlss-node-role=platform
+kubectl label nodes ${LABEL_GPU} hardware-type=NVIDIAGPU
+```
+### 5.4 安装组件
 
 Prophecis部署需要三个组件`notebook-controller`,`MinioDeployment`,`Prophecis`。
 
-**部署执行目录为**`./helm-Chart`目录下。
+**部署执行目录为****`./helm-Chart`****目录下。**
 
 ```shell
-## Prophecis默认使用kubernetes的命名空间prophecis，需要创建
-kubectl create namespace prophecis
-## Prophecis使用kubernetes的节点标签来启动节点，并识别用途
-# 服务节点的标签  LABEL_CPU='mlsskf010001 mlsskf010002'
-# GPU节点的标签  LABEL_GPU='mlsskf010003 mlsskf010004'
-kubectl label nodes ${LABEL_CPU} mlss-node-role=platform
-kubectl label nodes ${LABEL_GPU} hardware-type=NVIDIAGPU
-## 安装Notebook Controller组件
+# 安装Notebook Controller组件
 helm install notebook-controller ./notebook-controller
-## 安装MinIO组件
+# 安装MinIO组件
 helm install minio-prophecis --namespace prophecis ./MinioDeployment
-## 安装prophecis组件
+# 安装prophecis组件
 helm install prophecis ./prophecis
 ```
-## 5. 环境验证
 
-### 5.1 服务验证
+## 6. 环境验证
+
+### 6.1 服务验证
 
 * `kubectl get -n prophecis pod`查看所有服务是否正常`Running`，若异常通过`kubectl describe`及`kubectl log`查看异常原因
-### 5.2 登录验证
+### 6.2 登录验证
 
-* 所有Pod正常Running后，访问`http://${CLUSTER_IP}:30803`，默认账号为`admin`，密码`admin`。
-
-
-
-
+* 所有Pod正常Running后，访问`http://${SERVER_IP}:${SERVER_PORT}`，默认账号为`admin`，密码`admin`。
 
