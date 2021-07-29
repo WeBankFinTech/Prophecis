@@ -1,0 +1,112 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ffdl-trainer
+  namespace: {{.Values.namespace}}
+  labels:
+    environment: {{.Values.env}}
+    service: ffdl-trainer
+spec:
+  selector:
+    matchLabels:
+      service: ffdl-trainer
+      environment: {{.Values.env}}
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        service: ffdl-trainer
+        environment: {{.Values.env}}
+        version: {{.Values.trainer.version}}
+    spec:
+      volumes:
+      - name: learner-config-volume
+        configMap:
+          name: learner-config
+######### 1.3.0 ############
+      - name: di-config
+        configMap:
+          name: di-config
+      - name: timezone-volume
+        hostPath:
+          path: /usr/share/zoneinfo/Asia/Shanghai
+          type: File
+############################
+      containers:
+      - name: ffdl-trainer-container
+        image: {{.Values.server_repository}}:{{.Values.trainer.version}}
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8443
+        env:
+        - name: DLAAS_POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: DLAAS_ENV
+          value: {{.Values.env}}
+        - name: DLAAS_LOGLEVEL
+          value: {{.Values.log.level}}
+        - name: DLAAS_PUSH_METRICS_ENABLED
+#          value: "false"
+          value: "true"
+        - name: LINKIS_ADDRESS
+          value: 127.0.0.1:8088
+        - name: LINKIS_TOKEN_CODE
+          value: MLSS
+        - name: DLAAS_MONGO_ADDRESS
+          value: mongo.$(DLAAS_POD_NAMESPACE).svc.cluster.local
+        - name: DLAAS_MONGO_USERNAME
+          value: mlss
+        - name: DLAAS_MONGO_PASSWORD
+          value: mlss
+        - name: DLAAS_OBJECTSTORE_TYPE
+          valueFrom:
+            secretKeyRef:
+              name: trainer-secrets
+              key: DLAAS_OBJECTSTORE_TYPE
+        - name: DLAAS_OBJECTSTORE_AUTH_URL
+          valueFrom:
+            secretKeyRef:
+              name: trainer-secrets
+              key: DLAAS_OBJECTSTORE_AUTH_URL
+        - name: DLAAS_OBJECTSTORE_USER_NAME
+          valueFrom:
+            secretKeyRef:
+              name: trainer-secrets
+              key: DLAAS_OBJECTSTORE_USER_NAME
+        - name: DLAAS_OBJECTSTORE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: trainer-secrets
+              key: DLAAS_OBJECTSTORE_PASSWORD
+        volumeMounts:
+        - mountPath: /etc/learner-config
+          name: learner-config-volume
+####### 1.3.0 ############
+        - mountPath: /etc/mlss/
+          name: di-config
+        - name: timezone-volume
+          mountPath: /etc/localtime
+##########################
+        command: ["/bin/sh", "-c"]
+        args: ["DLAAS_PORT=8443 /main"]
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 2048Mi
+        livenessProbe:
+          exec:
+            command:
+              - /bin/sh
+              - -c
+              - "grpc-health-checker --port 8443 --tls"
+          initialDelaySeconds: 15
+          timeoutSeconds: 2
+      imagePullSecrets:
+#      - name: regcred
+      - name: hubsecret
+      nodeSelector:
+       {{range $key,$val := .Values.platformNodeSelectors}}
+         {{$key}}: {{$val}}
+       {{end}}
