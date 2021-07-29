@@ -1,0 +1,96 @@
+namespace: prophecis
+env: prod
+platformNodeSelectors:
+  mlss-node-role: platform
+envir: prophecis
+has_static_volumes: true
+ceph_host_path: /cosdata/mlss-test
+
+server_ui_gateway: 127.0.0.1:30778
+
+server_repository: wedatasphere/prophecis
+
+
+
+database:
+  server: 127.0.0.1
+  port: 3306
+  name: di_dev
+  user: di_test
+  pwd: test
+  encryptPwd: ""
+  privKey: ""
+
+log:
+  level: DEBUG
+cc:
+  image:
+    tag: cc-apiserver-v0.2.0
+  ldap:
+    address: ldap://127.0.0.1:1389/
+    baseDN: dc=webank,dc=com
+ccGateway:
+  image:
+    tag: cc-apigateway-v0.2.0
+aide:
+  image:
+    tag: mllabis-v0.1.1
+  hadoop:
+    enable: "false"
+    installPath: "/data/Install"
+    commonlibPath: "/data/commonlib"
+    configPath: "/data/config"
+    javaPath: "/data/jdk1.8.0_141"
+    sourceConfigPath: "/data/config/Notebook_ENV.sh"
+    hostFilePath: "/data/config/MLSS-config/MLSS_AIDE-config/HOST_ENV.sh"
+ui:
+  image:
+    tag: ui-v0.2.0
+  service:
+    bdap:
+      nodePort: 30803
+  grafana:
+    url: ""
+  dashboard:
+    url: ""
+  prometheus:
+    url: ""
+  kibana:
+    url: ""
+  aide:
+    image:
+      notebookTags:
+        - name: MLSS-AIDE_1.8.0_tensorflow-2.0.0-jupyterlab-gpu-v0.5.0
+        - name: MLSS-AIDE_1.8.0_tensorflow-1.13.1-jupyterlab-cpu-v0.5.0
+        - name: MLSS-AIDE_1.8.0_tensorflow-1.13.1-jupyterlab-gpu-v0.5.0
+        - name: MLSS-AIDE_1.8.0_tensorflow-1.12.0-jupyterlab-gpu-v0.5.0
+        - name: MLSS-AIDE_1.8.0_tensorflow-1.12.0-jupyterlab-cpu-v0.5.0
+  di:
+    image:
+      trainingTags:
+        - name: tensorflow-1.5.0-gpu-py3-wml-v1
+livy:
+  address: http://127.0.0.1:8998
+restapi:
+  version: restapi-0.2.0
+trainer:
+  version: trainer-0.2.0
+storage:
+  version: storage-0.2.0
+  uploadHostPath: /uploaded-models
+  uploadContainerPath: /uploaded-models
+lcm:
+  version: lcm-0.2.0
+jm:
+  version: jobmonitor-0.2.0
+trainingdata:
+  version: metrics-0.2.0
+learner:
+  tag: master-97
+persistent:
+  etcd:
+    path: /cosdata/mlss-test/prophecis/etcd
+  localstack:
+    path: /cosdata/mlss-test/prophecis/localstack
+  mongo:
+    path: /cosdata/mlss-test/prophecis/mongo

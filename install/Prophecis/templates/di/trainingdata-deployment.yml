@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ffdl-trainingdata
+  namespace: {{.Values.namespace}}
+  labels:
+    environment: {{.Values.env}}
+    service: ffdl-trainingdata
+spec:
+  selector:
+    matchLabels:
+      service: ffdl-trainingdata
+      environment: {{.Values.env}}
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        service: ffdl-trainingdata
+        environment: {{.Values.env}}
+        version: {{.Values.trainingdata.version}}
+    spec:
+      containers:
+      - name: ffdl-trainingdata-container
+        image: {{.Values.server_repository}}:{{.Values.trainingdata.version}}
+        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8443
+        env:
+        - name: DLAAS_POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: DLAAS_ENV
+          value: {{.Values.env}}
+        - name: DLAAS_LOGLEVEL
+          value: {{.Values.log.level}}
+        - name: DLAAS_ELASTICSEARCH_SCHEME
+          value: http
+        - name: DLAAS_ELASTICSEARCH_ADDRESS
+          value: http://elasticsearch.prophecis.svc.cluster.local:9200
+        volumeMounts:
+        - mountPath: /etc/ssl/dlaas/
+          name: ffdl-certs
+        - name: timezone-volume
+          mountPath: /etc/localtime
+        #- name: elasticsearch-ssl-cert
+        #  mountPath: /etc/certs/
+        #  readOnly: true
+        command: ["/bin/sh", "-c"]
+        args: ["DLAAS_PORT=8443 /main"]
+        resources:
+          limits:
+            cpu: 50m
+            memory: 64Mi
+      volumes:
+      #- name: elasticsearch-ssl-cert
+      #  secret:
+      #    secretName: trainingdata-secrets
+      #    items: [{
+      #      key: DLAAS_ELASTICSEARCH_CERT,
+      #      path: elasticsearch/elasticsearch.cert
+      #    }]
+      - name: ffdl-certs
+        configMap:
+          name: ffdl-certs
+      - name: timezone-volume
+        hostPath:
+          path: /usr/share/zoneinfo/Asia/Shanghai
+          type: File
+      imagePullSecrets:
+#      - name: regcred
+       - name: hubsecret
+#        livenessProbe:
+#          exec:
+#            command:
+#              - /bin/sh
+#              - -c
+#              - "grpc-health-checker --port 8443 --tls"
+#          initialDelaySeconds: 15
+#          timeoutSeconds: 2
+      nodeSelector:
+        {{range $key,$val := .Values.platformNodeSelectors}}
+          {{$key}}: {{$val}}
+        {{end}}
