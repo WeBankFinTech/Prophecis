@@ -38,10 +38,10 @@ Prophecis is a one-stop machine learning platform developed by WeBank. It integr
 
 ## Quick Start Guide
 - Read the  [Quick Start Guide](docs/zh_CN/QuickStartGuide.md) to quickly get going with **Prophecis**.
-- About Configuration，Read key configuration explanation in [Quick Start Guide](docs/zh_CN/QuickStartGuide.md) .
+- About Configuration，Read key configuration explanation in [Configuration Guide](docs/zh_CN/Development_Documents/ConfigurationGuide.md) .
 
 ## Developing
-- Read the [Develop Guide](docs/zh_CN/DevelopGuide.md)  guide to quickly get how to develop **Prophecis**.
+- Read the [Development Guide](docs/zh_CN/Development_Documents/DevelopmentGuide.md)  guide to quickly get how to develop **Prophecis**.
 
 ## Roadmap
 - See our [Roadmap](docs/zh_CN/Roadmap.md) for what's coming soon in **Prophecis**.
