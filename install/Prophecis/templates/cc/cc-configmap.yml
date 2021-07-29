@@ -1,0 +1,253 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cc-go-config
+  namespace: {{.Values.namespace}}
+data:
+  application-yml: |
+    ldapPubkey: |
+      -----BEGIN PUBLIC KEY-----
+      MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDek0HXRWqYvbL7Z6UfL11Sxycj
+      AjC3aioE8CIB7cUbIElroWgf5+AYbuVD7UuZfVCvvyQULH7O25+3eKJdgUVAY4h1
+      eWZveagauDKAtMgqYrwgii523/kI3FqskDuGsL5JhkIZfO2Ab+N/5HiWUzfLvVCG
+      k1TeUu0wUCgK/nbXswIDAQAB
+      -----END PUBLIC KEY-----
+    ldapPrivkey: |
+      -----BEGIN RSA PRIVATE KEY-----
+      MIICXAIBAAKBgQDek0HXRWqYvbL7Z6UfL11SxycjAjC3aioE8CIB7cUbIElroWgf
+      5+AYbuVD7UuZfVCvvyQULH7O25+3eKJdgUVAY4h1eWZveagauDKAtMgqYrwgii52
+      3/kI3FqskDuGsL5JhkIZfO2Ab+N/5HiWUzfLvVCGk1TeUu0wUCgK/nbXswIDAQAB
+      AoGAKY/6BYby5t7Vo1ixXudrV9/UkRcBnd53RkDJOO77lZsr2qtjVEHqeOWMbmjL
+      azgZbxgUVqgQbfRZGNuwBiHzmj9NYEEzmGRxXeeYKC+fmNXAtzmG8JImSQIVXhK4
+      V8PxadGtUZj1hklr8tluDpQSP5ikGw4aUzzBZqpXZ78gDyECQQDoXsqq/c/5N1mG
+      5o0yJfiJQupd+L5hD0LlPO3wzmc7ro9Ea+myFUg9819ovFHX41Rzv0ICqERtJU6u
+      dK/v2/SrAkEA9TV5d+9Yq8ncKEI1MuWgUAG/Lve3Yp0P4iXmSEVziyBs63Yk82cm
+      b7nmjV8jbYxd9RrgMazzHPNHQkTniMXZGQJASr/DfkHrlwXBHO4pWYpxauZFsjkE
+      NQDNyiRRfndHKiG7II1+PbUu6g7SEEUUJtiQIDPULjqm2F159BDBT+13xQJASo3F
+      rteQ6Dppu7vVnPIAOhMt48PheBQ0/hdz2slzBfwH4dd8CJ12LEYjeRxSEz64Wouf
+      Wrsw975oDhgRJZ6yEQJBAMTG5iSWMEtxE86rYmAuTTXAuvmTr3J7kPQ0bDQTOaVG
+      mdssiil0LCpxNTO+4sloilVu85quwCKtLQk/G+YMArY=
+      -----END RSA PRIVATE KEY-----
+    application:
+      profile: dev
+      platformNS: {{.Values.namespace}}
+      datasource:
+        driverClassName: com.mysql.jdbc.Driver
+        url: jdbc:mysql://{{.Values.database.server}}/{{.Values.database.name}}?useUnicode=true&characterEncoding=utf-8
+        username: {{.Values.database.user}}
+        password: {{.Values.database.pwd}}
+        ip: {{.Values.database.server}}
+        port: {{.Values.database.port}}
+        db: {{.Values.database.name}}
+      admin:
+        user: admin
+        password: admin
+      ldap: 
+        server: {{.Values.cc.ldap.address}}
+        baseDN: {{.Values.cc.ldap.baseDN}}
+    server:
+      port: 6666
+      servlet:
+        context-path: /cc
+      session:
+        timeout: 86400
+      error:
+        whitelabel:
+          enabled: false
+    logging:
+      level:
+        root: DEBUG
+        cn.webank.bdp.controlcenter.dao: DEBUG
+      path: /var/log/controlcenter
+    core:
+      interceptor:
+        configs:
+        - name: IpInterceptor
+          add:
+          - "/v1/auth/access/namespaces/**/notebooks/**"
+          exclude:
+        - name: UserInterceptor
+          add:
+          - "/v1/**"
+          exclude:
+          - "/v1/login"
+          - "/v1/logout"
+          - "/v1/alerts"
+          - "/v1/alerts/training"
+          - "/v1/auth/access/namespaces/**/notebooks/**"
+        - name: AuthInterceptor
+          add:
+          - "/v1/**"
+          exclude:
+          - "/v1/login"
+          - "/v1/logout"
+          - "/v1/alerts"
+          - "/v1/alerts/training"
+          - "/v1/auth/access/namespaces/**/notebooks/**"
+        maxTokenSize: 10000
+        maxTokenExpireHour: 24
+        defaultTimestampTimeout: 3600000
+      kube:
+        namespacedResourceConfig:
+          defaultRQName: mlss-default-rq
+          defaultRQCpu: 0
+          defaultRQMem: 0Mi
+          defaultRQGpu: 0
+      es:
+        address: elasticsearch
+        port: 9200
+        learnerIndex: dlaas_learner_data
+        dateIndex: logstash-
+      gateway:
+         bdapAddress: http://127.0.0.1:30803
+      authAddress:
+        user: http://controlcenter-go:6666/cc/v1/inter/user
+        auth: http://controlcenter-go:6666/cc/v1/inter/auth
+        ip: http://controlcenter-go:6666/cc/v1/inter/ip
+      cache:
+        cacheTime: 24h
+        defaultTimestampTimeout: 30000
+      cookie:
+        defaultTime: 86400
+        path: "/"
+
+  logback-spring-xml: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <configuration>
+        <!--<include resource="org/springframework/boot/logging/logback/base.xml"/>-->
+        <!-- 日志根目录-->
+        <springProperty scope="context" name="LOG_HOME" source="logging.path" defaultValue="/var/log/controlcenter"/>
+        <!-- 日志级别 -->
+        <springProperty scope="context" name="LOG_ROOT_LEVEL" source="logging.level.root" defaultValue="DEBUG"/>
+        <!--  标识这个"STDOUT" 将会添加到这个logger -->
+        <springProperty scope="context" name="STDOUT" source="log.stdout" defaultValue="STDOUT"/>
+        <!-- 日志文件名称-->
+        <property name="LOG_PREFIX" value="cc" />
+        <!-- 日志文件编码-->
+        <property name="LOG_CHARSET" value="UTF-8" />
+        <!-- 日志文件路径+日期-->
+        <property name="LOG_DIR" value="${LOG_HOME}/%d{yyyyMMdd}" />
+        <!--对日志进行格式化-->
+        <property name="LOG_MSG" value="%d{yyyy-MM-dd HH:mm:ss.SSS} %level %thread [%logger{36}] | %msg%n"/>
+        <!--文件大小，默认10MB-->
+        <property name="MAX_FILE_SIZE" value="50MB" />
+        <!-- 配置日志的滚动时间 ，表示只保留最近 10 天的日志-->
+        <property name="MAX_HISTORY" value="10"/>
+        <!--输出到控制台-->
+        <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+            <!-- 输出的日志内容格式化-->
+            <layout class="ch.qos.logback.classic.PatternLayout">
+                <pattern>${LOG_MSG}</pattern>
+            </layout>
+        </appender>
+        <!--输出到文件-->
+        <appender name="0" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        </appender>
+        <!-- 定义 ALL 日志的输出方式:-->
+        <appender name="FILE_ALL" class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <!--日志文件路径，日志文件名称-->
+            <File>${LOG_HOME}/${LOG_PREFIX}_all.log</File>
+            <!-- 设置滚动策略，当天的日志大小超过 ${MAX_FILE_SIZE} 文件大小时候，新的内容写入新的文件， 默认10MB -->
+            <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+                <!--日志文件路径，新的 ALL 日志文件名称，“ i ” 是个变量 -->
+                <FileNamePattern>${LOG_DIR}/${LOG_PREFIX}_all%i.log</FileNamePattern>
+                <!-- 配置日志的滚动时间 ，表示只保留最近 10 天的日志-->
+                <MaxHistory>${MAX_HISTORY}</MaxHistory>
+                <!--当天的日志大小超过 ${MAX_FILE_SIZE} 文件大小时候，新的内容写入新的文件， 默认10MB-->
+                <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                    <maxFileSize>${MAX_FILE_SIZE}</maxFileSize>
+                </timeBasedFileNamingAndTriggeringPolicy>
+            </rollingPolicy>
+            <!-- 输出的日志内容格式化-->
+            <layout class="ch.qos.logback.classic.PatternLayout">
+                <pattern>${LOG_MSG}</pattern>
+            </layout>
+        </appender>
+        <!-- 定义 ERROR 日志的输出方式:-->
+        <appender name="FILE_ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <!-- 下面为配置只输出error级别的日志 -->
+            <filter class="ch.qos.logback.classic.filter.LevelFilter">
+                <level>ERROR</level>
+                <OnMismatch>DENY</OnMismatch>
+                <OnMatch>ACCEPT</OnMatch>
+            </filter>
+            <!--日志文件路径，日志文件名称-->
+            <File>${LOG_HOME}/${LOG_PREFIX}_err.log</File>
+            <!-- 设置滚动策略，当天的日志大小超过 ${MAX_FILE_SIZE} 文件大小时候，新的内容写入新的文件， 默认10MB -->
+            <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+                <!--日志文件路径，新的 ERR 日志文件名称，“ i ” 是个变量 -->
+                <FileNamePattern>${LOG_DIR}/${LOG_PREFIX}_err%i.log</FileNamePattern>
+                <!-- 配置日志的滚动时间 ，表示只保留最近 10 天的日志-->
+                <MaxHistory>${MAX_HISTORY}</MaxHistory>
+                <!--当天的日志大小超过 ${MAX_FILE_SIZE} 文件大小时候，新的内容写入新的文件， 默认10MB-->
+                <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                    <maxFileSize>${MAX_FILE_SIZE}</maxFileSize>
+                </timeBasedFileNamingAndTriggeringPolicy>
+            </rollingPolicy>
+            <!-- 输出的日志内容格式化-->
+            <layout class="ch.qos.logback.classic.PatternLayout">
+                <Pattern>${LOG_MSG}</Pattern>
+            </layout>
+        </appender>
+        <!-- additivity 设为false,则logger内容不附加至root ，配置以配置包下的所有类的日志的打印，级别是 ERROR-->
+        <logger name="org.springframework.web"     level="INFO" />
+        <logger name="org.apache.commons"      level="ERROR" />
+        <logger name="org.apache.tomcat"      level="ERROR" />
+        <!-- ${LOG_ROOT_LEVEL} 日志级别 -->
+        <root level="${LOG_ROOT_LEVEL}">
+            <!-- 标识这个"${STDOUT}"将会添加到这个logger -->
+            <appender-ref ref="${STDOUT}"/>
+            <!-- FILE_ALL 日志输出添加到 logger -->
+            <appender-ref ref="FILE_ALL"/>
+            <!-- FILE_ERROR 日志输出添加到 logger -->
+            <appender-ref ref="FILE_ERROR"/>
+        </root>
+    </configuration>
+
+  server-crt: |
+    -----BEGIN CERTIFICATE-----
+    MIICzDCCAbQCCQCVrtRO5rcr1DANBgkqhkiG9w0BAQUFADAoMQswCQYDVQQGEwJD
+    TjEZMBcGA1UEAwwQY29udHJvbGNlbnRlci1nbzAeFw0yMDA1MDcxMDUyMzlaFw0z
+    MDA1MDUxMDUyMzlaMCgxCzAJBgNVBAYTAkNOMRkwFwYDVQQDDBBjb250cm9sY2Vu
+    dGVyLWdvMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAy7p22tSPDmN7
+    a7tRndX7NiEDYv+6mhFwSw/liUCe4rECF6v457eqNlmd+qo1JHYxBMelakFZtSt/
+    TpcAuz8vRQFmK61qwPruEqg5/S5VtQQNzrGkuOEthOD6+Joepfo1aSiBHl8ec6Fr
+    vYJkRijaoL3g2w/91Vt1LncrfsaPZBCKZ2epgsCnLYVQogxu/0gKBng9ilsMcBVA
+    GeAeAPmxW/4I+mO1a342L53A8xZU2RaDXbZsBLucH1ONIhLb7Zja1fUCJi7HRmIL
+    LfUzgJ62v4tsvZtLRoaA2QA4mEZesIPHeJpgQRmgpD5BmLxX9SHekoLTWqDCAA3z
+    XnxjHjgkawIDAQABMA0GCSqGSIb3DQEBBQUAA4IBAQAa3Q0ui/Jqy1h+2DG+yyDf
+    wtyemM0C9AjZFHiX10bG6EzdRlxX8lk1SJf1oQTnBhMR30FoI3ZyN+N9/uNvLHy+
+    9zarQT8GiaBJCV4otIZ6V27AeeKaWOFju3ZJUTZ3VlxPRn0qzeIQkNk2Z2HwEPXG
+    /ppDXqqSpChC7jWRr34ZClwdCiWVN3RL18c02giCJn/FBdLmxyia72Wjhox/zN+N
+    lnGyr00Jcoj26dwN8bxDmgrmkbJKeVgqUXgys9Hc2Vl1c9jv0NGbrI7YcAxCwHxj
+    NW/H5Z/FuR0A0ifTo5UgziamPGj0sB/OmZE/TPOSTFsaiM2IudAjwE8S32ihgJzo
+    -----END CERTIFICATE-----
+
+  server-key: |
+    -----BEGIN RSA PRIVATE KEY-----
+    MIIEpAIBAAKCAQEAy7p22tSPDmN7a7tRndX7NiEDYv+6mhFwSw/liUCe4rECF6v4
+    57eqNlmd+qo1JHYxBMelakFZtSt/TpcAuz8vRQFmK61qwPruEqg5/S5VtQQNzrGk
+    uOEthOD6+Joepfo1aSiBHl8ec6FrvYJkRijaoL3g2w/91Vt1LncrfsaPZBCKZ2ep
+    gsCnLYVQogxu/0gKBng9ilsMcBVAGeAeAPmxW/4I+mO1a342L53A8xZU2RaDXbZs
+    BLucH1ONIhLb7Zja1fUCJi7HRmILLfUzgJ62v4tsvZtLRoaA2QA4mEZesIPHeJpg
+    QRmgpD5BmLxX9SHekoLTWqDCAA3zXnxjHjgkawIDAQABAoIBAQC+f4gdzT5LZQiG
+    TyzdGraBAdOp4Zg58m5/MckfUzZ+oKdlPSBMg/f8REYtmrSAeKgTYR+ywJLCjn7H
+    HPnJHSb1Ln67/rdg5gJxna5DqOzpi3XhvUhau+wVYU4r4ekgqFsDDqXVoXnXA6y8
+    Es3ysMbmIUa9cDGZLKDhJvub2s0/8XA/bvb2HZUdQUBZMmx/Yw7R3mMDHFL813xr
+    gs3x/HwWDsqJC8AhOZNaAHHIynnSFSqQ1mjgYA0TVYZWGNASU9fncqKUcFYBFJq2
+    /O32drjTlTZQse3Mv2EQaVtVuxLrgGV4XTx3q1dsgG7+6IhVg046ffRtSX9o+jqY
+    fs1oJHzJAoGBAOtrxjjZoNe9tvNlImSU7jeZRJn0X+l2S9AQeKLqV2hjEB5LFscv
+    kDrR3stsUTuxKZe3ZfI8YUsbR5keCE6wuSdqtxuYtIhjxJq2zNcYrImI+xs7e3Sm
+    /WUgl5Wenxq0FKxRBMOp5o+sR7V1y2lxW3uxQpj8kc1bL0LTeyrc0fK3AoGBAN2J
+    edpHi2IxNIBCkkxYXVBAo8NUFHOkYnyeixzf6DySRLOMAx0kog/r0H89fM3xO+a/
+    3Sls8hptVmbBhtw2YNJQd1HllLQ1Ov1T2NBKs2eVcUSDNrMbjTYbLePK5sotQT7v
+    i3cdZ+pIGagzCOWZjbt9PLTrys0l7i1kaVxJVBftAoGATs4q8ojXMKDPBzbJhoXc
+    IDxsHGUTXiE9S47X8yEi1Uyj7qAQJekkDKyIOewuXR7231SDCc1wfCXLl9PX0A+U
+    Sz+Lv+8kL6vF+kxK0Y3u47M462rD7s6fcCSy2WDZvaSebvhH8f+DsIBpGLMvvkI1
+    73fs5S1W2Tk23tXQGw8EMI0CgYBbVHPBw0D5KCPmxIsfokZF8YAR5LXRvvFDQvFC
+    5CQP5JUiGBSojROq0KLR8f1jwZHaXTrF+z4MGwtFrX71hg2AZt/qCWW2rUM2cLyv
+    kjxH9doOTrHcQP2EUswmXt2qd+GwGn06jArtEPBS4UdHsHg31TeTtqmSzZJVcFHn
+    U+uxOQKBgQDBDilP5xsQeeeG8rdE8zudWhCf/6EDvYoDa+DzDfuDqxHCAmlufSYm
+    CB8vT/N7IEL9IjjmYo2JMNYiqMHmS9rTId8e9tdTgi8AAkYupkDGIqMkUeewgnxx
+    k+1+nsLxQD6MWoNiquRPPAL+bt/KV3FWMB4FsOK1cW3XrD/UrF1Dlg==
+    -----END RSA PRIVATE KEY-----
