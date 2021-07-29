@@ -1,0 +1,109 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: etcd
+  namespace: {{.Values.namespace}}
+spec:
+  ports:
+  - port: 2379
+    protocol: TCP
+    targetPort: 2379
+  selector:
+    app: etcd
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: etcd0
+  namespace: {{.Values.namespace}}
+spec:
+  serviceName: etcd
+  replicas: 1
+  selector:
+    matchLabels:
+      app: etcd
+  template:
+    metadata:
+      labels:
+        service: etcd
+        app: etcd
+        etcd_node: etcd0
+    spec:
+      volumes:
+      - name: etcd-pv-volume
+        persistentVolumeClaim:
+          claimName: etcd-pvc-{{.Values.namespace}}
+      - name: timezone-volume
+        hostPath:
+          path: /usr/share/zoneinfo/Asia/Shanghai
+          type: File
+      containers:
+      - command:
+        - /usr/local/bin/etcd
+        - --name
+        - etcd0
+        - --initial-advertise-peer-urls
+    #    - http://etcd0:2380
+    #    - http://etcd0.default:2380
+        - http://etcd0.{{.Values.namespace}}:2380
+        - --listen-peer-urls
+        - http://0.0.0.0:2380
+        - --listen-client-urls
+        - http://0.0.0.0:2379
+        - --advertise-client-urls
+    #    - http://etcd0:2379
+    #    - http://etcd0.default:2379
+        - http://etcd0.{{.Values.namespace}}:2379
+        - --initial-cluster
+    #    - etcd0=http://etcd0:2380
+    #    - etcd0=http://etcd0.default:2380
+        - etcd0=http://etcd0.{{.Values.namespace}}:2380
+        - --initial-cluster-state
+        - new
+    #    image: quay.io/coreos/etcd:latest
+    #    imagePullPolicy: IfNotPresent
+        image: {{.Values.server_repository}}:etcd-latest
+        imagePullPolicy: Always
+        name: etcd0
+        ports:
+        - containerPort: 2379
+          name: client
+          protocol: TCP
+        - containerPort: 2380
+          name: server
+          protocol: TCP
+        volumeMounts:
+        - mountPath: "/etcd0.etcd"
+          name: etcd-pv-volume
+        - name: timezone-volume
+          mountPath: /etc/localtime
+      imagePullSecrets:
+      - name: hubsecret
+      restartPolicy: Always
+      nodeSelector:
+        {{range $key,$val := .Values.platformNodeSelectors}}
+          {{$key}}: {{$val}}
+        {{end}}
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    etcd_node: etcd0
+  name: etcd0
+  namespace: {{.Values.namespace}}
+spec:
+  ports:
+  - name: client
+    port: 2379
+    protocol: TCP
+    targetPort: 2379
+  - name: server
+    port: 2380
+    protocol: TCP
+    targetPort: 2380
+  selector:
+    etcd_node: etcd0

@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bdap-ui-deployment
+  namespace: {{.Values.namespace}}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bdap-ui
+  template:
+    metadata:
+      labels:
+        app: bdap-ui
+    spec:
+      containers:
+      - name: ui
+        image: {{.Values.server_repository}}:{{.Values.ui.image.tag}}
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: main-config-volume
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+        - name: ui-config-volume
+          mountPath: /etc/nginx/conf.d
+        - name: ui-env-config-volume
+          mountPath: /var/www/html/static/env-config.js
+          subPath: env-config.js
+        - name: log-volume
+          mountPath: /var/log/nginx
+# crash the pod, device busy
+#        - name: timezone-volume
+#          mountPath: /etc/localtime
+      imagePullSecrets: 
+      - name: hubsecret
+      volumes:
+      - name: main-config-volume
+        configMap:
+          name: bdap-ui-config
+          items:
+          - key: nginx-conf
+            path: nginx.conf
+      - name: ui-config-volume
+        configMap:
+          name: bdap-ui-config
+          items: 
+          - key: ui-conf
+            path: ui.conf
+      - name: ui-env-config-volume
+        configMap:
+          name: bdap-ui-config
+          items:
+          - key: env-config-js
+            path: env-config.js
+      - name: log-volume
+        hostPath:
+          path: /appcom/log/ui-bdap/{{.Values.namespace}}
+      - name: timezone-volume
+        hostPath:
+          path: /etc/localtime
+          type: File
+      nodeSelector:
+        {{range $key,$val := .Values.platformNodeSelectors}}
+          {{$key}}: {{$val}}
+        {{end}}

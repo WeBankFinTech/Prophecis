@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: bdap-ui-service
+  namespace: {{.Values.namespace}}
+spec:
+  selector:
+    app: bdap-ui
+  type: NodePort
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+    nodePort: {{.Values.ui.service.bdap.nodePort}}
+  #externalTrafficPolicy: Local

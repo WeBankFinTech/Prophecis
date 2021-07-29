@@ -1,0 +1,91 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: s3
+  namespace: {{.Values.namespace}}
+spec:
+  type: NodePort
+  selector:
+    service: storage
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 4572
+    # newly added
+    nodePort: 30797
+
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch
+  namespace: {{.Values.namespace}}
+  labels:
+    component: elasticsearch
+spec:
+  type: NodePort
+  selector:
+    service: storage
+  ports:
+  - name: http
+    port: 9200
+    targetPort: 4571
+    protocol: TCP
+    # newly added
+    nodePort: 30880
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: storage
+  namespace: {{.Values.namespace}}
+spec:
+  serviceName: storage
+  replicas: 1
+  selector:
+    matchLabels:
+      service: storage
+  template:
+    metadata:
+      labels:
+        service: storage
+    spec:
+      volumes:
+        - name: localstack-pv-volume
+          persistentVolumeClaim:
+            claimName: localstack-pvc-{{.Values.namespace}}
+        - name: timezone-volume
+          hostPath:
+            path: /usr/share/zoneinfo/Asia/Shanghai
+            type: File
+      containers:
+        - name: storage
+          image: {{.Values.server_repository}}:localstack-latest
+          imagePullPolicy: Always
+          env:
+          - name: SERVICES
+            value: s3,elasticsearch
+          - name: DEBUG
+            value: "1"
+          - name: DATA_DIR
+            value: "/tmp/localstack/data"
+          ports:
+          - containerPort: 4572
+            protocol: TCP
+          - containerPort: 4571
+            protocol: TCP
+          volumeMounts:
+            - mountPath: "/tmp/localstack/data"
+              name: localstack-pv-volume
+            - name: timezone-volume
+              mountPath: /etc/localtime
+      imagePullSecrets:
+      - name: hubsecret     
+      nodeSelector:
+        {{range $key,$val := .Values.platformNodeSelectors}}
+          {{$key}}: {{$val}}
+        {{end}}
