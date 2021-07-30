@@ -98,7 +98,7 @@ Prophecis_1.8.0_tensorflow-1.12.0-jupyterlab-cpu-v0.5.0
 ```
 ## 4. 配置文件修改
 
-**需要修改****`./helm-charts/prophecis/values.yaml`****中的信息。**
+**需要修改`./helm-charts/prophecis/values.yaml`中的信息。**
 
 ### 4.1 配置数据库访问的信息
 
