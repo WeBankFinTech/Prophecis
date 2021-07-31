@@ -1,6 +1,6 @@
 ## 1. Prophecis简介
 
-​	Prophecis 使用`helm`来进行`kubernetes`包管理，主要安装文件位于install目录下。install目录包含了三个组件`notebook-controller`, `MinioDeployment`, `Prophecis`，主体为`Prophecis`。使用前，需要初始化MySQL数据库，并挂载NFS目录来存储数据。
+​	Prophecis 使用`helm`来进行`kubernetes`包管理，主要安装文件位于`install`目录下。`install`目录包含了三个组件`notebook-controller`, `MinioDeployment`, `Prophecis`，主体为`Prophecis`。使用前，需要初始化MySQL数据库，并挂载NFS目录来存储数据。
 
 
 ## 2. 环境准备
@@ -70,7 +70,7 @@ mount ${NFS_SERVER_IP}:${NFS_PATH_LOG} ${NFS_PATH_LOG}
 ![图片](../image/deploy/deploy_dir_1.png)
 
 * 文件清单：
-    * Helm Chart：`./helm-charts`目录下`notebook-controller`,`MinioDeployment`,`Prophecis`
+    * Helm Chart：`./install`目录下`notebook-controller`,`MinioDeployment`,`Prophecis`
     * SQL Script ：`./cc/sql`目录下`prophecis.sql`和`prophecis-data.sql`文件
 * 镜像列表（**安装时自动下载**）：
 ```yaml
@@ -98,7 +98,7 @@ Prophecis_1.8.0_tensorflow-1.12.0-jupyterlab-cpu-v0.5.0
 ```
 ## 4. 配置文件修改
 
-**需要修改****`./helm-charts/prophecis/values.yaml`****中的信息。**
+**需要修改`./install/prophecis/values.yaml`中的信息。**
 
 ### 4.1 配置数据库访问的信息
 
@@ -172,7 +172,7 @@ kubectl label nodes ${LABEL_GPU} hardware-type=NVIDIAGPU
 
 Prophecis部署需要三个组件`notebook-controller`,`MinioDeployment`,`Prophecis`。
 
-**部署执行目录为****`./helm-Chart`****目录下。**
+**部署执行目录为`./install`目录下。**
 
 ```shell
 # 安装Notebook Controller组件
