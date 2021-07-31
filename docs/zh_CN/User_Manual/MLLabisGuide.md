@@ -10,7 +10,7 @@ MLLabis是Prophecis的个人开发环境子系统，允许用户创建Notebook�
 
 ### 2.1 创建Notebook
 
-![图片](../userGuideImage/lab/notebook_create_1.png)
+![图片](../image/lab/notebook_create_1.png)
 
 进入个人开发环境后，在个人开发环境页面中包含已创建Notebook得列表信息，包括名称、用户、命名空间等。点击创建notebook之后，按步骤填写创建Notebook的相关信息，依次为基础信息设置、镜像设置、计算资源设置、存储设置，其中：
 

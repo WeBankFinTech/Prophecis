@@ -62,19 +62,19 @@ helm install prophecis
 
 
 
-* 配置触发器：
-     * 勾选：Push Events、Opened Merge Request Event、Approved Merge Request、Comments
-     * Rebuild open Merge Requests：Never
+- 配置触发器：
+    - 勾选：Push Events、Opened Merge Request Event、Approved Merge Request、Comments
+    - Rebuild open Merge Requests：Never
 
 ![图片](../image/dev/dev_jenkins_2.png)
 
 
 
 - 构建变量信息(用于版本管理)：
-        - 勾选：Create a formatted version number
-            - 填写：Environment Variable Name、Version Number Format String、Skip Builds worse than、Build Display Name（勾选）
-            - AIDE:
-            - 设置 Go Version
+    - 勾选：Create a formatted version number
+    - 填写：Environment Variable Name、Version Number Format String、Skip Builds worse than、Build Display Name（勾选）
+    - AIDE:
+        - 设置 Go Version
 
 ![图片](../image/dev/dev_jenkins_3.png)
 
@@ -90,7 +90,6 @@ helm install prophecis
 - 填写镜像构建及推送相关:
 
 	![图片](../image/dev/dev_jenkins_5.png)
-	
 
 
 
