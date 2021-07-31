@@ -15,7 +15,7 @@ DI是Prophecis的子系统，支持用户选择单机或者分布式的方式来
 * 命名空间（namespace）：管理员用户通过CC控制台创建，与所用硬件资源相关。
 * 状态：任务的运行状态，分为QUEUED、PENDING、RUNNING、FAILED、COMPLETED。
 
-![图片](../userGuideImage/di/di_model_list_1.png)
+![图片](../image/di/di_model_list_1.png)
 
 ### 2.2 创建GPU集群任务
 
@@ -26,20 +26,20 @@ DI是Prophecis的子系统，支持用户选择单机或者分布式的方式来
 1. **基础信息配置**
 * 任务名称及备注：配置任务名称、任务描述等基本信息
 
-![图片](../userGuideImage/di/single_model_create_1.png)
+![图片](../image/di/single_model_create_1.png)
 
 2. **镜像配置**
 * 镜像类型：标准为列表中提供的镜像，自定义可设置任意Tag
 * 镜像名称：Docker Image Tag
 
-![图片](../userGuideImage/di/single_model_create_2.png)
+![图片](../image/di/single_model_create_2.png)
 
 3. **计算资源配置**
 * 命名空间：命名空间会与硬件机器做绑定，对应命名空间下的任务会启动到对应的服务器上面。
 * 任务类型：在任务资源页面任务类型可选择单机或分布式，分布式任务即tensorflow的分布式模式，下图为单机模式的范例。
 * CPU/GPU/Mmemory：填写执行任务所需的CPU/GPU/Memory即可。
 
-![图片](../userGuideImage/di/single_model_create_3.png)
+![图片](../image/di/single_model_create_3.png)
 
 4. **训练任务目录配置**
 
@@ -49,7 +49,7 @@ DI是Prophecis的子系统，支持用户选择单机或者分布式的方式来
 * 训练数据子目录: 通常作为存放数据的目录，和DATA_DIR相对应。
 * 训练结果子目录: 通常作为存放日志的目录，和RESULT_DIR相对应。
 
-![图片](../userGuideImage/di/single_model_create_4.png)
+![图片](../image/di/single_model_create_4.png)
 
 5. **任务执行设置**
 * 执行入口设置：
