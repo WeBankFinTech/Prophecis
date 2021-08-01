@@ -72,7 +72,7 @@ mount ${NFS_SERVER_IP}:${NFS_PATH_LOG} ${NFS_PATH_LOG}
 ```
 ## 3. 配置文件修改
 
-- **修改**`./helm-charts/prophecis/values.yaml`中的信息。
+- **修改**`./install/prophecis/values.yaml`中的信息。
 
 ```yaml
 ## 配置数据库访问的信息
@@ -121,7 +121,7 @@ source prophecis-data.sql
 
 Prophecis部署需要三个组件`notebook-controller`,`MinioDeployment`,`Prophecis`。
 
-**部署执行目录为**`./helm-Chart`目录下。
+**部署执行目录为**`./install`目录下。
 
 ```shell
 ## Prophecis默认使用kubernetes的命名空间prophecis，需要创建
