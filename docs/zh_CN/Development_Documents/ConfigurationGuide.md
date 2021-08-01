@@ -8,7 +8,7 @@
 
 ### 2.1 目录结构
 
-* 配置文件位置：**helm-chart/Prophecis**
+* 配置文件位置：**install/Prophecis**
 * 文件内容：
     * values.yaml
     * templates目录
@@ -100,7 +100,7 @@
 
 ### 3.1 目录结构
 
-* 配置文件位置：**helm-chart/notebook-controller**
+* 配置文件位置：**install/notebook-controller**
 * 文件内容：
     * values.yaml
     * templates目录：
