@@ -8,25 +8,26 @@
 
 1. `no matches for kind “DaemonSet“ in version “extensions/v1beta1“`
 
-​       LogCollectorDS为kubernetes 1.8之前版本需要进行修改，将`LogCollectorDS/FluentBit.yaml`中的`extensions/v1beta1`改为`apps/v1`
+   LogCollectorDS为kubernetes 1.8之前版本需要进行修改，将`Prophecis/templates/LogCollectorDS/FluentBit.yaml`中的`extensions/v1beta1`改为`apps/v1`
 
 
 
 2. missing required field "selector" in io.k8s.api.apps.v1sssssssssssss.DaemonSetSpec
-   - LogCollectorDS为kubernetes 1.8之前版本需要进行修改，将`LogCollectorDS/FluentBit.yaml`添加3行，并注释2行
+   LogCollectorDS为kubernetes 1.8之前版本需要进行修改，将`Prophecis/templates/LogCollectorDS/FluentBit.yaml`添加3行，并注释2行
+   
    ```yaml
    apiVersion: apps/v1
    spec:
-   selector:
-   matchLabels:
-   app: fluent-bit
-   template:
-   metadata:
-   creationTimestamp: null
-   labels:
-   # log_collector_image_short_name: fluent-bit
-   # service: prophecis-lhelper
-   app: fluent-bit
+     selector:
+     matchLabels:
+       app: fluent-bit
+     template:
+       metadata:
+         creationTimestamp: null
+         labels:
+         # log_collector_image_short_name: fluent-bit
+         # service: prophecis-lhelper
+           app: fluent-bit
    ```
 
 
@@ -64,8 +65,8 @@ nfs未进行挂载
 
 
 6. `Error response from daemon: Get https://dockerhub.prophecis/v2/: http: server gave HTTP response to HTTPS client`
-docker registry未采用https服务，而客户端docker使用https请求push所致
-将以下配置添加到 /etc/docker/daemon.json 中：
+   docker registry未采用https服务，而客户端docker使用https请求push所致
+   将以下配置添加到 /etc/docker/daemon.json 中：
 
     ```shell
     { "insecure-registries":["127.0.0.1:5000"] }
@@ -100,13 +101,3 @@ kubectl delete pod ${ERROR_POD} -n prophecis
 
 ![图片](./image/qa/sample_3.png)
 
-
-
-
-```
-
-```
-
-```
-
-```

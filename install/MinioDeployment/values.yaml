@@ -13,7 +13,7 @@ clusterDomain: cluster.local
 ## Set default image, imageTag, and imagePullPolicy. mode is used to indicate the
 ##
 image:
-  repository: wedataspere/prophecis
+  repository: wedatasphere/prophecis
   tag: minio-2020-06-14
   pullPolicy: IfNotPresent
 
