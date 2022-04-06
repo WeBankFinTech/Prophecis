@@ -11,7 +11,6 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/middleware"
-	"github.com/go-openapi/validate"
 
 	strfmt "github.com/go-openapi/strfmt"
 )
@@ -27,8 +26,8 @@ func NewListModelsParams() ListModelsParams {
 		expIDDefault       = string("")
 		expRunIDDefault    = string("")
 		namespaceDefault   = string("")
-		pageDefault        = string("")
-		sizeDefault        = string("")
+		pageDefault        = string("1")
+		sizeDefault        = string("10")
 		useridDefault      = string("")
 		versionDefault     = string("2017-02-13")
 	)
@@ -48,7 +47,7 @@ func NewListModelsParams() ListModelsParams {
 
 		Userid: &useridDefault,
 
-		Version: versionDefault,
+		Version: &versionDefault,
 	}
 }
 
@@ -83,12 +82,12 @@ type ListModelsParams struct {
 	Namespace *string
 	/*page number.
 	  In: query
-	  Default: ""
+	  Default: "1"
 	*/
 	Page *string
 	/*entity number per page.
 	  In: query
-	  Default: ""
+	  Default: "10"
 	*/
 	Size *string
 	/*owner's userid.
@@ -97,11 +96,10 @@ type ListModelsParams struct {
 	*/
 	Userid *string
 	/*The release date of the version of the API you want to use. Specify dates in YYYY-MM-DD format.
-	  Required: true
 	  In: query
 	  Default: "2017-02-13"
 	*/
-	Version string
+	Version *string
 }
 
 // BindRequest both binds and validates a request, it assumes that complex things implement a Validatable(strfmt.Registry) error interface
@@ -296,21 +294,19 @@ func (o *ListModelsParams) bindUserid(rawData []string, hasKey bool, formats str
 
 // bindVersion binds and validates parameter Version from query.
 func (o *ListModelsParams) bindVersion(rawData []string, hasKey bool, formats strfmt.Registry) error {
-	if !hasKey {
-		return errors.Required("version", "query")
-	}
 	var raw string
 	if len(rawData) > 0 {
 		raw = rawData[len(rawData)-1]
 	}
 
-	// Required: true
+	// Required: false
 	// AllowEmptyValue: false
-	if err := validate.RequiredString("version", "query", raw); err != nil {
-		return err
+	if raw == "" { // empty values pass all other validations
+		// Default values have been previously initialized by NewListModelsParams()
+		return nil
 	}
 
-	o.Version = raw
+	o.Version = &raw
 
 	return nil
 }

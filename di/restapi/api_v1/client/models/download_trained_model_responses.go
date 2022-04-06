@@ -13,7 +13,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	"webank/DI/restapi/api_v1/restmodels"
+	restmodels "webank/DI/restapi/api_v1/restmodels"
 )
 
 // DownloadTrainedModelReader is a Reader for the DownloadTrainedModel structure.
@@ -25,28 +25,24 @@ type DownloadTrainedModelReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *DownloadTrainedModelReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewDownloadTrainedModelOK(o.writer)
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 401:
 		result := NewDownloadTrainedModelUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 404:
 		result := NewDownloadTrainedModelNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 410:
 		result := NewDownloadTrainedModelGone()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -75,7 +71,11 @@ type DownloadTrainedModelOK struct {
 }
 
 func (o *DownloadTrainedModelOK) Error() string {
-	return fmt.Sprintf("[GET /v1/models/{model_id}/trained_model][%d] downloadTrainedModelOK  %+v", 200, o.Payload)
+	return fmt.Sprintf("[GET /di/v1/models/{model_id}/trained_model][%d] downloadTrainedModelOK  %+v", 200, o.Payload)
+}
+
+func (o *DownloadTrainedModelOK) GetPayload() io.Writer {
+	return o.Payload
 }
 
 func (o *DownloadTrainedModelOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -102,7 +102,11 @@ type DownloadTrainedModelUnauthorized struct {
 }
 
 func (o *DownloadTrainedModelUnauthorized) Error() string {
-	return fmt.Sprintf("[GET /v1/models/{model_id}/trained_model][%d] downloadTrainedModelUnauthorized  %+v", 401, o.Payload)
+	return fmt.Sprintf("[GET /di/v1/models/{model_id}/trained_model][%d] downloadTrainedModelUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *DownloadTrainedModelUnauthorized) GetPayload() *restmodels.Error {
+	return o.Payload
 }
 
 func (o *DownloadTrainedModelUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -131,7 +135,11 @@ type DownloadTrainedModelNotFound struct {
 }
 
 func (o *DownloadTrainedModelNotFound) Error() string {
-	return fmt.Sprintf("[GET /v1/models/{model_id}/trained_model][%d] downloadTrainedModelNotFound  %+v", 404, o.Payload)
+	return fmt.Sprintf("[GET /di/v1/models/{model_id}/trained_model][%d] downloadTrainedModelNotFound  %+v", 404, o.Payload)
+}
+
+func (o *DownloadTrainedModelNotFound) GetPayload() *restmodels.Error {
+	return o.Payload
 }
 
 func (o *DownloadTrainedModelNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -160,7 +168,11 @@ type DownloadTrainedModelGone struct {
 }
 
 func (o *DownloadTrainedModelGone) Error() string {
-	return fmt.Sprintf("[GET /v1/models/{model_id}/trained_model][%d] downloadTrainedModelGone  %+v", 410, o.Payload)
+	return fmt.Sprintf("[GET /di/v1/models/{model_id}/trained_model][%d] downloadTrainedModelGone  %+v", 410, o.Payload)
+}
+
+func (o *DownloadTrainedModelGone) GetPayload() *restmodels.Error {
+	return o.Payload
 }
 
 func (o *DownloadTrainedModelGone) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

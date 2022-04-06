@@ -116,6 +116,1109 @@ func init() {
         }
       }
     },
+    "/di/v1/dssUserInfo": {
+      "get": {
+        "description": "Get DSS UserInfo",
+        "tags": [
+          "DssUserInfo"
+        ],
+        "summary": "Get DSS UserInfo",
+        "operationId": "getDssUserInfo",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "id",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "workspaceId",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/DssUserInfo"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Get UserInfo Not Found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/experiment": {
+      "put": {
+        "description": "Update Experiment Flow Json.",
+        "tags": [
+          "Experiments"
+        ],
+        "summary": "Update Experiment",
+        "operationId": "updateExperiment",
+        "parameters": [
+          {
+            "description": "The Experiment Put Request.",
+            "name": "experiment",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ProphecisExperimentPutRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Model create failed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "Create Experiment.",
+        "tags": [
+          "Experiments"
+        ],
+        "summary": "createExperiment",
+        "operationId": "createExperiment",
+        "parameters": [
+          {
+            "description": "The Experiment Request",
+            "name": "experiment",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ProphecisExperimentRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ProphecisExperimentIDResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "The Models cannot be found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/experiment/import": {
+      "post": {
+        "description": "import experiment.",
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Experiments"
+        ],
+        "summary": "import Zip To Create Experimetn.",
+        "operationId": "importExperiment",
+        "parameters": [
+          {
+            "type": "file",
+            "name": "file",
+            "in": "formData",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "fileName",
+            "in": "formData"
+          },
+          {
+            "type": "number",
+            "format": "int64",
+            "default": 0,
+            "description": "if experimentId is 0 or not provided, create experiment in db; if exists, get experiment by experimentId, update it.",
+            "name": "experimentId",
+            "in": "formData"
+          },
+          {
+            "type": "string",
+            "default": "MLFlow",
+            "description": "experiment type, default \"MLFlow\", choose next value, \"WTSS\" \"DSS\" \"MLFlow\"",
+            "name": "createType",
+            "in": "formData"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ProphecisExperimentIDResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "The Models cannot be found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/experiment/importdss": {
+      "post": {
+        "description": "import Experiment(DSS)",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Experiments"
+        ],
+        "summary": "Import Experiment(DSS)",
+        "operationId": "importExperimentDss",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "resourceId",
+            "in": "formData",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "version",
+            "in": "formData"
+          },
+          {
+            "type": "string",
+            "name": "desc",
+            "in": "formData"
+          },
+          {
+            "type": "number",
+            "format": "int64",
+            "default": 0,
+            "description": "if experimentId is 0 or not provided, create experiment in db; if exists, get experiment by experimentId, update it.",
+            "name": "experimentId",
+            "in": "formData"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Import Experiment(Dss) Response definition",
+            "schema": {
+              "$ref": "#/definitions/ProphecisImportExperimentDssResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "The Experiment cannot be found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/experiment/{id}": {
+      "get": {
+        "description": "Get Experiment By Experiment Id.",
+        "tags": [
+          "Experiments"
+        ],
+        "summary": "Get Experiment",
+        "operationId": "getExperiment",
+        "parameters": [
+          {
+            "type": "number",
+            "format": "int64",
+            "description": "experiment id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ProphecisExperimentGetResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Model create failed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "put": {
+        "description": "Put Experiment Basic Info By Experiment Id.",
+        "tags": [
+          "Experiments"
+        ],
+        "summary": "Put Experiment Basic Info",
+        "operationId": "updateExperimentInfo",
+        "parameters": [
+          {
+            "type": "number",
+            "format": "int64",
+            "description": "experiment id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "experiment",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/ProphecisExperimentPutBasicInfo"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Model create failed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "Delete Experiment.",
+        "tags": [
+          "Experiments"
+        ],
+        "summary": "Delete Experiment",
+        "operationId": "deleteExperiment",
+        "parameters": [
+          {
+            "type": "number",
+            "format": "int64",
+            "description": "experiment id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/BasicModel"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Model create failed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/experiment/{id}/export": {
+      "get": {
+        "description": "export Experiment.",
+        "tags": [
+          "Experiments"
+        ],
+        "summary": "Export Experiment",
+        "operationId": "exportExperiment",
+        "parameters": [
+          {
+            "type": "number",
+            "format": "int64",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Model definition",
+            "schema": {
+              "type": "string",
+              "format": "binary"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "The Experiment cannot be found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/experiment/{id}/exportdss": {
+      "get": {
+        "description": "export Experiment(DSS)",
+        "tags": [
+          "Experiments"
+        ],
+        "summary": "Export Expriments(DSS)",
+        "operationId": "exportExperimentDss",
+        "parameters": [
+          {
+            "type": "number",
+            "format": "int64",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Export Experiment(Dss) Response definition",
+            "schema": {
+              "$ref": "#/definitions/ProphecisExportExperimentDssResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "The Experiment cannot be found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/experimentJob/{linkis_exec_id}/status": {
+      "get": {
+        "description": "Get Flow Execution Msg From /api/entrance/${exec_id}/status",
+        "tags": [
+          "LinkisJob"
+        ],
+        "summary": "Get Linkis Execution Job Status.",
+        "operationId": "getLinkisJobStatus",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "linkis_exec_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Model create failed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/experimentJob/{linkis_task_id}/log": {
+      "get": {
+        "description": "Get Flow Execution Msg From /api/entrance/${exec_id}/log",
+        "tags": [
+          "LinkisJob"
+        ],
+        "summary": "Get Linkis Execution Log.",
+        "operationId": "getLinkisJobLog",
+        "parameters": [
+          {
+            "type": "number",
+            "format": "int64",
+            "name": "linkis_task_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Model create failed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/experimentRun/{exec_id}/execution": {
+      "get": {
+        "description": "Get Flow Execution Msg From /api/entrance/${exec_id}/execution",
+        "tags": [
+          "ExperimentRuns"
+        ],
+        "summary": "Linkis Execution Method.",
+        "operationId": "getExperimentRunExecution",
+        "parameters": [
+          {
+            "type": "number",
+            "format": "int64",
+            "name": "exec_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Model create failed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/experimentRun/{exp_id}": {
+      "post": {
+        "description": "Run an Experiment Flow By Experiment Id.",
+        "tags": [
+          "ExperimentRuns"
+        ],
+        "summary": "Run an Experiment Flow By Experiment Id.",
+        "operationId": "createExperimentRun",
+        "parameters": [
+          {
+            "type": "number",
+            "format": "int64",
+            "name": "exp_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "experimentRunRequest",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/ProphecisExperimentRunRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ProphecisExperimentRun"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "The Models cannot be found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/experimentRun/{id}": {
+      "get": {
+        "description": "Get an Experiment Flow Exec Record By Experiment Id \u0026 Flow_Exec_ID.",
+        "tags": [
+          "ExperimentRuns"
+        ],
+        "summary": "Get an Experiment Flow Exec Record By Experiment Id \u0026 Flow_Exec_ID.",
+        "operationId": "getExperimentRun",
+        "parameters": [
+          {
+            "type": "number",
+            "format": "int64",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ProphecisExperimentRunsGetResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "The Models cannot be found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "Stop And Delete Experiment Exec Record By Experiment Id.",
+        "tags": [
+          "ExperimentRuns"
+        ],
+        "summary": "Stop And Delete Experiment Exec Record By Experiment Id.",
+        "operationId": "deleteExperimentRun",
+        "parameters": [
+          {
+            "type": "number",
+            "format": "int64",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/BasicModel"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "The Models cannot be found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/experimentRun/{id}/kill": {
+      "get": {
+        "description": "Kill Experiment Run By Exec Id.",
+        "tags": [
+          "ExperimentRuns"
+        ],
+        "summary": "Kill Experiment Run By Exec Id.",
+        "operationId": "killExperimentRun",
+        "parameters": [
+          {
+            "type": "number",
+            "format": "int64",
+            "description": "The Experiment Run Id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Model create failed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/experimentRun/{id}/log": {
+      "get": {
+        "description": "Get Experiment Exec Log By Exec Id.",
+        "tags": [
+          "ExperimentRuns"
+        ],
+        "summary": "Get Experiment Exec Log By Exec Id.",
+        "operationId": "getExperimentRunLog",
+        "parameters": [
+          {
+            "type": "number",
+            "format": "int64",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "number",
+            "format": "int64",
+            "description": "log from line number",
+            "name": "from_line",
+            "in": "query"
+          },
+          {
+            "type": "number",
+            "format": "int64",
+            "description": "get log size",
+            "name": "size",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Model create failed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/experimentRun/{id}/status": {
+      "get": {
+        "description": "Get ExperimentRun Status By Id.",
+        "tags": [
+          "ExperimentRuns"
+        ],
+        "summary": "Get ExperimentRun Status By Id.",
+        "operationId": "getExperimentRunStatus",
+        "parameters": [
+          {
+            "type": "number",
+            "format": "int64",
+            "description": "The Experiment Run Id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ExperimentRunStatusResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Model create failed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/experimentRuns": {
+      "get": {
+        "description": "List ExperimentRuns.",
+        "tags": [
+          "ExperimentRuns"
+        ],
+        "summary": "List ExperimentRuns.",
+        "operationId": "listExperimentRuns",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "query_str",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "username",
+            "in": "query"
+          },
+          {
+            "type": "number",
+            "format": "int64",
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "type": "number",
+            "format": "int64",
+            "name": "size",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ProphecisExperimentRuns"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "The Models cannot be found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/experimentRunsHistory/{exp_id}": {
+      "get": {
+        "description": "Get Experiment's ExperimentRun History",
+        "tags": [
+          "ExperimentRuns"
+        ],
+        "summary": "ExperimentRun History",
+        "operationId": "getExperimentRunsHistory",
+        "parameters": [
+          {
+            "type": "number",
+            "format": "int64",
+            "name": "exp_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "query_str",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "username",
+            "in": "query"
+          },
+          {
+            "type": "number",
+            "format": "int64",
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "type": "number",
+            "format": "int64",
+            "name": "size",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ProphecisExperiments"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Get ExperimentRun's History Failed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/experimentTag": {
+      "post": {
+        "description": "Create Experiment Tag.",
+        "tags": [
+          "Experiments"
+        ],
+        "summary": "createExperimentTag",
+        "operationId": "createExperimentTag",
+        "parameters": [
+          {
+            "description": "The Experiment Tag Request",
+            "name": "experimentTag",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ProphecisExperimentTagPostRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ProphecisExperimentTag"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "The Models cannot be found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/experimentTag/{id}": {
+      "delete": {
+        "description": "Delete Experiment Ta.",
+        "tags": [
+          "Experiments"
+        ],
+        "summary": "deleteExperimentTag",
+        "operationId": "deleteExperimentTag",
+        "parameters": [
+          {
+            "type": "number",
+            "format": "int64",
+            "description": "The Experiment Request",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "The Models cannot be found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/experiments": {
+      "get": {
+        "description": "List Experiments by User.",
+        "tags": [
+          "Experiments"
+        ],
+        "summary": "List Experiments by User.",
+        "operationId": "listExperiments",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "query_str",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "username",
+            "in": "query"
+          },
+          {
+            "type": "number",
+            "format": "int64",
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "type": "number",
+            "format": "int64",
+            "name": "size",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ProphecisExperiments"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Model create failed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/job/{training_id}/log": {
+      "get": {
+        "description": "Get Job Log By Exec Id And Line.",
+        "tags": [
+          "Models"
+        ],
+        "summary": "Get Job Log By Exec Id And Line.",
+        "operationId": "getJobLogByLine",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "training_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "number",
+            "format": "int64",
+            "description": "log start line",
+            "name": "size",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "number",
+            "format": "int64",
+            "description": "log end line",
+            "name": "from",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/LogResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Model create failed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/di/v1/logs/{model_id}/loglines": {
       "get": {
         "tags": [
@@ -203,8 +1306,7 @@ func init() {
             "default": "2017-02-13",
             "description": "The release date of the version of the API you want to use. Specify dates in YYYY-MM-DD format.",
             "name": "version",
-            "in": "query",
-            "required": true
+            "in": "query"
           },
           {
             "type": "string",
@@ -222,14 +1324,14 @@ func init() {
           },
           {
             "type": "string",
-            "default": "",
+            "default": "1",
             "description": "page number.",
             "name": "page",
             "in": "query"
           },
           {
             "type": "string",
-            "default": "",
+            "default": "10",
             "description": "entity number per page.",
             "name": "size",
             "in": "query"
@@ -303,8 +1405,7 @@ func init() {
             "default": "2017-02-13",
             "description": "The release date of the version of the API you want to use. Specify dates in YYYY-MM-DD format.",
             "name": "version",
-            "in": "query",
-            "required": true
+            "in": "query"
           }
         ],
         "responses": {
@@ -356,8 +1457,7 @@ func init() {
             "default": "2017-02-13",
             "description": "The release date of the version of the API you want to use. Specify dates in YYYY-MM-DD format.",
             "name": "version",
-            "in": "query",
-            "required": true
+            "in": "query"
           }
         ],
         "responses": {
@@ -402,8 +1502,7 @@ func init() {
             "default": "2017-02-13",
             "description": "The release date of the version of the API you want to use. Specify dates in YYYY-MM-DD format.",
             "name": "version",
-            "in": "query",
-            "required": true
+            "in": "query"
           }
         ],
         "responses": {
@@ -513,8 +1612,7 @@ func init() {
             "default": "2017-02-13",
             "description": "The release date of the version of the API you want to use. Specify dates in YYYY-MM-DD format.",
             "name": "version",
-            "in": "query",
-            "required": true
+            "in": "query"
           }
         ],
         "responses": {
@@ -584,6 +1682,45 @@ func init() {
         }
       }
     },
+    "/di/v1/models/{model_id}/kill": {
+      "get": {
+        "description": "Get detailed information about a model such as training status.\n",
+        "tags": [
+          "Models"
+        ],
+        "summary": "Get detailed information about a model.",
+        "operationId": "KillTrainingModel",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The id of the model.",
+            "name": "model_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detailed model and training information.",
+            "schema": {
+              "$ref": "#/definitions/Model"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Model with the given ID not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/di/v1/models/{model_id}/logs": {
       "get": {
         "security": [],
@@ -626,8 +1763,7 @@ func init() {
             "default": "2017-02-13",
             "description": "The release date of the version of the API you want to use. Specify dates in YYYY-MM-DD format.",
             "name": "version",
-            "in": "query",
-            "required": true
+            "in": "query"
           }
         ],
         "responses": {
@@ -678,8 +1814,7 @@ func init() {
             "default": "2017-02-13",
             "description": "The release date of the version of the API you want to use. Specify dates in YYYY-MM-DD format.",
             "name": "version",
-            "in": "query",
-            "required": true
+            "in": "query"
           }
         ],
         "responses": {
@@ -747,6 +1882,35 @@ func init() {
         }
       }
     },
+    "DataSet": {
+      "type": "object",
+      "properties": {
+        "testing_data_path": {
+          "description": "the path of testing data set",
+          "type": "string"
+        },
+        "testing_label_path": {
+          "description": "the path of testing data label.",
+          "type": "string"
+        },
+        "training_data_path": {
+          "description": "the path of training data set.",
+          "type": "string"
+        },
+        "training_label_path": {
+          "description": "the path of training data label.",
+          "type": "string"
+        },
+        "validation_data_path": {
+          "description": "the path of validation data set.",
+          "type": "string"
+        },
+        "validation_label_path": {
+          "description": "the path of validation data label.",
+          "type": "string"
+        }
+      }
+    },
     "Datastore": {
       "type": "object",
       "properties": {
@@ -762,6 +1926,15 @@ func init() {
         },
         "type": {
           "description": "the type of the data store as defined in the manifest.",
+          "type": "string"
+        }
+      }
+    },
+    "DssUserInfo": {
+      "type": "object",
+      "properties": {
+        "userName": {
+          "description": "UserName",
           "type": "string"
         }
       }
@@ -801,6 +1974,56 @@ func init() {
           "type": "string"
         },
         "msg": {
+          "type": "string"
+        }
+      }
+    },
+    "ExperimentRunLogRequest": {
+      "type": "object",
+      "properties": {
+        "fromline": {
+          "description": "request log from line.",
+          "type": "number",
+          "format": "int64"
+        },
+        "size": {
+          "description": "request log size.",
+          "type": "number",
+          "format": "int64"
+        }
+      }
+    },
+    "ExperimentRunLogResponse": {
+      "type": "object",
+      "properties": {
+        "fromline": {
+          "description": "log from line number",
+          "type": "number",
+          "format": "int64"
+        },
+        "id": {
+          "description": "prophecis_experiment_run entity",
+          "type": "number",
+          "format": "int64"
+        },
+        "log": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "ExperimentRunStatusResponse": {
+      "type": "object",
+      "properties": {
+        "runId": {
+          "description": "experiment run id.",
+          "type": "number",
+          "format": "int64"
+        },
+        "status": {
+          "description": "experiment run status.",
           "type": "string"
         }
       }
@@ -853,6 +2076,20 @@ func init() {
         }
       }
     },
+    "LogResponse": {
+      "type": "object",
+      "properties": {
+        "is_last_line": {
+          "type": "string"
+        },
+        "logs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "Model": {
       "allOf": [
         {
@@ -872,9 +2109,16 @@ func init() {
               "description": "TFosRequest",
               "$ref": "#/definitions/TFosRequest"
             },
+            "api_type": {
+              "description": "api type of xgboost or lightgbm",
+              "type": "string"
+            },
             "completed_timestamp": {
               "description": "completed timestamp of the job",
               "type": "string"
+            },
+            "data_set": {
+              "$ref": "#/definitions/DataSet"
             },
             "data_stores": {
               "type": "array",
@@ -909,8 +2153,16 @@ func init() {
               "description": "job's namespace.",
               "type": "string"
             },
+            "job_params": {
+              "description": "algorithm of training job",
+              "type": "string"
+            },
             "name": {
               "description": "The name of the deep learning model.",
+              "type": "string"
+            },
+            "proxy_user": {
+              "description": "proxy user of job",
               "type": "string"
             },
             "ps_cpu": {
@@ -958,6 +2210,508 @@ func init() {
         },
         "total": {
           "type": "integer"
+        }
+      }
+    },
+    "ProphecisExperiment": {
+      "type": "object",
+      "required": [
+        "exp_name",
+        "exp_desc"
+      ],
+      "properties": {
+        "create_type": {
+          "description": "Create Type.",
+          "type": "string"
+        },
+        "create_user": {
+          "description": "user entity",
+          "type": "object",
+          "$ref": "#/definitions/User"
+        },
+        "dss_bml_last_version": {
+          "description": "DSS Flow BML Version",
+          "type": "string"
+        },
+        "dss_dss_flow_name": {
+          "description": "DSS DSS Flow Name",
+          "type": "string"
+        },
+        "dss_dss_flow_project_version_id": {
+          "description": "DSS DSS Flow Project Version Id",
+          "type": "string"
+        },
+        "dss_dss_flow_version": {
+          "description": "DSS DSS Flow Version",
+          "type": "string"
+        },
+        "dss_dss_project_id": {
+          "description": "DSS DSS Project Id",
+          "type": "number",
+          "format": "int64"
+        },
+        "dss_dss_project_name": {
+          "description": "DSS DSS Project Name",
+          "type": "string"
+        },
+        "dss_flow_id": {
+          "description": "DSS Flow ID.",
+          "type": "number",
+          "format": "int64"
+        },
+        "dss_project_id": {
+          "description": "DSS Project ID.",
+          "type": "number",
+          "format": "int64"
+        },
+        "dss_project_version_id": {
+          "description": "DSS Project Version.",
+          "type": "number",
+          "format": "int64"
+        },
+        "dss_workspace_id": {
+          "description": "DSS Workspace ID.",
+          "type": "number",
+          "format": "int64"
+        },
+        "enable_flag": {
+          "description": "Flag of Delete.",
+          "type": "string"
+        },
+        "exp_create_time": {
+          "description": "Timestamp of experiment create.",
+          "type": "string",
+          "format": "date-time"
+        },
+        "exp_create_user_id": {
+          "description": "User of experiment creator.",
+          "type": "number",
+          "format": "int64"
+        },
+        "exp_desc": {
+          "description": "Experiment Description.",
+          "type": "string"
+        },
+        "exp_modify_time": {
+          "description": "Timestamp of experiment modify.",
+          "type": "string",
+          "format": "date-time"
+        },
+        "exp_modify_user_id": {
+          "description": "User of last experiment modifier.",
+          "type": "number",
+          "format": "int64"
+        },
+        "exp_name": {
+          "description": "Experiment Name.",
+          "type": "string"
+        },
+        "group_name": {
+          "description": "Experiment Name.",
+          "type": "string"
+        },
+        "id": {
+          "description": "Experiment id.",
+          "type": "number",
+          "format": "int64"
+        },
+        "mlflow_exp_id": {
+          "description": "MLFlow Experiment ID.",
+          "type": "string"
+        },
+        "modify_user": {
+          "description": "user entity",
+          "type": "object",
+          "$ref": "#/definitions/User"
+        },
+        "tag_list": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProphecisExperimentTag"
+          }
+        }
+      }
+    },
+    "ProphecisExperimentGetResponse": {
+      "type": "object",
+      "required": [
+        "prophecis_experiment",
+        "flow_json"
+      ],
+      "properties": {
+        "flow_json": {
+          "type": "string"
+        },
+        "prophecis_experiment": {
+          "$ref": "#/definitions/ProphecisExperiment"
+        }
+      }
+    },
+    "ProphecisExperimentIDResponse": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "exp_name": {
+          "description": "ProphecisExperiment Name",
+          "type": "string"
+        },
+        "id": {
+          "description": "ProphecisExperiment ID",
+          "type": "number",
+          "format": "int64"
+        }
+      }
+    },
+    "ProphecisExperimentPutBasicInfo": {
+      "type": "object",
+      "properties": {
+        "exp_desc": {
+          "description": "Experiment Description.",
+          "type": "string"
+        },
+        "exp_name": {
+          "description": "Experiment Name.",
+          "type": "string"
+        },
+        "tag_list": {
+          "description": "Experiment Tags",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProphecisExperimentTagPutBasicInfo"
+          }
+        }
+      }
+    },
+    "ProphecisExperimentPutRequest": {
+      "type": "object",
+      "required": [
+        "experiment_id",
+        "flow_json"
+      ],
+      "properties": {
+        "experiment_id": {
+          "description": "ProphecisExperiment ID",
+          "type": "number",
+          "format": "int64"
+        },
+        "flow_json": {
+          "type": "string"
+        }
+      }
+    },
+    "ProphecisExperimentRequest": {
+      "type": "object",
+      "required": [
+        "exp_name",
+        "exp_desc"
+      ],
+      "properties": {
+        "createType": {
+          "description": "experiment type, default \"MLFlow\", choose next value, \"WTSS\" \"DSS\" \"MLFlow\"",
+          "type": "string",
+          "default": "MLFlow"
+        },
+        "exp_desc": {
+          "description": "Experiment Description.",
+          "type": "string"
+        },
+        "exp_id": {
+          "description": "Experiment id.",
+          "type": "number",
+          "format": "int64"
+        },
+        "exp_name": {
+          "description": "Experiment Name.",
+          "type": "string"
+        },
+        "group_name": {
+          "description": "Group Name.",
+          "type": "string"
+        },
+        "tag_list": {
+          "description": "Experiment Tags",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProphecisExperimentTagPutBasicInfo"
+          }
+        }
+      }
+    },
+    "ProphecisExperimentRun": {
+      "type": "object",
+      "required": [
+        "exp_id",
+        "exp_exec_type"
+      ],
+      "properties": {
+        "dss_exec_id": {
+          "description": "linkis flow exec id.",
+          "type": "string"
+        },
+        "dss_flow_id": {
+          "description": "DSS Flow ID.",
+          "type": "number",
+          "format": "int64"
+        },
+        "dss_flow_last_version_id": {
+          "description": "DSS Flow Version ID.",
+          "type": "number",
+          "format": "int64"
+        },
+        "enable_flag": {
+          "description": "Flag of Delete.",
+          "type": "string"
+        },
+        "exp_exec_status": {
+          "description": "Experiment Exec Type, include RUNNING/SCHEDULED/FINISHED/FAILED/KILLED.",
+          "type": "string"
+        },
+        "exp_exec_type": {
+          "description": "Experiment Exec Type, include CLI/UI/DSS/Schedulis.",
+          "type": "string"
+        },
+        "exp_id": {
+          "description": "Experiment ID.",
+          "type": "number",
+          "format": "int64"
+        },
+        "exp_run_create_time": {
+          "description": "Created Timestamp of Experiment Exec.",
+          "type": "string",
+          "format": "date-time"
+        },
+        "exp_run_create_user_id": {
+          "description": "User of experiment exec.",
+          "type": "number",
+          "format": "int64"
+        },
+        "exp_run_end_time": {
+          "description": "Timestamp of Experiment finished.",
+          "type": "string",
+          "format": "date-time"
+        },
+        "exp_run_modify_user_id": {
+          "description": "User of modify experiment exec.",
+          "type": "number",
+          "format": "int64"
+        },
+        "experiment": {
+          "description": "experiment entity.",
+          "type": "object",
+          "$ref": "#/definitions/ProphecisExperiment"
+        },
+        "id": {
+          "description": "Experiment Exec ID.",
+          "type": "number"
+        },
+        "user": {
+          "description": "user entity",
+          "type": "object",
+          "$ref": "#/definitions/User"
+        }
+      }
+    },
+    "ProphecisExperimentRunRequest": {
+      "type": "object",
+      "required": [
+        "exp_exec_type"
+      ],
+      "properties": {
+        "exp_exec_type": {
+          "description": "Experiment Run type, Include CLI/UI/DSS/Schedulis.",
+          "type": "string"
+        },
+        "flow_json": {
+          "description": "Experiment Run type, Include CLI/UI/DSS/Schedulis.",
+          "type": "string"
+        }
+      }
+    },
+    "ProphecisExperimentRunResponse": {
+      "type": "object",
+      "properties": {
+        "exp_exec_id": {
+          "description": "Experiment Run ID",
+          "type": "number"
+        }
+      }
+    },
+    "ProphecisExperimentRuns": {
+      "type": "object",
+      "properties": {
+        "experiment_runs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProphecisExperimentRun"
+          }
+        },
+        "page_number": {
+          "type": "number",
+          "format": "int64"
+        },
+        "page_size": {
+          "type": "number",
+          "format": "int64"
+        },
+        "total": {
+          "type": "number",
+          "format": "int64"
+        },
+        "total_page": {
+          "type": "number",
+          "format": "int64"
+        }
+      }
+    },
+    "ProphecisExperimentRunsGetResponse": {
+      "type": "object",
+      "required": [
+        "prophecis_experiment_run",
+        "flow_json"
+      ],
+      "properties": {
+        "flow_json": {
+          "type": "string"
+        },
+        "prophecis_experiment_run": {
+          "description": "prophecis_experiment_run entity",
+          "$ref": "#/definitions/ProphecisExperimentRun"
+        }
+      }
+    },
+    "ProphecisExperimentTag": {
+      "type": "object",
+      "required": [
+        "exp_tag"
+      ],
+      "properties": {
+        "enable_flag": {
+          "description": "Flag of Delete.",
+          "type": "string"
+        },
+        "exp_id": {
+          "description": "Experiment ID.",
+          "type": "number",
+          "format": "int64"
+        },
+        "exp_tag": {
+          "description": "Experiment Tag Name.",
+          "type": "string"
+        },
+        "exp_tag_create_time": {
+          "description": "Timestamp recorded when this Experiment Tag  was created.",
+          "type": "string",
+          "format": "date-time"
+        },
+        "exp_tag_create_user_id": {
+          "description": "Creator recorded when this Experiment Tag  was created.",
+          "type": "integer"
+        },
+        "id": {
+          "description": "Experiment Tag ID.",
+          "type": "number",
+          "format": "int64"
+        }
+      }
+    },
+    "ProphecisExperimentTagPostRequest": {
+      "type": "object",
+      "required": [
+        "exp_tag"
+      ],
+      "properties": {
+        "exp_id": {
+          "description": "experiment id.",
+          "type": "number",
+          "format": "int64"
+        },
+        "exp_tag": {
+          "description": "Experiment Tag Name.",
+          "type": "string"
+        }
+      }
+    },
+    "ProphecisExperimentTagPutBasicInfo": {
+      "type": "object",
+      "properties": {
+        "exp_id": {
+          "description": "Experiment Id",
+          "type": "number"
+        },
+        "exp_tag": {
+          "description": "Experiment's Tag",
+          "type": "string"
+        }
+      }
+    },
+    "ProphecisExperimentTags": {
+      "type": "object",
+      "properties": {
+        "experiment_tags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProphecisExperimentTag"
+          }
+        },
+        "page_number": {
+          "type": "number",
+          "format": "int64"
+        },
+        "page_size": {
+          "type": "number",
+          "format": "int64"
+        }
+      }
+    },
+    "ProphecisExperiments": {
+      "type": "object",
+      "properties": {
+        "experiments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProphecisExperiment"
+          }
+        },
+        "page_number": {
+          "type": "number",
+          "format": "int64"
+        },
+        "page_size": {
+          "type": "number",
+          "format": "int64"
+        },
+        "total": {
+          "type": "number",
+          "format": "int64"
+        },
+        "total_page": {
+          "type": "number",
+          "format": "int64"
+        }
+      }
+    },
+    "ProphecisExportExperimentDssResponse": {
+      "type": "object",
+      "properties": {
+        "resourceId": {
+          "description": "Resource Id",
+          "type": "string"
+        },
+        "version": {
+          "description": "Version",
+          "type": "string"
+        }
+      }
+    },
+    "ProphecisImportExperimentDssResponse": {
+      "type": "object",
+      "properties": {
+        "expId": {
+          "description": "Experiment Id",
+          "type": "number",
+          "format": "int64"
         }
       }
     },
@@ -1178,7 +2932,42 @@ func init() {
         }
       }
     }
-  }
+  },
+  "securityDefinitions": {
+    "basicAuth": {
+      "description": "Basic Autentication credentials for using the API.",
+      "type": "basic"
+    },
+    "basicAuthToken": {
+      "description": "Watson Developer Cloud Basic Autentication. See [here](https://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/doc/getting_started/gs-tokens.shtml) for more information",
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header"
+    },
+    "watsonAuthToken": {
+      "description": "Watson Developer Cloud Token Autentication. See [here](https://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/doc/getting_started/gs-tokens.shtml) for more information",
+      "type": "apiKey",
+      "name": "X-Watson-Authorization-Token",
+      "in": "header"
+    },
+    "watsonAuthTokenQuery": {
+      "description": "Watson Developer Cloud Token Autentication. See [here](https://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/doc/getting_started/gs-tokens.shtml) for more information",
+      "type": "apiKey",
+      "name": "watson-token",
+      "in": "query"
+    }
+  },
+  "security": [
+    {
+      "basicAuthToken": []
+    },
+    {
+      "watsonAuthToken": []
+    },
+    {
+      "watsonAuthTokenQuery": []
+    }
+  ]
 }`))
 	FlatSwaggerJSON = json.RawMessage([]byte(`{
   "consumes": [
@@ -1279,6 +3068,1109 @@ func init() {
         }
       }
     },
+    "/di/v1/dssUserInfo": {
+      "get": {
+        "description": "Get DSS UserInfo",
+        "tags": [
+          "DssUserInfo"
+        ],
+        "summary": "Get DSS UserInfo",
+        "operationId": "getDssUserInfo",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "id",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "workspaceId",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/DssUserInfo"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Get UserInfo Not Found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/experiment": {
+      "put": {
+        "description": "Update Experiment Flow Json.",
+        "tags": [
+          "Experiments"
+        ],
+        "summary": "Update Experiment",
+        "operationId": "updateExperiment",
+        "parameters": [
+          {
+            "description": "The Experiment Put Request.",
+            "name": "experiment",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ProphecisExperimentPutRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Model create failed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "Create Experiment.",
+        "tags": [
+          "Experiments"
+        ],
+        "summary": "createExperiment",
+        "operationId": "createExperiment",
+        "parameters": [
+          {
+            "description": "The Experiment Request",
+            "name": "experiment",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ProphecisExperimentRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ProphecisExperimentIDResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "The Models cannot be found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/experiment/import": {
+      "post": {
+        "description": "import experiment.",
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Experiments"
+        ],
+        "summary": "import Zip To Create Experimetn.",
+        "operationId": "importExperiment",
+        "parameters": [
+          {
+            "type": "file",
+            "name": "file",
+            "in": "formData",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "fileName",
+            "in": "formData"
+          },
+          {
+            "type": "number",
+            "format": "int64",
+            "default": 0,
+            "description": "if experimentId is 0 or not provided, create experiment in db; if exists, get experiment by experimentId, update it.",
+            "name": "experimentId",
+            "in": "formData"
+          },
+          {
+            "type": "string",
+            "default": "MLFlow",
+            "description": "experiment type, default \"MLFlow\", choose next value, \"WTSS\" \"DSS\" \"MLFlow\"",
+            "name": "createType",
+            "in": "formData"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ProphecisExperimentIDResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "The Models cannot be found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/experiment/importdss": {
+      "post": {
+        "description": "import Experiment(DSS)",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Experiments"
+        ],
+        "summary": "Import Experiment(DSS)",
+        "operationId": "importExperimentDss",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "resourceId",
+            "in": "formData",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "version",
+            "in": "formData"
+          },
+          {
+            "type": "string",
+            "name": "desc",
+            "in": "formData"
+          },
+          {
+            "type": "number",
+            "format": "int64",
+            "default": 0,
+            "description": "if experimentId is 0 or not provided, create experiment in db; if exists, get experiment by experimentId, update it.",
+            "name": "experimentId",
+            "in": "formData"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Import Experiment(Dss) Response definition",
+            "schema": {
+              "$ref": "#/definitions/ProphecisImportExperimentDssResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "The Experiment cannot be found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/experiment/{id}": {
+      "get": {
+        "description": "Get Experiment By Experiment Id.",
+        "tags": [
+          "Experiments"
+        ],
+        "summary": "Get Experiment",
+        "operationId": "getExperiment",
+        "parameters": [
+          {
+            "type": "number",
+            "format": "int64",
+            "description": "experiment id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ProphecisExperimentGetResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Model create failed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "put": {
+        "description": "Put Experiment Basic Info By Experiment Id.",
+        "tags": [
+          "Experiments"
+        ],
+        "summary": "Put Experiment Basic Info",
+        "operationId": "updateExperimentInfo",
+        "parameters": [
+          {
+            "type": "number",
+            "format": "int64",
+            "description": "experiment id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "experiment",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/ProphecisExperimentPutBasicInfo"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Model create failed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "Delete Experiment.",
+        "tags": [
+          "Experiments"
+        ],
+        "summary": "Delete Experiment",
+        "operationId": "deleteExperiment",
+        "parameters": [
+          {
+            "type": "number",
+            "format": "int64",
+            "description": "experiment id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/BasicModel"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Model create failed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/experiment/{id}/export": {
+      "get": {
+        "description": "export Experiment.",
+        "tags": [
+          "Experiments"
+        ],
+        "summary": "Export Experiment",
+        "operationId": "exportExperiment",
+        "parameters": [
+          {
+            "type": "number",
+            "format": "int64",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Model definition",
+            "schema": {
+              "type": "string",
+              "format": "binary"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "The Experiment cannot be found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/experiment/{id}/exportdss": {
+      "get": {
+        "description": "export Experiment(DSS)",
+        "tags": [
+          "Experiments"
+        ],
+        "summary": "Export Expriments(DSS)",
+        "operationId": "exportExperimentDss",
+        "parameters": [
+          {
+            "type": "number",
+            "format": "int64",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Export Experiment(Dss) Response definition",
+            "schema": {
+              "$ref": "#/definitions/ProphecisExportExperimentDssResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "The Experiment cannot be found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/experimentJob/{linkis_exec_id}/status": {
+      "get": {
+        "description": "Get Flow Execution Msg From /api/entrance/${exec_id}/status",
+        "tags": [
+          "LinkisJob"
+        ],
+        "summary": "Get Linkis Execution Job Status.",
+        "operationId": "getLinkisJobStatus",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "linkis_exec_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Model create failed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/experimentJob/{linkis_task_id}/log": {
+      "get": {
+        "description": "Get Flow Execution Msg From /api/entrance/${exec_id}/log",
+        "tags": [
+          "LinkisJob"
+        ],
+        "summary": "Get Linkis Execution Log.",
+        "operationId": "getLinkisJobLog",
+        "parameters": [
+          {
+            "type": "number",
+            "format": "int64",
+            "name": "linkis_task_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Model create failed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/experimentRun/{exec_id}/execution": {
+      "get": {
+        "description": "Get Flow Execution Msg From /api/entrance/${exec_id}/execution",
+        "tags": [
+          "ExperimentRuns"
+        ],
+        "summary": "Linkis Execution Method.",
+        "operationId": "getExperimentRunExecution",
+        "parameters": [
+          {
+            "type": "number",
+            "format": "int64",
+            "name": "exec_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Model create failed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/experimentRun/{exp_id}": {
+      "post": {
+        "description": "Run an Experiment Flow By Experiment Id.",
+        "tags": [
+          "ExperimentRuns"
+        ],
+        "summary": "Run an Experiment Flow By Experiment Id.",
+        "operationId": "createExperimentRun",
+        "parameters": [
+          {
+            "type": "number",
+            "format": "int64",
+            "name": "exp_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "experimentRunRequest",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/ProphecisExperimentRunRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ProphecisExperimentRun"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "The Models cannot be found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/experimentRun/{id}": {
+      "get": {
+        "description": "Get an Experiment Flow Exec Record By Experiment Id \u0026 Flow_Exec_ID.",
+        "tags": [
+          "ExperimentRuns"
+        ],
+        "summary": "Get an Experiment Flow Exec Record By Experiment Id \u0026 Flow_Exec_ID.",
+        "operationId": "getExperimentRun",
+        "parameters": [
+          {
+            "type": "number",
+            "format": "int64",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ProphecisExperimentRunsGetResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "The Models cannot be found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "Stop And Delete Experiment Exec Record By Experiment Id.",
+        "tags": [
+          "ExperimentRuns"
+        ],
+        "summary": "Stop And Delete Experiment Exec Record By Experiment Id.",
+        "operationId": "deleteExperimentRun",
+        "parameters": [
+          {
+            "type": "number",
+            "format": "int64",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/BasicModel"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "The Models cannot be found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/experimentRun/{id}/kill": {
+      "get": {
+        "description": "Kill Experiment Run By Exec Id.",
+        "tags": [
+          "ExperimentRuns"
+        ],
+        "summary": "Kill Experiment Run By Exec Id.",
+        "operationId": "killExperimentRun",
+        "parameters": [
+          {
+            "type": "number",
+            "format": "int64",
+            "description": "The Experiment Run Id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Model create failed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/experimentRun/{id}/log": {
+      "get": {
+        "description": "Get Experiment Exec Log By Exec Id.",
+        "tags": [
+          "ExperimentRuns"
+        ],
+        "summary": "Get Experiment Exec Log By Exec Id.",
+        "operationId": "getExperimentRunLog",
+        "parameters": [
+          {
+            "type": "number",
+            "format": "int64",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "number",
+            "format": "int64",
+            "description": "log from line number",
+            "name": "from_line",
+            "in": "query"
+          },
+          {
+            "type": "number",
+            "format": "int64",
+            "description": "get log size",
+            "name": "size",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Model create failed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/experimentRun/{id}/status": {
+      "get": {
+        "description": "Get ExperimentRun Status By Id.",
+        "tags": [
+          "ExperimentRuns"
+        ],
+        "summary": "Get ExperimentRun Status By Id.",
+        "operationId": "getExperimentRunStatus",
+        "parameters": [
+          {
+            "type": "number",
+            "format": "int64",
+            "description": "The Experiment Run Id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ExperimentRunStatusResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Model create failed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/experimentRuns": {
+      "get": {
+        "description": "List ExperimentRuns.",
+        "tags": [
+          "ExperimentRuns"
+        ],
+        "summary": "List ExperimentRuns.",
+        "operationId": "listExperimentRuns",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "query_str",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "username",
+            "in": "query"
+          },
+          {
+            "type": "number",
+            "format": "int64",
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "type": "number",
+            "format": "int64",
+            "name": "size",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ProphecisExperimentRuns"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "The Models cannot be found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/experimentRunsHistory/{exp_id}": {
+      "get": {
+        "description": "Get Experiment's ExperimentRun History",
+        "tags": [
+          "ExperimentRuns"
+        ],
+        "summary": "ExperimentRun History",
+        "operationId": "getExperimentRunsHistory",
+        "parameters": [
+          {
+            "type": "number",
+            "format": "int64",
+            "name": "exp_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "query_str",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "username",
+            "in": "query"
+          },
+          {
+            "type": "number",
+            "format": "int64",
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "type": "number",
+            "format": "int64",
+            "name": "size",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ProphecisExperiments"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Get ExperimentRun's History Failed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/experimentTag": {
+      "post": {
+        "description": "Create Experiment Tag.",
+        "tags": [
+          "Experiments"
+        ],
+        "summary": "createExperimentTag",
+        "operationId": "createExperimentTag",
+        "parameters": [
+          {
+            "description": "The Experiment Tag Request",
+            "name": "experimentTag",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ProphecisExperimentTagPostRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ProphecisExperimentTag"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "The Models cannot be found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/experimentTag/{id}": {
+      "delete": {
+        "description": "Delete Experiment Ta.",
+        "tags": [
+          "Experiments"
+        ],
+        "summary": "deleteExperimentTag",
+        "operationId": "deleteExperimentTag",
+        "parameters": [
+          {
+            "type": "number",
+            "format": "int64",
+            "description": "The Experiment Request",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "The Models cannot be found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/experiments": {
+      "get": {
+        "description": "List Experiments by User.",
+        "tags": [
+          "Experiments"
+        ],
+        "summary": "List Experiments by User.",
+        "operationId": "listExperiments",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "query_str",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "username",
+            "in": "query"
+          },
+          {
+            "type": "number",
+            "format": "int64",
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "type": "number",
+            "format": "int64",
+            "name": "size",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ProphecisExperiments"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Model create failed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/di/v1/job/{training_id}/log": {
+      "get": {
+        "description": "Get Job Log By Exec Id And Line.",
+        "tags": [
+          "Models"
+        ],
+        "summary": "Get Job Log By Exec Id And Line.",
+        "operationId": "getJobLogByLine",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "training_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "number",
+            "format": "int64",
+            "description": "log start line",
+            "name": "size",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "number",
+            "format": "int64",
+            "description": "log end line",
+            "name": "from",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/LogResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Model create failed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/di/v1/logs/{model_id}/loglines": {
       "get": {
         "tags": [
@@ -1366,8 +4258,7 @@ func init() {
             "default": "2017-02-13",
             "description": "The release date of the version of the API you want to use. Specify dates in YYYY-MM-DD format.",
             "name": "version",
-            "in": "query",
-            "required": true
+            "in": "query"
           },
           {
             "type": "string",
@@ -1385,14 +4276,14 @@ func init() {
           },
           {
             "type": "string",
-            "default": "",
+            "default": "1",
             "description": "page number.",
             "name": "page",
             "in": "query"
           },
           {
             "type": "string",
-            "default": "",
+            "default": "10",
             "description": "entity number per page.",
             "name": "size",
             "in": "query"
@@ -1466,8 +4357,7 @@ func init() {
             "default": "2017-02-13",
             "description": "The release date of the version of the API you want to use. Specify dates in YYYY-MM-DD format.",
             "name": "version",
-            "in": "query",
-            "required": true
+            "in": "query"
           }
         ],
         "responses": {
@@ -1519,8 +4409,7 @@ func init() {
             "default": "2017-02-13",
             "description": "The release date of the version of the API you want to use. Specify dates in YYYY-MM-DD format.",
             "name": "version",
-            "in": "query",
-            "required": true
+            "in": "query"
           }
         ],
         "responses": {
@@ -1565,8 +4454,7 @@ func init() {
             "default": "2017-02-13",
             "description": "The release date of the version of the API you want to use. Specify dates in YYYY-MM-DD format.",
             "name": "version",
-            "in": "query",
-            "required": true
+            "in": "query"
           }
         ],
         "responses": {
@@ -1676,8 +4564,7 @@ func init() {
             "default": "2017-02-13",
             "description": "The release date of the version of the API you want to use. Specify dates in YYYY-MM-DD format.",
             "name": "version",
-            "in": "query",
-            "required": true
+            "in": "query"
           }
         ],
         "responses": {
@@ -1747,6 +4634,45 @@ func init() {
         }
       }
     },
+    "/di/v1/models/{model_id}/kill": {
+      "get": {
+        "description": "Get detailed information about a model such as training status.\n",
+        "tags": [
+          "Models"
+        ],
+        "summary": "Get detailed information about a model.",
+        "operationId": "KillTrainingModel",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The id of the model.",
+            "name": "model_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detailed model and training information.",
+            "schema": {
+              "$ref": "#/definitions/Model"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Model with the given ID not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/di/v1/models/{model_id}/logs": {
       "get": {
         "security": [],
@@ -1789,8 +4715,7 @@ func init() {
             "default": "2017-02-13",
             "description": "The release date of the version of the API you want to use. Specify dates in YYYY-MM-DD format.",
             "name": "version",
-            "in": "query",
-            "required": true
+            "in": "query"
           }
         ],
         "responses": {
@@ -1841,8 +4766,7 @@ func init() {
             "default": "2017-02-13",
             "description": "The release date of the version of the API you want to use. Specify dates in YYYY-MM-DD format.",
             "name": "version",
-            "in": "query",
-            "required": true
+            "in": "query"
           }
         ],
         "responses": {
@@ -1910,6 +4834,35 @@ func init() {
         }
       }
     },
+    "DataSet": {
+      "type": "object",
+      "properties": {
+        "testing_data_path": {
+          "description": "the path of testing data set",
+          "type": "string"
+        },
+        "testing_label_path": {
+          "description": "the path of testing data label.",
+          "type": "string"
+        },
+        "training_data_path": {
+          "description": "the path of training data set.",
+          "type": "string"
+        },
+        "training_label_path": {
+          "description": "the path of training data label.",
+          "type": "string"
+        },
+        "validation_data_path": {
+          "description": "the path of validation data set.",
+          "type": "string"
+        },
+        "validation_label_path": {
+          "description": "the path of validation data label.",
+          "type": "string"
+        }
+      }
+    },
     "Datastore": {
       "type": "object",
       "properties": {
@@ -1925,6 +4878,15 @@ func init() {
         },
         "type": {
           "description": "the type of the data store as defined in the manifest.",
+          "type": "string"
+        }
+      }
+    },
+    "DssUserInfo": {
+      "type": "object",
+      "properties": {
+        "userName": {
+          "description": "UserName",
           "type": "string"
         }
       }
@@ -1964,6 +4926,56 @@ func init() {
           "type": "string"
         },
         "msg": {
+          "type": "string"
+        }
+      }
+    },
+    "ExperimentRunLogRequest": {
+      "type": "object",
+      "properties": {
+        "fromline": {
+          "description": "request log from line.",
+          "type": "number",
+          "format": "int64"
+        },
+        "size": {
+          "description": "request log size.",
+          "type": "number",
+          "format": "int64"
+        }
+      }
+    },
+    "ExperimentRunLogResponse": {
+      "type": "object",
+      "properties": {
+        "fromline": {
+          "description": "log from line number",
+          "type": "number",
+          "format": "int64"
+        },
+        "id": {
+          "description": "prophecis_experiment_run entity",
+          "type": "number",
+          "format": "int64"
+        },
+        "log": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "ExperimentRunStatusResponse": {
+      "type": "object",
+      "properties": {
+        "runId": {
+          "description": "experiment run id.",
+          "type": "number",
+          "format": "int64"
+        },
+        "status": {
+          "description": "experiment run status.",
           "type": "string"
         }
       }
@@ -2016,6 +5028,20 @@ func init() {
         }
       }
     },
+    "LogResponse": {
+      "type": "object",
+      "properties": {
+        "is_last_line": {
+          "type": "string"
+        },
+        "logs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "Model": {
       "allOf": [
         {
@@ -2035,9 +5061,16 @@ func init() {
               "description": "TFosRequest",
               "$ref": "#/definitions/TFosRequest"
             },
+            "api_type": {
+              "description": "api type of xgboost or lightgbm",
+              "type": "string"
+            },
             "completed_timestamp": {
               "description": "completed timestamp of the job",
               "type": "string"
+            },
+            "data_set": {
+              "$ref": "#/definitions/DataSet"
             },
             "data_stores": {
               "type": "array",
@@ -2072,8 +5105,16 @@ func init() {
               "description": "job's namespace.",
               "type": "string"
             },
+            "job_params": {
+              "description": "algorithm of training job",
+              "type": "string"
+            },
             "name": {
               "description": "The name of the deep learning model.",
+              "type": "string"
+            },
+            "proxy_user": {
+              "description": "proxy user of job",
               "type": "string"
             },
             "ps_cpu": {
@@ -2121,6 +5162,508 @@ func init() {
         },
         "total": {
           "type": "integer"
+        }
+      }
+    },
+    "ProphecisExperiment": {
+      "type": "object",
+      "required": [
+        "exp_name",
+        "exp_desc"
+      ],
+      "properties": {
+        "create_type": {
+          "description": "Create Type.",
+          "type": "string"
+        },
+        "create_user": {
+          "description": "user entity",
+          "type": "object",
+          "$ref": "#/definitions/User"
+        },
+        "dss_bml_last_version": {
+          "description": "DSS Flow BML Version",
+          "type": "string"
+        },
+        "dss_dss_flow_name": {
+          "description": "DSS DSS Flow Name",
+          "type": "string"
+        },
+        "dss_dss_flow_project_version_id": {
+          "description": "DSS DSS Flow Project Version Id",
+          "type": "string"
+        },
+        "dss_dss_flow_version": {
+          "description": "DSS DSS Flow Version",
+          "type": "string"
+        },
+        "dss_dss_project_id": {
+          "description": "DSS DSS Project Id",
+          "type": "number",
+          "format": "int64"
+        },
+        "dss_dss_project_name": {
+          "description": "DSS DSS Project Name",
+          "type": "string"
+        },
+        "dss_flow_id": {
+          "description": "DSS Flow ID.",
+          "type": "number",
+          "format": "int64"
+        },
+        "dss_project_id": {
+          "description": "DSS Project ID.",
+          "type": "number",
+          "format": "int64"
+        },
+        "dss_project_version_id": {
+          "description": "DSS Project Version.",
+          "type": "number",
+          "format": "int64"
+        },
+        "dss_workspace_id": {
+          "description": "DSS Workspace ID.",
+          "type": "number",
+          "format": "int64"
+        },
+        "enable_flag": {
+          "description": "Flag of Delete.",
+          "type": "string"
+        },
+        "exp_create_time": {
+          "description": "Timestamp of experiment create.",
+          "type": "string",
+          "format": "date-time"
+        },
+        "exp_create_user_id": {
+          "description": "User of experiment creator.",
+          "type": "number",
+          "format": "int64"
+        },
+        "exp_desc": {
+          "description": "Experiment Description.",
+          "type": "string"
+        },
+        "exp_modify_time": {
+          "description": "Timestamp of experiment modify.",
+          "type": "string",
+          "format": "date-time"
+        },
+        "exp_modify_user_id": {
+          "description": "User of last experiment modifier.",
+          "type": "number",
+          "format": "int64"
+        },
+        "exp_name": {
+          "description": "Experiment Name.",
+          "type": "string"
+        },
+        "group_name": {
+          "description": "Experiment Name.",
+          "type": "string"
+        },
+        "id": {
+          "description": "Experiment id.",
+          "type": "number",
+          "format": "int64"
+        },
+        "mlflow_exp_id": {
+          "description": "MLFlow Experiment ID.",
+          "type": "string"
+        },
+        "modify_user": {
+          "description": "user entity",
+          "type": "object",
+          "$ref": "#/definitions/User"
+        },
+        "tag_list": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProphecisExperimentTag"
+          }
+        }
+      }
+    },
+    "ProphecisExperimentGetResponse": {
+      "type": "object",
+      "required": [
+        "prophecis_experiment",
+        "flow_json"
+      ],
+      "properties": {
+        "flow_json": {
+          "type": "string"
+        },
+        "prophecis_experiment": {
+          "$ref": "#/definitions/ProphecisExperiment"
+        }
+      }
+    },
+    "ProphecisExperimentIDResponse": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "exp_name": {
+          "description": "ProphecisExperiment Name",
+          "type": "string"
+        },
+        "id": {
+          "description": "ProphecisExperiment ID",
+          "type": "number",
+          "format": "int64"
+        }
+      }
+    },
+    "ProphecisExperimentPutBasicInfo": {
+      "type": "object",
+      "properties": {
+        "exp_desc": {
+          "description": "Experiment Description.",
+          "type": "string"
+        },
+        "exp_name": {
+          "description": "Experiment Name.",
+          "type": "string"
+        },
+        "tag_list": {
+          "description": "Experiment Tags",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProphecisExperimentTagPutBasicInfo"
+          }
+        }
+      }
+    },
+    "ProphecisExperimentPutRequest": {
+      "type": "object",
+      "required": [
+        "experiment_id",
+        "flow_json"
+      ],
+      "properties": {
+        "experiment_id": {
+          "description": "ProphecisExperiment ID",
+          "type": "number",
+          "format": "int64"
+        },
+        "flow_json": {
+          "type": "string"
+        }
+      }
+    },
+    "ProphecisExperimentRequest": {
+      "type": "object",
+      "required": [
+        "exp_name",
+        "exp_desc"
+      ],
+      "properties": {
+        "createType": {
+          "description": "experiment type, default \"MLFlow\", choose next value, \"WTSS\" \"DSS\" \"MLFlow\"",
+          "type": "string",
+          "default": "MLFlow"
+        },
+        "exp_desc": {
+          "description": "Experiment Description.",
+          "type": "string"
+        },
+        "exp_id": {
+          "description": "Experiment id.",
+          "type": "number",
+          "format": "int64"
+        },
+        "exp_name": {
+          "description": "Experiment Name.",
+          "type": "string"
+        },
+        "group_name": {
+          "description": "Group Name.",
+          "type": "string"
+        },
+        "tag_list": {
+          "description": "Experiment Tags",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProphecisExperimentTagPutBasicInfo"
+          }
+        }
+      }
+    },
+    "ProphecisExperimentRun": {
+      "type": "object",
+      "required": [
+        "exp_id",
+        "exp_exec_type"
+      ],
+      "properties": {
+        "dss_exec_id": {
+          "description": "linkis flow exec id.",
+          "type": "string"
+        },
+        "dss_flow_id": {
+          "description": "DSS Flow ID.",
+          "type": "number",
+          "format": "int64"
+        },
+        "dss_flow_last_version_id": {
+          "description": "DSS Flow Version ID.",
+          "type": "number",
+          "format": "int64"
+        },
+        "enable_flag": {
+          "description": "Flag of Delete.",
+          "type": "string"
+        },
+        "exp_exec_status": {
+          "description": "Experiment Exec Type, include RUNNING/SCHEDULED/FINISHED/FAILED/KILLED.",
+          "type": "string"
+        },
+        "exp_exec_type": {
+          "description": "Experiment Exec Type, include CLI/UI/DSS/Schedulis.",
+          "type": "string"
+        },
+        "exp_id": {
+          "description": "Experiment ID.",
+          "type": "number",
+          "format": "int64"
+        },
+        "exp_run_create_time": {
+          "description": "Created Timestamp of Experiment Exec.",
+          "type": "string",
+          "format": "date-time"
+        },
+        "exp_run_create_user_id": {
+          "description": "User of experiment exec.",
+          "type": "number",
+          "format": "int64"
+        },
+        "exp_run_end_time": {
+          "description": "Timestamp of Experiment finished.",
+          "type": "string",
+          "format": "date-time"
+        },
+        "exp_run_modify_user_id": {
+          "description": "User of modify experiment exec.",
+          "type": "number",
+          "format": "int64"
+        },
+        "experiment": {
+          "description": "experiment entity.",
+          "type": "object",
+          "$ref": "#/definitions/ProphecisExperiment"
+        },
+        "id": {
+          "description": "Experiment Exec ID.",
+          "type": "number"
+        },
+        "user": {
+          "description": "user entity",
+          "type": "object",
+          "$ref": "#/definitions/User"
+        }
+      }
+    },
+    "ProphecisExperimentRunRequest": {
+      "type": "object",
+      "required": [
+        "exp_exec_type"
+      ],
+      "properties": {
+        "exp_exec_type": {
+          "description": "Experiment Run type, Include CLI/UI/DSS/Schedulis.",
+          "type": "string"
+        },
+        "flow_json": {
+          "description": "Experiment Run type, Include CLI/UI/DSS/Schedulis.",
+          "type": "string"
+        }
+      }
+    },
+    "ProphecisExperimentRunResponse": {
+      "type": "object",
+      "properties": {
+        "exp_exec_id": {
+          "description": "Experiment Run ID",
+          "type": "number"
+        }
+      }
+    },
+    "ProphecisExperimentRuns": {
+      "type": "object",
+      "properties": {
+        "experiment_runs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProphecisExperimentRun"
+          }
+        },
+        "page_number": {
+          "type": "number",
+          "format": "int64"
+        },
+        "page_size": {
+          "type": "number",
+          "format": "int64"
+        },
+        "total": {
+          "type": "number",
+          "format": "int64"
+        },
+        "total_page": {
+          "type": "number",
+          "format": "int64"
+        }
+      }
+    },
+    "ProphecisExperimentRunsGetResponse": {
+      "type": "object",
+      "required": [
+        "prophecis_experiment_run",
+        "flow_json"
+      ],
+      "properties": {
+        "flow_json": {
+          "type": "string"
+        },
+        "prophecis_experiment_run": {
+          "description": "prophecis_experiment_run entity",
+          "$ref": "#/definitions/ProphecisExperimentRun"
+        }
+      }
+    },
+    "ProphecisExperimentTag": {
+      "type": "object",
+      "required": [
+        "exp_tag"
+      ],
+      "properties": {
+        "enable_flag": {
+          "description": "Flag of Delete.",
+          "type": "string"
+        },
+        "exp_id": {
+          "description": "Experiment ID.",
+          "type": "number",
+          "format": "int64"
+        },
+        "exp_tag": {
+          "description": "Experiment Tag Name.",
+          "type": "string"
+        },
+        "exp_tag_create_time": {
+          "description": "Timestamp recorded when this Experiment Tag  was created.",
+          "type": "string",
+          "format": "date-time"
+        },
+        "exp_tag_create_user_id": {
+          "description": "Creator recorded when this Experiment Tag  was created.",
+          "type": "integer"
+        },
+        "id": {
+          "description": "Experiment Tag ID.",
+          "type": "number",
+          "format": "int64"
+        }
+      }
+    },
+    "ProphecisExperimentTagPostRequest": {
+      "type": "object",
+      "required": [
+        "exp_tag"
+      ],
+      "properties": {
+        "exp_id": {
+          "description": "experiment id.",
+          "type": "number",
+          "format": "int64"
+        },
+        "exp_tag": {
+          "description": "Experiment Tag Name.",
+          "type": "string"
+        }
+      }
+    },
+    "ProphecisExperimentTagPutBasicInfo": {
+      "type": "object",
+      "properties": {
+        "exp_id": {
+          "description": "Experiment Id",
+          "type": "number"
+        },
+        "exp_tag": {
+          "description": "Experiment's Tag",
+          "type": "string"
+        }
+      }
+    },
+    "ProphecisExperimentTags": {
+      "type": "object",
+      "properties": {
+        "experiment_tags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProphecisExperimentTag"
+          }
+        },
+        "page_number": {
+          "type": "number",
+          "format": "int64"
+        },
+        "page_size": {
+          "type": "number",
+          "format": "int64"
+        }
+      }
+    },
+    "ProphecisExperiments": {
+      "type": "object",
+      "properties": {
+        "experiments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProphecisExperiment"
+          }
+        },
+        "page_number": {
+          "type": "number",
+          "format": "int64"
+        },
+        "page_size": {
+          "type": "number",
+          "format": "int64"
+        },
+        "total": {
+          "type": "number",
+          "format": "int64"
+        },
+        "total_page": {
+          "type": "number",
+          "format": "int64"
+        }
+      }
+    },
+    "ProphecisExportExperimentDssResponse": {
+      "type": "object",
+      "properties": {
+        "resourceId": {
+          "description": "Resource Id",
+          "type": "string"
+        },
+        "version": {
+          "description": "Version",
+          "type": "string"
+        }
+      }
+    },
+    "ProphecisImportExperimentDssResponse": {
+      "type": "object",
+      "properties": {
+        "expId": {
+          "description": "Experiment Id",
+          "type": "number",
+          "format": "int64"
         }
       }
     },
@@ -2341,6 +5884,41 @@ func init() {
         }
       }
     }
-  }
+  },
+  "securityDefinitions": {
+    "basicAuth": {
+      "description": "Basic Autentication credentials for using the API.",
+      "type": "basic"
+    },
+    "basicAuthToken": {
+      "description": "Watson Developer Cloud Basic Autentication. See [here](https://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/doc/getting_started/gs-tokens.shtml) for more information",
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header"
+    },
+    "watsonAuthToken": {
+      "description": "Watson Developer Cloud Token Autentication. See [here](https://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/doc/getting_started/gs-tokens.shtml) for more information",
+      "type": "apiKey",
+      "name": "X-Watson-Authorization-Token",
+      "in": "header"
+    },
+    "watsonAuthTokenQuery": {
+      "description": "Watson Developer Cloud Token Autentication. See [here](https://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/doc/getting_started/gs-tokens.shtml) for more information",
+      "type": "apiKey",
+      "name": "watson-token",
+      "in": "query"
+    }
+  },
+  "security": [
+    {
+      "basicAuthToken": []
+    },
+    {
+      "watsonAuthToken": []
+    },
+    {
+      "watsonAuthTokenQuery": []
+    }
+  ]
 }`))
 }

@@ -6,11 +6,9 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"net/http"
-	"os"
 	"time"
-
-	"golang.org/x/net/context"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
@@ -26,7 +24,7 @@ func NewPostModelParams() *PostModelParams {
 		versionDefault = string("2017-02-13")
 	)
 	return &PostModelParams{
-		Version: versionDefault,
+		Version: &versionDefault,
 
 		timeout: cr.DefaultTimeout,
 	}
@@ -39,7 +37,7 @@ func NewPostModelParamsWithTimeout(timeout time.Duration) *PostModelParams {
 		versionDefault = string("2017-02-13")
 	)
 	return &PostModelParams{
-		Version: versionDefault,
+		Version: &versionDefault,
 
 		timeout: timeout,
 	}
@@ -52,7 +50,7 @@ func NewPostModelParamsWithContext(ctx context.Context) *PostModelParams {
 		versionDefault = string("2017-02-13")
 	)
 	return &PostModelParams{
-		Version: versionDefault,
+		Version: &versionDefault,
 
 		Context: ctx,
 	}
@@ -65,7 +63,7 @@ func NewPostModelParamsWithHTTPClient(client *http.Client) *PostModelParams {
 		versionDefault = string("2017-02-13")
 	)
 	return &PostModelParams{
-		Version:    versionDefault,
+		Version:    &versionDefault,
 		HTTPClient: client,
 	}
 }
@@ -79,17 +77,17 @@ type PostModelParams struct {
 	  The manifest providing configuration for the deep learning model, the training data and the training execution.
 
 	*/
-	Manifest os.File
+	Manifest runtime.NamedReadCloser
 	/*ModelDefinition
 	  The deep learning model code as compressed archive (ZIP).
 
 	*/
-	ModelDefinition *os.File
+	ModelDefinition runtime.NamedReadCloser
 	/*Version
 	  The release date of the version of the API you want to use. Specify dates in YYYY-MM-DD format.
 
 	*/
-	Version string
+	Version *string
 
 	timeout    time.Duration
 	Context    context.Context
@@ -130,35 +128,35 @@ func (o *PostModelParams) SetHTTPClient(client *http.Client) {
 }
 
 // WithManifest adds the manifest to the post model params
-func (o *PostModelParams) WithManifest(manifest os.File) *PostModelParams {
+func (o *PostModelParams) WithManifest(manifest runtime.NamedReadCloser) *PostModelParams {
 	o.SetManifest(manifest)
 	return o
 }
 
 // SetManifest adds the manifest to the post model params
-func (o *PostModelParams) SetManifest(manifest os.File) {
+func (o *PostModelParams) SetManifest(manifest runtime.NamedReadCloser) {
 	o.Manifest = manifest
 }
 
 // WithModelDefinition adds the modelDefinition to the post model params
-func (o *PostModelParams) WithModelDefinition(modelDefinition *os.File) *PostModelParams {
+func (o *PostModelParams) WithModelDefinition(modelDefinition runtime.NamedReadCloser) *PostModelParams {
 	o.SetModelDefinition(modelDefinition)
 	return o
 }
 
 // SetModelDefinition adds the modelDefinition to the post model params
-func (o *PostModelParams) SetModelDefinition(modelDefinition *os.File) {
+func (o *PostModelParams) SetModelDefinition(modelDefinition runtime.NamedReadCloser) {
 	o.ModelDefinition = modelDefinition
 }
 
 // WithVersion adds the version to the post model params
-func (o *PostModelParams) WithVersion(version string) *PostModelParams {
+func (o *PostModelParams) WithVersion(version *string) *PostModelParams {
 	o.SetVersion(version)
 	return o
 }
 
 // SetVersion adds the version to the post model params
-func (o *PostModelParams) SetVersion(version string) {
+func (o *PostModelParams) SetVersion(version *string) {
 	o.Version = version
 }
 
@@ -171,7 +169,7 @@ func (o *PostModelParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Reg
 	var res []error
 
 	// form file param manifest
-	if err := r.SetFileParam("manifest", &o.Manifest); err != nil {
+	if err := r.SetFileParam("manifest", o.Manifest); err != nil {
 		return err
 	}
 
@@ -188,13 +186,20 @@ func (o *PostModelParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Reg
 
 	}
 
-	// query param version
-	qrVersion := o.Version
-	qVersion := qrVersion
-	if qVersion != "" {
-		if err := r.SetQueryParam("version", qVersion); err != nil {
-			return err
+	if o.Version != nil {
+
+		// query param version
+		var qrVersion string
+		if o.Version != nil {
+			qrVersion = *o.Version
 		}
+		qVersion := qrVersion
+		if qVersion != "" {
+			if err := r.SetQueryParam("version", qVersion); err != nil {
+				return err
+			}
+		}
+
 	}
 
 	if len(res) > 0 {

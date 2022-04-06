@@ -12,16 +12,16 @@ import (
 )
 
 // GetModelHandlerFunc turns a function with the right signature into a get model handler
-type GetModelHandlerFunc func(GetModelParams) middleware.Responder
+type GetModelHandlerFunc func(GetModelParams, interface{}) middleware.Responder
 
 // Handle executing the request and returning a response
-func (fn GetModelHandlerFunc) Handle(params GetModelParams) middleware.Responder {
-	return fn(params)
+func (fn GetModelHandlerFunc) Handle(params GetModelParams, principal interface{}) middleware.Responder {
+	return fn(params, principal)
 }
 
 // GetModelHandler interface for that can handle valid get model params
 type GetModelHandler interface {
-	Handle(GetModelParams) middleware.Responder
+	Handle(GetModelParams, interface{}) middleware.Responder
 }
 
 // NewGetModel creates a new http.Handler for the get model operation
@@ -49,12 +49,25 @@ func (o *GetModel) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 	var Params = NewGetModelParams()
 
+	uprinc, aCtx, err := o.Context.Authorize(r, route)
+	if err != nil {
+		o.Context.Respond(rw, r, route.Produces, route, err)
+		return
+	}
+	if aCtx != nil {
+		r = aCtx
+	}
+	var principal interface{}
+	if uprinc != nil {
+		principal = uprinc
+	}
+
 	if err := o.Context.BindValidRequest(r, route, &Params); err != nil { // bind params
 		o.Context.Respond(rw, r, route.Produces, route, err)
 		return
 	}
 
-	res := o.Handler.Handle(Params) // actually handle the request
+	res := o.Handler.Handle(Params, principal) // actually handle the request
 
 	o.Context.Respond(rw, r, route.Produces, route, res)
 

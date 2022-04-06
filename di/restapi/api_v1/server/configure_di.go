@@ -5,6 +5,7 @@ package server
 import (
 	"crypto/tls"
 	"net/http"
+	"webank/DI/commons/service"
 	"webank/DI/restapi/api_v1/server/rest_impl"
 
 	errors "github.com/go-openapi/errors"
@@ -12,7 +13,10 @@ import (
 	middleware "github.com/go-openapi/runtime/middleware"
 
 	"webank/DI/restapi/api_v1/server/operations"
+	"webank/DI/restapi/api_v1/server/operations/dss_user_info"
+	"webank/DI/restapi/api_v1/server/operations/experiment_runs"
 	"webank/DI/restapi/api_v1/server/operations/experiments"
+	"webank/DI/restapi/api_v1/server/operations/linkis_job"
 	"webank/DI/restapi/api_v1/server/operations/models"
 	"webank/DI/restapi/api_v1/server/operations/training_data"
 )
@@ -31,7 +35,7 @@ func configureAPI(api *operations.DiAPI) http.Handler {
 	// Expected interface func(string, ...interface{})
 	//
 	// Example:
-	// s.api.Logger = log.Printf
+	// api.Logger = log.Printf
 
 	api.JSONConsumer = runtime.JSONConsumer()
 
@@ -41,55 +45,141 @@ func configureAPI(api *operations.DiAPI) http.Handler {
 
 	api.BinProducer = runtime.ByteStreamProducer()
 
-	// Applies when the Authorization header is set with the Basic scheme
-	//api.BasicAuthAuth = func(user string, pass string) (interface{}, error) {
-	//	// We can assume that the basic authentication is handled by the frontend
-	//	// gateway. We don't need any checks here anymore.
-	//	if user == "" || pass == "" {
-	//		return nil, errors.Unauthenticated("user/password missing")
-	//	}
-	//	return user, nil
-	//}
+	// Important: we don't really autenticate here anymore. It is done at the gateway level.
+	api.WatsonAuthTokenAuth = func(token string) (interface{}, error) {
+		if token == "" {
+			return nil, errors.Unauthenticated("token")
+		}
+		return &service.User{}, nil
+	}
 
-	api.ExperimentsCodeUploadHandler = experiments.CodeUploadHandlerFunc(func(params experiments.CodeUploadParams) middleware.Responder {
-		return rest_impl.CodeUpload(params)
-	})
-	api.ModelsDeleteModelHandler = models.DeleteModelHandlerFunc(func(params models.DeleteModelParams) middleware.Responder {
+	api.WatsonAuthTokenQueryAuth = func(token string) (interface{}, error) {
+		return api.WatsonAuthTokenAuth(token)
+	}
+
+	// Important: we don't really autenticate here anymore. It is done at the gateway level.
+	api.BasicAuthTokenAuth = func(token string) (interface{}, error) {
+		return api.WatsonAuthTokenAuth(token)
+	}
+	api.ModelsDeleteModelHandler = models.DeleteModelHandlerFunc(func(params models.DeleteModelParams, principal interface{}) middleware.Responder {
 		return rest_impl.DeleteModel(params)
 	})
-	api.ModelsDownloadModelDefinitionHandler = models.DownloadModelDefinitionHandlerFunc(func(params models.DownloadModelDefinitionParams) middleware.Responder {
+	api.ModelsDownloadModelDefinitionHandler = models.DownloadModelDefinitionHandlerFunc(func(params models.DownloadModelDefinitionParams, principal interface{}) middleware.Responder {
 		return rest_impl.DownloadModelDefinition(params)
 	})
-	api.ModelsDownloadTrainedModelHandler = models.DownloadTrainedModelHandlerFunc(func(params models.DownloadTrainedModelParams) middleware.Responder {
+	api.ModelsDownloadTrainedModelHandler = models.DownloadTrainedModelHandlerFunc(func(params models.DownloadTrainedModelParams, principal interface{}) middleware.Responder {
 		return rest_impl.DownloadTrainedModel(params)
 	})
-	api.ModelsExportModelHandler = models.ExportModelHandlerFunc(func(params models.ExportModelParams) middleware.Responder {
+	api.ModelsExportModelHandler = models.ExportModelHandlerFunc(func(params models.ExportModelParams, i interface{}) middleware.Responder {
 		return rest_impl.ExportModel(params)
 	})
 	api.ModelsGetLogsHandler = models.GetLogsHandlerFunc(func(params models.GetLogsParams) middleware.Responder {
 		return rest_impl.GetLogs(params)
 	})
-	api.ModelsGetModelHandler = models.GetModelHandlerFunc(func(params models.GetModelParams) middleware.Responder {
+	api.ModelsGetModelHandler = models.GetModelHandlerFunc(func(params models.GetModelParams, principal interface{}) middleware.Responder {
 		return rest_impl.GetModel(params)
 	})
-	api.ModelsListModelsHandler = models.ListModelsHandlerFunc(func(params models.ListModelsParams) middleware.Responder {
+	api.ModelsListModelsHandler = models.ListModelsHandlerFunc(func(params models.ListModelsParams, principal interface{}) middleware.Responder {
 		return rest_impl.ListModels(params)
 	})
-	api.ModelsPostModelHandler = models.PostModelHandlerFunc(func(params models.PostModelParams) middleware.Responder {
+	api.ModelsPostModelHandler = models.PostModelHandlerFunc(func(params models.PostModelParams, principal interface{}) middleware.Responder {
 		return rest_impl.PostModel(params)
 	})
-	api.ModelsPatchModelHandler = models.PatchModelHandlerFunc(func(params models.PatchModelParams) middleware.Responder {
+	api.ModelsPatchModelHandler = models.PatchModelHandlerFunc(func(params models.PatchModelParams, principal interface{}) middleware.Responder {
 		return rest_impl.PatchModel(params)
 	})
-	api.TrainingDataGetLoglinesHandler = training_data.GetLoglinesHandlerFunc(func(params training_data.GetLoglinesParams) middleware.Responder {
+	api.TrainingDataGetLoglinesHandler = training_data.GetLoglinesHandlerFunc(func(params training_data.GetLoglinesParams, principal interface{}) middleware.Responder {
 		return rest_impl.GetLoglines(params)
 	})
-	api.GetDashboardsHandler = operations.GetDashboardsHandlerFunc(func(params operations.GetDashboardsParams) middleware.Responder {
+	api.GetDashboardsHandler = operations.GetDashboardsHandlerFunc(func(params operations.GetDashboardsParams, principal interface{}) middleware.Responder {
 		return rest_impl.GetDashboards(params)
 	})
+	api.ExperimentsDeleteExperimentHandler = experiments.DeleteExperimentHandlerFunc(func(params experiments.DeleteExperimentParams, principal interface{}) middleware.Responder {
+		return rest_impl.DeleteExperiment(params)
+	})
+	api.ExperimentRunsDeleteExperimentRunHandler = experiment_runs.DeleteExperimentRunHandlerFunc(func(params experiment_runs.DeleteExperimentRunParams, principal interface{}) middleware.Responder {
+		return rest_impl.DeleteExperimentRun(params)
+	})
+	api.ExperimentsDeleteExperimentTagHandler = experiments.DeleteExperimentTagHandlerFunc(func(params experiments.DeleteExperimentTagParams, principal interface{}) middleware.Responder {
+		return rest_impl.DeleteExperimentTag(params)
+	})
+	api.ExperimentsExportExperimentHandler = experiments.ExportExperimentHandlerFunc(func(params experiments.ExportExperimentParams, principal interface{}) middleware.Responder {
+		return rest_impl.ExportExperiment(params)
+	})
+	api.ExperimentsGetExperimentHandler = experiments.GetExperimentHandlerFunc(func(params experiments.GetExperimentParams, principal interface{}) middleware.Responder {
+		return rest_impl.GetExperiment(params)
+	})
+	api.ExperimentRunsGetExperimentRunHandler = experiment_runs.GetExperimentRunHandlerFunc(func(params experiment_runs.GetExperimentRunParams, principal interface{}) middleware.Responder {
+		return rest_impl.GetExperimentRun(params)
+	})
+	api.ExperimentsImportExperimentHandler = experiments.ImportExperimentHandlerFunc(func(params experiments.ImportExperimentParams, principal interface{}) middleware.Responder {
+		return rest_impl.ImportExperiment(params)
+	})
+	api.ExperimentRunsListExperimentRunsHandler = experiment_runs.ListExperimentRunsHandlerFunc(func(params experiment_runs.ListExperimentRunsParams, principal interface{}) middleware.Responder {
+		return rest_impl.ListExperimentRuns(params)
+	})
+	api.ExperimentsListExperimentsHandler = experiments.ListExperimentsHandlerFunc(func(params experiments.ListExperimentsParams, principal interface{}) middleware.Responder {
+		return rest_impl.ListExperiments(params)
+	})
+	api.ExperimentsUpdateExperimentHandler = experiments.UpdateExperimentHandlerFunc(func(params experiments.UpdateExperimentParams, principal interface{}) middleware.Responder {
+		return rest_impl.UpdateExperiment(params)
+	})
+	api.ExperimentsCreateExperimentHandler = experiments.CreateExperimentHandlerFunc(func(params experiments.CreateExperimentParams, principal interface{}) middleware.Responder {
+		return rest_impl.CreateExperiment(params)
+	})
+	api.ExperimentRunsCreateExperimentRunHandler = experiment_runs.CreateExperimentRunHandlerFunc(func(params experiment_runs.CreateExperimentRunParams, principal interface{}) middleware.Responder {
+		return rest_impl.CreateExperimentRun(params)
+	})
+	api.ExperimentRunsGetExperimentRunStatusHandler = experiment_runs.GetExperimentRunStatusHandlerFunc(func(params experiment_runs.GetExperimentRunStatusParams, principal interface{}) middleware.Responder {
+		return rest_impl.StatusExperimentRun(params)
+	})
+	api.ExperimentRunsKillExperimentRunHandler = experiment_runs.KillExperimentRunHandlerFunc(func(params experiment_runs.KillExperimentRunParams, principal interface{}) middleware.Responder {
+		return rest_impl.KillExperimentRun(params)
+	})
+	api.ModelsGetJobLogByLineHandler = models.GetJobLogByLineHandlerFunc(func(params models.GetJobLogByLineParams, principal interface{}) middleware.Responder {
+		return rest_impl.GetJobLogByLine(params)
+	})
+	api.ExperimentRunsGetExperimentRunLogHandler = experiment_runs.GetExperimentRunLogHandlerFunc(func(params experiment_runs.GetExperimentRunLogParams, principal interface{}) middleware.Responder {
+		return rest_impl.GetExperimentRunLog(params)
+	})
+	api.ExperimentsCodeUploadHandler = experiments.CodeUploadHandlerFunc(func(params experiments.CodeUploadParams, principal interface{}) middleware.Responder {
+		return rest_impl.CodeUpload(params)
+	})
+	api.ExperimentsUpdateExperimentInfoHandler = experiments.UpdateExperimentInfoHandlerFunc(func(params experiments.UpdateExperimentInfoParams, principal interface{}) middleware.Responder {
+		return rest_impl.UpdateExperimentInfo(params)
+	})
+	api.LinkisJobGetLinkisJobStatusHandler = linkis_job.GetLinkisJobStatusHandlerFunc(func(params linkis_job.GetLinkisJobStatusParams, principal interface{}) middleware.Responder {
+		return rest_impl.GetLinkisJobStatus(params)
+	})
+	api.LinkisJobGetLinkisJobLogHandler = linkis_job.GetLinkisJobLogHandlerFunc(func(params linkis_job.GetLinkisJobLogParams, principal interface{}) middleware.Responder {
+		return rest_impl.GetLinkisJobLog(params)
+	})
+	api.ExperimentRunsGetExperimentRunExecutionHandler = experiment_runs.GetExperimentRunExecutionHandlerFunc(func(params experiment_runs.GetExperimentRunExecutionParams, principal interface{}) middleware.Responder {
+		return rest_impl.GetExperimentRunExecution(params)
+	})
+	api.ExperimentsCreateExperimentTagHandler = experiments.CreateExperimentTagHandlerFunc(func(params experiments.CreateExperimentTagParams, principal interface{}) middleware.Responder {
+		return rest_impl.CreateExperimentTag(params)
+	})
+	api.ExperimentsDeleteExperimentTagHandler = experiments.DeleteExperimentTagHandlerFunc(func(params experiments.DeleteExperimentTagParams, principal interface{}) middleware.Responder {
+		return rest_impl.DeleteExperimentTag(params)
+	})
+	api.ExperimentsExportExperimentDssHandler = experiments.ExportExperimentDssHandlerFunc(func(params experiments.ExportExperimentDssParams, principal interface{}) middleware.Responder {
+		return rest_impl.ExportExperimentDss(params)
+	})
+	api.ExperimentsImportExperimentDssHandler = experiments.ImportExperimentDssHandlerFunc(func(params experiments.ImportExperimentDssParams, principal interface{}) middleware.Responder {
+		return rest_impl.ImportExperimentDss(params)
+	})
+	api.DssUserInfoGetDssUserInfoHandler = dss_user_info.GetDssUserInfoHandlerFunc(func(params dss_user_info.GetDssUserInfoParams, i interface{}) middleware.Responder {
+		return rest_impl.DssGetUserInfo(params)
+	})
+	api.ExperimentRunsGetExperimentRunsHistoryHandler = experiment_runs.GetExperimentRunsHistoryHandlerFunc(func(params experiment_runs.GetExperimentRunsHistoryParams, i interface{}) middleware.Responder {
+		return rest_impl.GetExperimentRunsHistory(params)
+	})
+	api.ModelsKillTrainingModelHandler = models.KillTrainingModelHandlerFunc(func(params models.KillTrainingModelParams, i interface{}) middleware.Responder{
+		return rest_impl.KillTrainingModel(params)
+	})
 	api.ServerShutdown = func() {}
-	// return setupGlobalMiddleware(api.Serve(setupMiddlewares))
-	return api.Serve(setupMiddlewares)
+	return setupGlobalMiddleware(api.Serve(setupMiddlewares))
 }
 
 // The TLS configuration before HTTPS server starts.

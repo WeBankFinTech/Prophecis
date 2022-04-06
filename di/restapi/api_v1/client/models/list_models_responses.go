@@ -13,7 +13,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	"webank/DI/restapi/api_v1/restmodels"
+	restmodels "webank/DI/restapi/api_v1/restmodels"
 )
 
 // ListModelsReader is a Reader for the ListModels structure.
@@ -24,14 +24,12 @@ type ListModelsReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *ListModelsReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewListModelsOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 401:
 		result := NewListModelsUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -58,7 +56,11 @@ type ListModelsOK struct {
 }
 
 func (o *ListModelsOK) Error() string {
-	return fmt.Sprintf("[GET /v1/models][%d] listModelsOK  %+v", 200, o.Payload)
+	return fmt.Sprintf("[GET /di/v1/models][%d] listModelsOK  %+v", 200, o.Payload)
+}
+
+func (o *ListModelsOK) GetPayload() *restmodels.ModelList {
+	return o.Payload
 }
 
 func (o *ListModelsOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -87,7 +89,11 @@ type ListModelsUnauthorized struct {
 }
 
 func (o *ListModelsUnauthorized) Error() string {
-	return fmt.Sprintf("[GET /v1/models][%d] listModelsUnauthorized  %+v", 401, o.Payload)
+	return fmt.Sprintf("[GET /di/v1/models][%d] listModelsUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *ListModelsUnauthorized) GetPayload() *restmodels.Error {
+	return o.Payload
 }
 
 func (o *ListModelsUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

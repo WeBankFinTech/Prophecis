@@ -12,16 +12,16 @@ import (
 )
 
 // DownloadModelDefinitionHandlerFunc turns a function with the right signature into a download model definition handler
-type DownloadModelDefinitionHandlerFunc func(DownloadModelDefinitionParams) middleware.Responder
+type DownloadModelDefinitionHandlerFunc func(DownloadModelDefinitionParams, interface{}) middleware.Responder
 
 // Handle executing the request and returning a response
-func (fn DownloadModelDefinitionHandlerFunc) Handle(params DownloadModelDefinitionParams) middleware.Responder {
-	return fn(params)
+func (fn DownloadModelDefinitionHandlerFunc) Handle(params DownloadModelDefinitionParams, principal interface{}) middleware.Responder {
+	return fn(params, principal)
 }
 
 // DownloadModelDefinitionHandler interface for that can handle valid download model definition params
 type DownloadModelDefinitionHandler interface {
-	Handle(DownloadModelDefinitionParams) middleware.Responder
+	Handle(DownloadModelDefinitionParams, interface{}) middleware.Responder
 }
 
 // NewDownloadModelDefinition creates a new http.Handler for the download model definition operation
@@ -48,12 +48,25 @@ func (o *DownloadModelDefinition) ServeHTTP(rw http.ResponseWriter, r *http.Requ
 	}
 	var Params = NewDownloadModelDefinitionParams()
 
+	uprinc, aCtx, err := o.Context.Authorize(r, route)
+	if err != nil {
+		o.Context.Respond(rw, r, route.Produces, route, err)
+		return
+	}
+	if aCtx != nil {
+		r = aCtx
+	}
+	var principal interface{}
+	if uprinc != nil {
+		principal = uprinc
+	}
+
 	if err := o.Context.BindValidRequest(r, route, &Params); err != nil { // bind params
 		o.Context.Respond(rw, r, route.Produces, route, err)
 		return
 	}
 
-	res := o.Handler.Handle(Params) // actually handle the request
+	res := o.Handler.Handle(Params, principal) // actually handle the request
 
 	o.Context.Respond(rw, r, route.Produces, route, res)
 

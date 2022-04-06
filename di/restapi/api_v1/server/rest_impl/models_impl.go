@@ -1,8 +1,8 @@
 /*
- * Copyright 2020 WeBank
+ * Copyright 2017-2018 IBM Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
+ * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package rest_impl
 
 import (
@@ -20,21 +21,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
-	"math"
-	"net/http"
-	"os"
-	"strconv"
-	datasource "webank/DI/commons/datasource/mysql"
-	"webank/DI/commons/operators/tf-operator/apis/tensorflow/v1alpha1"
-	"webank/DI/commons/repo"
-	"webank/DI/jobmonitor/jobmonitor"
-	"webank/DI/restapi/api_v1/server/operations"
-	"webank/DI/restapi/service"
-	"webank/DI/storage/storage/grpc_storage"
-
-	logr "github.com/sirupsen/logrus"
-
 	"github.com/google/uuid"
 	"github.com/jinzhu/copier"
 	"github.com/mholt/archiver/v3"
@@ -43,6 +29,20 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gopkg.in/yaml.v2"
+	"io/ioutil"
+	"math"
+	"net/http"
+	"os"
+	"regexp"
+	"strconv"
+	"webank/DI/commons/constants"
+	"webank/DI/jobmonitor/jobmonitor"
+	datasource "webank/DI/pkg/datasource/mysql"
+	"webank/DI/pkg/operators/tf-operator/apis/tensorflow/v1alpha1"
+	"webank/DI/pkg/repo"
+	"webank/DI/restapi/api_v1/server/operations"
+	"webank/DI/restapi/service"
+	"webank/DI/storage/storage/grpc_storage"
 
 	commonModels "webank/DI/commons/models"
 	"webank/DI/restapi/api_v1/restmodels"
@@ -88,6 +88,10 @@ const (
 	userGU             = "2"
 )
 
+var (
+	PermissionDeniedError = errors.New("permission denied")
+)
+
 // postModel posts a model definition and starts the training
 func PostModel(params models.PostModelParams) middleware.Responder {
 	operation := "postModel"
@@ -107,6 +111,12 @@ func PostModel(params models.PostModelParams) middleware.Responder {
 		logr.WithError(err).Errorf("Parameter 'manifest' contains incorrect YAML")
 		return httpResponseHandle(http.StatusNotFound, err, operation, []byte("Incorrect manifest"))
 	}
+
+	//TODO: Remove
+	if manifest.Name == "" {
+		manifest.Name = manifest.JobType
+	}
+
 	logr.Info("Loading Manifest: ", manifest.DssTaskId)
 	var modelDefinition []byte
 	if modelFile != nil {
@@ -137,14 +147,23 @@ func PostModel(params models.PostModelParams) middleware.Responder {
 		//log.Info("ModelDefintion is ", modelDefinition)
 	}
 
-	// Handle TFOS Job ManiFest
-	// logr.Debugf("postModel, manifest.JobType: %v", manifest.JobType)
-	// if "tfos" == manifest.JobType {
-	// 	err := handleTfosManifest(userID, manifest, logr)
-	// 	if err != nil {
-	// 		return httpResponseHandle(http.StatusUnauthorized, err, operation, []byte("Incorrect Manifest"))
-	// 	}
-	// }
+	if "" != manifest.Framework.Command {
+		manifest.Framework.Command, err = CommandTransform(manifest.Framework.Command)
+		if err != nil {
+			return httpResponseHandle(http.StatusBadRequest, err, operation, []byte("Incorrect Manifest"))
+		}
+	}
+
+	if "tfos" == manifest.JobType {
+		err := handleTfosManifest(userID, manifest, logr)
+		if err != nil {
+			return httpResponseHandle(http.StatusUnauthorized, err, operation, []byte("Incorrect Manifest"))
+		}
+	}
+
+	if "MLPipeline" == manifest.JobType {
+
+	}
 
 	// Check Manifest
 	errForCheckManifest := checkManifest(manifest, logr)
@@ -171,7 +190,7 @@ func PostModel(params models.PostModelParams) middleware.Responder {
 	ccAddress := viper.GetString(config.CCAddress)
 	ccClient := cc.GetCcClient(ccAddress)
 	//Check DataPath,TFOS Job Use HDFS, Not Need to Check Data Path
-	if manifest.JobType != "tfos" {
+	if manifest.JobType != "tfos" && manifest.ProxyUser == "" {
 		err = ccClient.UserStorageCheck(params.HTTPRequest.Header.Get(cc.CcAuthToken), userID, dataPath)
 		if err != nil {
 			logr.Errorf("check dataPath failed: %v", err.Error())
@@ -180,11 +199,12 @@ func PostModel(params models.PostModelParams) middleware.Responder {
 	}
 
 	//Check ResultsPath
-	err = ccClient.UserStorageCheck(params.HTTPRequest.Header.Get(cc.CcAuthToken), userID, resultsPath)
-	if err != nil {
-		logr.Errorf("check resultsPath failed: %v", err.Error())
-		return httpResponseHandle(http.StatusBadRequest, err, operation, []byte("Check ResultsPath Failed "+err.Error()))
-
+	if manifest.ProxyUser == "" {
+		err = ccClient.UserStorageCheck(params.HTTPRequest.Header.Get(cc.CcAuthToken), userID, resultsPath)
+		if err != nil {
+			logr.Errorf("check resultsPath failed: %v", err.Error())
+			return httpResponseHandle(http.StatusBadRequest, err, operation, []byte("Check ResultsPath Failed "+err.Error()))
+		}
 	}
 
 	if "tfos" != manifest.JobType {
@@ -203,6 +223,12 @@ func PostModel(params models.PostModelParams) middleware.Responder {
 		return httpResponseHandle(http.StatusBadRequest, err, operation, []byte("Check ResultsPath Failed "+err.Error()))
 	}
 
+	commandStr, err := CommandTransform(manifest.Framework.Command)
+	if err != nil {
+		return httpResponseHandle(http.StatusBadRequest, err, operation, []byte("Command Parse Error "+err.Error()))
+	}
+	manifest.Framework.Command = commandStr
+
 	trainer, err := trainerClient.NewTrainer()
 	if err != nil {
 		logr.WithError(err).Errorf("Cannot create client for trainer service")
@@ -212,7 +238,7 @@ func PostModel(params models.PostModelParams) middleware.Responder {
 
 	// TODO do some basic manifest.yml validation to avoid a panic
 	// Validate the Manifest File to Avoid panic
-	createRequstParam, err := manifest2TrainingRequest(manifest, modelDefinition, params.HTTPRequest, logr, dataPath)
+	createRequestParam, err := manifest2TrainingRequest(manifest, modelDefinition, params.HTTPRequest, logr, dataPath)
 	if err != nil {
 		logr.WithError(err).Errorf("CreateRequest parameters check or config failed")
 		return httpResponseHandle(http.StatusBadRequest, err, operation, []byte(err.Error()))
@@ -225,19 +251,34 @@ func PostModel(params models.PostModelParams) middleware.Responder {
 		return httpResponseHandle(http.StatusBadRequest, err, operation, []byte("GetUserByName failed: "+err.Error()))
 	}
 	logr.Debugf("userFromDB.Token: %v", userFromDB.Token)
-	createRequstParam.Token = userFromDB.Token
+	createRequestParam.Token = userFromDB.Token
 
-	logr.Infof("createRequstParam.TFosRequest: %v", createRequstParam.TFosRequest)
+	//Proxy User check
+	if manifest.ProxyUser != "" {
+		auth, err := ccClient.ProxyUserCheck(params.HTTPRequest.Header.Get(cc.CcAuthToken), userID, manifest.ProxyUser)
+		if err != nil {
+			logr.Errorf("check proxy user permission: %v", err.Error())
+			return httpResponseHandle(http.StatusBadRequest, err, operation, []byte("check proxy user permission failed: "+err.Error()))
+		}
+		if !auth {
+			authStr := strconv.FormatBool(auth)
+			logr.Errorf("check proxy user permission: %v", authStr)
+			err = errors.New("check proxy user permission: " + authStr)
+			return httpResponseHandle(http.StatusBadRequest, err, operation, []byte("check proxy user permission: "+err.Error()))
+		}
+	}
+
+	logr.Infof("createRequestParam.TFosRequest: %v", createRequestParam.TFosRequest)
 
 	// Check GPU, CPU and Memory
-	if createRequstParam.Training.Resources.Cpus <= 0 || createRequstParam.Training.Resources.Gpus < 0 || createRequstParam.Training.Resources.Memory <= 0 {
+	if createRequestParam.Training.Resources.Cpus <= 0 || createRequestParam.Training.Resources.Gpus < 0 || createRequestParam.Training.Resources.Memory <= 0 {
 		err = errors.New("gpu, cpu and memory has to be greater than 0")
 		return httpResponseHandle(http.StatusBadRequest, err, operation, []byte("failed to creatTrainingJob when check for resource"))
 	}
 	//Get data
 	db := datasource.GetDB()
 	if !reflect2.IsNil(manifest.ExpRunId) && manifest.ExpRunId > 0 {
-		createRequstParam.ExpRunId = strconv.Itoa(int(manifest.ExpRunId))
+		createRequestParam.ExpRunId = strconv.Itoa(int(manifest.ExpRunId))
 		experimentRun, err := repo.ExperimentRunRepo.Get(manifest.ExpRunId, db)
 		if err != nil {
 			logger.GetLogger().Error("get experiment run failed, ", err)
@@ -247,19 +288,20 @@ func PostModel(params models.PostModelParams) middleware.Responder {
 			logger.GetLogger().Error("get experiment failed, ", err)
 		}
 		if experiment.ExpName != nil {
-			createRequstParam.ExpName = *experiment.ExpName
+			createRequestParam.ExpName = *experiment.ExpName
 		}
 	}
 	if !reflect2.IsNil(manifest.FileName) && len(manifest.FileName) > 0 {
-		createRequstParam.FileName = manifest.FileName
+		createRequestParam.FileName = manifest.FileName
 	}
 	if !reflect2.IsNil(manifest.CodePath) && len(manifest.CodePath) > 0 {
-		createRequstParam.FilePath = manifest.CodePath
+		createRequestParam.FilePath = manifest.CodePath
 	}
+
 	// SERVICE METHOD
-	tresp, err := trainer.Client().CreateTrainingJob(params.HTTPRequest.Context(), createRequstParam)
+	tresp, err := trainer.Client().CreateTrainingJob(params.HTTPRequest.Context(), createRequestParam)
 	if err != nil {
-		logr.Println("== CreateTrainingJobError：", err)
+		logr.Println("== CreateTrainingJobError：", err.Error())
 		logr.WithError(err).Errorf("Trainer service call failed")
 
 		if status.Code(err) == codes.InvalidArgument || grpc.Code(err) == codes.NotFound {
@@ -284,6 +326,56 @@ func PostModel(params models.PostModelParams) middleware.Responder {
 		})
 }
 
+func DeleteModel(params models.DeleteModelParams) middleware.Responder {
+	//1、Recv Parmas Init
+	logr := logger.LocLogger(logWithDeleteModelParams(params))
+	logr.Debugf("deleteModel invoked: %v", params.HTTPRequest.Header)
+	storageClient, err := storageClient.NewStorage()
+	if err != nil {
+		logr.WithError(err).Errorf("Cannot create client for trainer service")
+		return handleErrorResponse(logr, err.Error())
+	}
+	defer storageClient.Close()
+	//2、Params Check & Perminssion Check
+	// FIXME MLSS Change: auth user in restapi
+	_, errResp := checkJobVisibility(params.HTTPRequest.Context(), params.ModelID, getUserID(params.HTTPRequest), params.HTTPRequest.Header.Get(cc.CcAuthToken))
+	if errResp != nil {
+		return errResp
+	}
+	_, err = storageClient.Client().DeleteTrainingJob(params.HTTPRequest.Context(), &grpc_storage.DeleteRequest{
+		TrainingId: params.ModelID,
+		UserId:     getUserID(params.HTTPRequest),
+	})
+	if err != nil {
+		logr.WithError(err).Errorf("storage.Client().DeleteTrainingJob call failed")
+		if grpc.Code(err) == codes.PermissionDenied {
+			return middleware.ResponderFunc(func(w http.ResponseWriter, _ runtime.Producer) {
+				w.WriteHeader(http.StatusForbidden)
+				//FIXME MLSS Change: change Description to Msg
+				payload, _ := json.Marshal(restmodels.Error{
+					Error: "forbidden",
+					Code:  http.StatusForbidden,
+					Msg:   err.Error(),
+				})
+				w.Write(payload)
+			})
+		}
+		if grpc.Code(err) == codes.NotFound {
+			//FIXME MLSS Change: change Description to Msg
+			return models.NewDeleteModelNotFound().WithPayload(&restmodels.Error{
+				Error: "Not found",
+				Code:  http.StatusNotFound,
+				Msg:   "",
+			})
+		}
+		return handleErrorResponse(logr, err.Error())
+	}
+	return models.NewDeleteModelOK().WithPayload(
+		&restmodels.BasicModel{
+			ModelID: params.ModelID,
+		})
+}
+
 func GetModel(params models.GetModelParams) middleware.Responder {
 	logr := logger.LocLogger(logWithGetModelParams(params))
 	logr.Debugf("getModel invoked: %v", params.HTTPRequest.Header)
@@ -303,6 +395,7 @@ func ListModels(params models.ListModelsParams) middleware.Responder {
 	logr := logger.LocLogger(logWithGetListModelsParams(params))
 	userID := getUserID(params.HTTPRequest)
 	isSA := getSuperadmin(params.HTTPRequest)
+
 	queryUser, namespace, page, size, clusterName, expRunId, err := getParamsForListModels(params)
 	if err != nil {
 		return handleErrorResponse(logr, err.Error())
@@ -330,6 +423,27 @@ func ListModels(params models.ListModelsParams) middleware.Responder {
 		role = userSA
 		logr.Debugf("pass for SA.")
 	} else {
+		db := datasource.GetDB()
+		// Permission Check
+		if expRunId != "" {
+			expRunIdInt, err := strconv.ParseInt(expRunId, 10, 64)
+			if err != nil {
+				logr.Error("Parse expId error, ", err.Error())
+				return handleErrorResponse(logr, err.Error())
+			}
+
+			expRun, err := repo.ExperimentRunRepo.Get(expRunIdInt, db)
+			if err != nil {
+				logr.Error("Get ExperimentRun error, ", err.Error())
+				return handleErrorResponse(logr, err.Error())
+
+			}
+			if *expRun.User.Name != userID {
+				return httpResponseHandle(http.StatusUnauthorized, PermissionDeniedError, "List Models",
+					[]byte("permission denied"))
+			}
+		}
+
 		role = userGA
 		if namespace != "" && queryUser != "" {
 			role, err = getRoleNum(params.HTTPRequest.Header.Get(cc.CcAuthToken), getUserID(params.HTTPRequest), namespace)
@@ -339,7 +453,7 @@ func ListModels(params models.ListModelsParams) middleware.Responder {
 			}
 		}
 	}
-	nsList, err := getUserNSList(params.HTTPRequest.Header.Get(cc.CcAuthToken), role, clusterName)
+	nsList, err := getUserNSList(params.HTTPRequest.Header.Get(cc.CcAuthToken), role)
 	if err != nil {
 		logger.GetLogger().Info("getUserNSList error, ", err)
 		return handleErrorResponse(logr, err.Error())
@@ -355,8 +469,20 @@ func ListModels(params models.ListModelsParams) middleware.Responder {
 					ExpRunId:      expRunId,
 				})
 				if err != nil {
-					logger.GetLogger().Info("Get storage error, ", err)
+					logger.GetLogger().Error("GetAllTrainingsJobsByUserIdAndNamespaceList error, ", err.Error())
+					return handleErrorResponse(logr, err.Error())
 				}
+			} else {
+				resp, err = sClient.Client().GetAllTrainingsJobsByUserIdAndNamespaceList(params.HTTPRequest.Context(), &grpc_storage.GetAllRequest{
+					NamespaceList: nsList,
+					Page:          page,
+					Size:          size,
+					ExpRunId:      expRunId,
+				})
+			}
+			if err != nil {
+				logger.GetLogger().Error("GetAllTrainingsJobsByUserIdAndNamespaceList error, ", err.Error())
+				return handleErrorResponse(logr, err.Error())
 			}
 		} else {
 			logr.Debugf("pass nothing for GA/GU.")
@@ -364,37 +490,63 @@ func ListModels(params models.ListModelsParams) middleware.Responder {
 			//nsList,user
 			//CC:getNamespaceWithRole
 			logr.Debugf("debug_metaUserID: %v", userID)
-			resp, err = sClient.Client().GetAllTrainingsJobsByUserIdAndNamespaceList(params.HTTPRequest.Context(), &grpc_storage.GetAllRequest{
-				Username:      getUserID(params.HTTPRequest),
+			resp, err = sClient.Client().GetAllTrainingsJobsByUserIdAndNamespace(params.HTTPRequest.Context(), &grpc_storage.GetAllRequest{
+				UserId:      getUserID(params.HTTPRequest),
+				Username:    getUserID(params.HTTPRequest),
+				ClusterName: clusterName,
+				Page:        page,
+				Size:        size,
+				ExpRunId:    expRunId,
+			})
+			if err != nil {
+				logger.GetLogger().Error("GetAllTrainingsJobsByUserIdAndNamespaceList error, ", err)
+				return handleErrorResponse(logr, err.Error())
+			}
+			logr.Debugf("storage.Client().GetAllTrainingsJobsByUserIdAndNamespaceList, page: %v, total %v", resp.Pages, resp.Total)
+		}
+	} else if queryUser == "" && namespace != "" {
+		//pass namespace only
+		//CC:/access/admin/namespaces/{namespace}
+		if isSA == SA {
+			resp, err = sClient.Client().GetAllTrainingsJobsByUserIdAndNamespace(params.HTTPRequest.Context(), &grpc_storage.GetAllRequest{
+				Namespace: namespace,
+				Page:      page,
+				Size:      size,
+				ExpRunId:  expRunId,
+			})
+		} else {
+			resp, err = sClient.Client().GetAllTrainingsJobsByUserIdAndNamespace(params.HTTPRequest.Context(), &grpc_storage.GetAllRequest{
+				UserId:    getUserID(params.HTTPRequest),
+				Username:  queryUser,
+				Namespace: namespace,
+				Page:      page,
+				Size:      size,
+				ExpRunId:  expRunId,
+			})
+		}
+	} else if queryUser != "" && namespace != "" {
+		//pass user and namespace
+		//CC:/access/admin/namespaces/{namespace}/users/{user}
+		if isSA == SA {
+			resp, err = sClient.Client().GetAllTrainingsJobsByUserIdAndNamespace(params.HTTPRequest.Context(), &grpc_storage.GetAllRequest{
+				Username:      queryUser,
 				ClusterName:   clusterName,
 				NamespaceList: nsList,
 				Page:          page,
 				Size:          size,
 				ExpRunId:      expRunId,
 			})
-			logr.Debugf("storage.Client().GetAllTrainingsJobsByUserIdAndNamespaceList, page: %v, total %v", resp.Pages, resp.Total)
+		} else {
+			resp, err = sClient.Client().GetAllTrainingsJobsByUserIdAndNamespace(params.HTTPRequest.Context(), &grpc_storage.GetAllRequest{
+				UserId:        getUserID(params.HTTPRequest),
+				Username:      queryUser,
+				ClusterName:   clusterName,
+				NamespaceList: nsList,
+				Page:          page,
+				Size:          size,
+				ExpRunId:      expRunId,
+			})
 		}
-	} else if queryUser == "" && namespace != "" {
-		//pass namespace only
-		//CC:/access/admin/namespaces/{namespace}
-		resp, err = sClient.Client().GetAllTrainingsJobsByUserIdAndNamespace(params.HTTPRequest.Context(), &grpc_storage.GetAllRequest{
-			UserId:    getUserID(params.HTTPRequest),
-			Namespace: namespace,
-			Page:      page,
-			Size:      size,
-			ExpRunId:  expRunId,
-		})
-	} else if queryUser != "" && namespace != "" {
-		//pass user and namespace
-		//CC:/access/admin/namespaces/{namespace}/users/{user}
-		resp, err = sClient.Client().GetAllTrainingsJobsByUserIdAndNamespace(params.HTTPRequest.Context(), &grpc_storage.GetAllRequest{
-			Username:      queryUser,
-			ClusterName:   clusterName,
-			NamespaceList: nsList,
-			Page:          page,
-			Size:          size,
-			ExpRunId:      expRunId,
-		})
 	} else {
 		return handleErrorResponse(logr, "namespace can't be null, when user exists")
 	}
@@ -421,6 +573,7 @@ func ListModels(params models.ListModelsParams) middleware.Responder {
 	pageInt := 0
 	totalInt := 0
 	marr := make([]*restmodels.Model, 0, len(resp.Jobs))
+
 	if resp != nil {
 		for _, job := range resp.Jobs {
 			// use append(); we may have skipped some because they were gone by the time we got to them.
@@ -492,21 +645,23 @@ func PatchModel(params models.PatchModelParams) middleware.Responder {
 	})
 }
 
-func getUserNSList(token string, role string, clusterName string) ([]string, error) {
+func getUserNSList(token string, role string) ([]string, error) {
 	ccAddress := viper.GetString(config.CCAddress)
 	ccClient := cc.GetCcClient(ccAddress)
-	bodyForNS, err := ccClient.GetCurrentUserNamespaceWithRole(token, role, clusterName)
+	bodyForNS, err := ccClient.GetCurrentUserNamespaceWithRole(token, role)
 	if err != nil {
-		logr.WithError(err).Errorf("Error when checking namespace from cc, ", err)
+		logger.GetLogger().Error("Error when checking namespace from cc, ", err)
 		return []string{}, errors.New("Error when checking namespace from cc, " + err.Error())
 	}
-	logr.Debugf("ns from cc: %v", string(bodyForNS))
+
+	logger.GetLogger().Debugf("ns from cc: %v", string(bodyForNS))
 	var nsVOList []commonModels.NamespaceVO
 	err = commonModels.GetResultData(bodyForNS, &nsVOList)
 	if err != nil {
-		logr.WithError(err).Errorf("GetResultData failed")
+		logger.GetLogger().Errorf("GetResultData failed")
 		return []string{}, errors.New("GetResultData failed")
 	}
+	
 	nsList := []string{}
 	for _, v := range nsVOList {
 		nsList = append(nsList, v.Namespace)
@@ -522,13 +677,13 @@ func getRoleNum(token string, username string, namespace string) (string, error)
 	ccClient := cc.GetCcClient(ccAddress)
 	err := ccClient.CheckNamespaceUser(token, namespace, username)
 	if err != nil {
-		logr.WithError(err).Errorf("CheckNamespaceUser failed, %v", err.Error())
+		logger.GetLogger().Errorf("CheckNamespaceUser failed, %v", err.Error())
 		return "", err
 	}
 	bodyForRole, err := ccClient.CheckNamespace(token, namespace)
 	err = commonModels.GetResultData(bodyForRole, &role)
 	if err != nil {
-		logr.WithError(err).Errorf("GetResultData failed")
+		logger.GetLogger().Errorf("GetResultData failed")
 		return "", err
 	}
 	if role == "SA" || role == "GA" {
@@ -539,57 +694,76 @@ func getRoleNum(token string, username string, namespace string) (string, error)
 	return roleNum, nil
 }
 
-func DeleteModel(params models.DeleteModelParams) middleware.Responder {
-	//1、Recv Parmas Init
-	logr := logger.LocLogger(logWithDeleteModelParams(params))
-	logr.Debugf("deleteModel invoked: %v", params.HTTPRequest.Header)
-	storageClient, err := storageClient.NewStorage()
+func handleTfosManifest(userId string, manifest *ManifestV1, logr *logger.LocLoggingEntry) error {
+	logr.Debugf("handleTfosManifest start")
+	//fixme: skip loading model in learner
+	manifest.CodeSelector = "storagePath"
+	cpuInfloat64, err := strconv.ParseFloat(os.Getenv("LINKIS_EXECUTOR_CPU"), 64)
 	if err != nil {
-		logr.WithError(err).Errorf("Cannot create client for trainer service")
-		return handleErrorResponse(logr, err.Error())
+		logr.Debugf("ParseFloat LINKIS_EXECUTOR_CPU failed: %v", err.Error())
+		return err
 	}
-	defer storageClient.Close()
-	//2、Params Check & Perminssion Check
-	// FIXME MLSS Change: auth user in restapi
-	_, errResp := checkJobVisibility(params.HTTPRequest.Context(), params.ModelID, getUserID(params.HTTPRequest), params.HTTPRequest.Header.Get(cc.CcAuthToken))
-	if errResp != nil {
-		return errResp
-	}
-	_, err = storageClient.Client().DeleteTrainingJob(params.HTTPRequest.Context(), &grpc_storage.DeleteRequest{
-		TrainingId: params.ModelID,
-		UserId:     getUserID(params.HTTPRequest),
-	})
+	manifest.Cpus = cpuInfloat64
+	manifest.Memory = os.Getenv("LINKIS_EXECUTOR_MEM")
+	manifest.Gpus = 0
+
+	clusterNameForDir, err := getClusterNameForDir(manifest.Namespace)
 	if err != nil {
-		logr.WithError(err).Errorf("storage.Client().DeleteTrainingJob call failed")
-		if grpc.Code(err) == codes.PermissionDenied {
-			return middleware.ResponderFunc(func(w http.ResponseWriter, _ runtime.Producer) {
-				w.WriteHeader(http.StatusForbidden)
-				//FIXME MLSS Change: change Description to Msg
-				payload, _ := json.Marshal(restmodels.Error{
-					Error: "forbidden",
-					Code:  http.StatusForbidden,
-					Msg:   err.Error(),
-				})
-				w.Write(payload)
-			})
-		}
-		if grpc.Code(err) == codes.NotFound {
-			//FIXME MLSS Change: change Description to Msg
-			return models.NewDeleteModelNotFound().WithPayload(&restmodels.Error{
-				Error: "Not found",
-				Code:  http.StatusNotFound,
-				Msg:   "",
-			})
-		}
-		return handleErrorResponse(logr, err.Error())
+		logr.Debugf("handleTfosManifest, getClusterNameForDir: %v", err.Error())
+		return err
 	}
-	return models.NewDeleteModelOK().WithPayload(
-		&restmodels.BasicModel{
-			ModelID: params.ModelID,
-		})
+
+	var dss = make([]*dataStoreRef, 1)
+	manifest.DataStores = dss
+	var ds = &dataStoreRef{
+		TrainingData: &storageContainerV1{
+			Container: "data",
+		},
+		TrainingResults: &storageContainerV1{
+			Container: "result",
+		},
+		ID:   "hostmount",
+		Type: "mount_volume",
+		Connection: map[string]string{
+			"type": "host_mount",
+			"name": "host-mount",
+			"path": fmt.Sprintf("/data/%v/mlss-data/%v", clusterNameForDir, userId),
+		},
+	}
+	dss[0] = ds
+	manifest.Framework = &frameworkV1{
+		Name:    os.Getenv("LINKIS_EXECUTOR_IMAGE"),
+		Version: os.Getenv("LINKIS_EXECUTOR_TAG"),
+	}
+	manifest.Framework.Command = "/main"
+	logr.Debugf("after handleTfosManifest: %+v", manifest)
+	return nil
+}
+
+func getClusterNameForDir(namespace string) (string, error) {
+	split := stringsUtil.Split(namespace, "-")
+
+	if len(split) != 7 {
+		return "", errors.New("ns must have 7 Field")
+	}
+
+	if split[2] == constants.BDP {
+		return constants.BDP_SS, nil
+	} else if split[2] == constants.BDAP {
+		if split[6] == constants.SAFE {
+			return constants.BDAPSAFE_SS, nil
+		} else {
+			return constants.BDAP_SS, nil
+		}
+	} else {
+		return "", errors.New("check ns pls,there is only 3 clusterName bdapsafe/bdap/bdp now")
+	}
 }
 
 func ExportModel(params models.ExportModelParams) middleware.Responder {
+	currentUserId := getUserID(params.HTTPRequest)
+	isSA := getSuperadminBool(params.HTTPRequest)
+
 	//1、Recv Parmas Init
 	folderUid := uuid.New().String()
 	manifestPath := "./exportFolder/" + folderUid + "/model"
@@ -611,6 +785,11 @@ func ExportModel(params models.ExportModelParams) middleware.Responder {
 		logger.GetLogger().Error("Get training job err, ", err)
 		return handleErrorResponse(logger.GetLogger(), "")
 	}
+	if !isSA && trainingJob.Job.UserId != currentUserId {
+		return getErrorResultWithPayload("forbidden", http.StatusForbidden,
+			errors.New("permission deniedKillTrainingJob"))
+	}
+
 	//3、Write yaml file
 	yamlBytes, err := yaml.Marshal(&manifest)
 	if err != nil {
@@ -624,6 +803,7 @@ func ExportModel(params models.ExportModelParams) middleware.Responder {
 		return handleErrorResponse(logger.GetLogger(), "")
 	}
 	//4、Check codeFile or storagePath
+	logger.GetLogger().Debugf("ExportModel trainingJob.Job.FilePath: %v\n", trainingJob.Job.FilePath)
 	if trainingJob.Job.FilePath != "" {
 		s3Client, err := storageClient.NewStorage()
 		todo := context.TODO()
@@ -685,7 +865,6 @@ func GetDashboards(params operations.GetDashboardsParams) middleware.Responder {
 	}
 
 	//2、Get userId and namespace from params
-	clusterName, err := getParamsForDashboards(params)
 	logr.Debugf("Calling trainer.Client().GetAllTrainingsJobs(...)")
 	logr.Debugf("debug")
 
@@ -695,96 +874,133 @@ func GetDashboards(params operations.GetDashboardsParams) middleware.Responder {
 	} else {
 		role = userGA
 	}
-	nsList, err := getUserNSList(params.HTTPRequest.Header.Get(cc.CcAuthToken), role, clusterName)
+	nsList, err := getUserNSList(params.HTTPRequest.Header.Get(cc.CcAuthToken), role)
 	if err != nil {
-		logr.WithError(err).Errorf("getUserNSList error, ", err)
+		logr.WithError(err).Error("getUserNSList error, ", err)
 		return handleErrorResponse(logr, err.Error())
 	}
 
 	//4、Get nsList by role
+	jobTotal := 0
+	jobRunning := 0
+	var gpuCount float32
+	var currentPage int64 = 1
+	var pageSize int64 = 10
+	queryFlag := true
+	pageSizeStr := strconv.FormatInt(pageSize, 10)
 	if isSA == SA {
 		logr.Infof("pass nothing for SA.")
 		//if role == SA
 		//nil,nil
 		// FIXME MLSS Change: v_1.5.0 added param clusterName to filter models
 		if nsList != nil && len(nsList) > 0 {
-			resp, err = storage.Client().GetAllTrainingsJobsByUserIdAndNamespaceList(params.HTTPRequest.Context(), &grpc_storage.GetAllRequest{
-				NamespaceList: nsList,
-			})
-			if err != nil {
-				logr.WithError(err).Errorf("GetAllTrainingsJobsByUserIdAndNamespaceList failed")
-				return handleErrorResponse(logr, err.Error())
+			for queryFlag {
+				pageStr := strconv.FormatInt(currentPage, 10)
+				resp, err = storage.Client().GetAllTrainingsJobsByUserIdAndNamespaceList(params.HTTPRequest.Context(), &grpc_storage.GetAllRequest{
+					NamespaceList: nsList,
+					Page:          pageStr,
+					Size:          pageSizeStr,
+				})
+				if err != nil {
+					logr.WithError(err).Errorf("GetAllTrainingsJobsByUserIdAndNamespaceList failed")
+					return handleErrorResponse(logr, err.Error())
+				}
+				totalInt64, err := strconv.ParseInt(resp.Total, 10, 64)
+				if err != nil {
+					logr.WithError(err).Errorf("GetAllTrainingsJobsByUserIdAndNamespaceList failed to"+
+						" parse response total, total: %s, err: %v", resp.Total, err)
+					return handleErrorResponse(logr, err.Error())
+				}
+				if (currentPage * pageSize) > totalInt64 {
+					currentPage += 1
+				} else {
+					queryFlag = false
+				}
+
+				//5 make response
+				if resp != nil {
+					jobTotal += len(resp.Jobs)
+					if len(resp.Jobs) > 0 {
+						for _, j := range resp.Jobs {
+							if grpc_storage.Status_COMPLETED != j.Status.Status && grpc_storage.Status_FAILED != j.Status.Status &&
+								grpc_storage.Status_PENDING != j.Status.Status && grpc_storage.Status_QUEUED != j.Status.Status {
+								jobRunning += 1
+								if j.GetTraining().GetResources().GetGpus() > 0 {
+									gpu := j.GetTraining().GetResources().GetGpus()
+									gpuCount += gpu
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 	} else {
 		logr.Debugf("pass nothing for GA/GU.")
-		//other role
-		//nsList,user
-		//CC:getNamespaceWithRole
-		resp, err = storage.Client().GetAllTrainingsJobsByUserIdAndNamespaceList(params.HTTPRequest.Context(), &grpc_storage.GetAllRequest{
-			Username:      currentUserId,
-			NamespaceList: nsList,
-			ClusterName:   clusterName,
-		})
-		if err != nil {
-			logr.WithError(err).Errorf("GetAllTrainingsJobsByUserIdAndNamespaceList failed")
-			return handleErrorResponse(logr, err.Error())
+		if nsList != nil && len(nsList) > 0 {
+			for queryFlag {
+				pageStr := strconv.FormatInt(currentPage, 10)
+				//resp, err = storage.Client().GetAllTrainingsJobsByUserIdAndNamespaceList(params.HTTPRequest.Context(), &grpc_storage.GetAllRequest{ //todo
+				resp, err = storage.Client().GetAllTrainingsJobsByUserIdAndNamespaceList(context.TODO(), &grpc_storage.GetAllRequest{
+					Username:      currentUserId,
+					NamespaceList: nsList,
+					Page:          pageStr,
+					Size:          pageSizeStr,
+				})
+				if err != nil {
+					logr.WithError(err).Errorf("GetAllTrainingsJobsByUserIdAndNamespaceList failed")
+					return handleErrorResponse(logr, err.Error())
+				}
+				totalInt64, err := strconv.ParseInt(resp.Total, 10, 64)
+				if err != nil {
+					logr.WithError(err).Errorf("GetAllTrainingsJobsByUserIdAndNamespaceList failed to"+
+						" parse response total, total: %s, err: %v", resp.Total, err)
+					return handleErrorResponse(logr, err.Error())
+				}
+				if (currentPage * pageSize) > totalInt64 {
+					currentPage += 1
+				} else {
+					queryFlag = false
+				}
+
+				//5 make response
+				if resp != nil {
+					jobTotal += len(resp.Jobs)
+					if len(resp.Jobs) > 0 {
+						for _, j := range resp.Jobs {
+							if grpc_storage.Status_COMPLETED != j.Status.Status && grpc_storage.Status_FAILED != j.Status.Status &&
+								grpc_storage.Status_PENDING != j.Status.Status && grpc_storage.Status_QUEUED != j.Status.Status {
+								jobRunning += 1
+								if j.GetTraining().GetResources().GetGpus() > 0 {
+									gpu := j.GetTraining().GetResources().GetGpus()
+									gpuCount += gpu
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 
 	//5、Make response
-	if resp != nil {
-		jobs := resp.Jobs
-		//logr.Infof("getDashboards jobs: %v", jobs)
-		//jobTotal:current user's trainingJobs; jobRunning: number of current user's trainingJobs is 'COMPLETED' or 'FAILED'  for status; gpuCount:gpu number of jobRunning
-		jobTotal := len(jobs)
-		jobRunning := 0
-		var gpuCount float32 = 0
-		for _, j := range jobs {
-			if grpc_storage.Status_COMPLETED != j.Status.Status && grpc_storage.Status_FAILED != j.Status.Status && grpc_storage.Status_PENDING != j.Status.Status && grpc_storage.Status_QUEUED != j.Status.Status {
-				jobRunning += 1
-				if j.GetTraining().GetResources().GetGpus() > 0 {
-					gpu := j.GetTraining().GetResources().GetGpus()
-					gpuCount += gpu
-					//logr.Infof("getDashboards jobs j: %v", j)
-				}
-			}
-		}
-		mp := map[string]int{"jobTotal": jobTotal, "jobRunning": jobRunning, "gpuCount": int(gpuCount)}
-		marshal, err := json.Marshal(mp)
-		if err != nil {
-			logr.WithError(err).Errorf("json.Marshal(mp) failed")
-			return handleErrorResponse(logr, err.Error())
-		}
-		var result = commonModels.Result{
-			Code:   "200",
-			Msg:    "success",
-			Result: json.RawMessage(marshal),
-		}
-
-		return middleware.ResponderFunc(func(w http.ResponseWriter, _ runtime.Producer) {
-			payload, _ := json.Marshal(result)
-			w.Write(payload)
-			w.WriteHeader(200)
-		})
-	} else {
-		mp := map[string]int{"jobTotal": 0, "jobRunning": 0, "gpuCount": int(0)}
-		marshal, err := json.Marshal(mp)
-		if err != nil {
-			logr.WithError(err).Errorf("json.Marshal(mp) failed")
-			return handleErrorResponse(logr, err.Error())
-		}
-		var result = commonModels.Result{
-			Code:   "200",
-			Msg:    "success",
-			Result: json.RawMessage(marshal),
-		}
-		return middleware.ResponderFunc(func(w http.ResponseWriter, _ runtime.Producer) {
-			payload, _ := json.Marshal(result)
-			w.Write(payload)
-			w.WriteHeader(200)
-		})
+	mp := map[string]int{"jobTotal": jobTotal, "jobRunning": jobRunning, "gpuCount": int(gpuCount)}
+	marshal, err := json.Marshal(mp)
+	if err != nil {
+		logr.WithError(err).Errorf("json.Marshal(mp) failed")
+		return handleErrorResponse(logr, err.Error())
 	}
+	var result = commonModels.Result{
+		Code:   "200",
+		Msg:    "success",
+		Result: json.RawMessage(marshal),
+	}
+
+	return middleware.ResponderFunc(func(w http.ResponseWriter, _ runtime.Producer) {
+		payload, _ := json.Marshal(result)
+		w.Write(payload)
+		w.WriteHeader(200)
+	})
 }
 
 func GetLogs(params models.GetLogsParams) middleware.Responder {
@@ -1101,6 +1317,17 @@ func getTrainingJob(params models.ExportModelParams, storage storageClient.Stora
 			Container: trainingJob.Job.Datastores[1].Fields["bucket"],
 		},
 	}
+
+	mfModel := MFModel{}
+	if trainingJob.Job.MfModel != nil {
+		mfModel = MFModel{
+			GroupId:     trainingJob.Job.MfModel.GroupId,
+			ModelName:   trainingJob.Job.MfModel.ModelName,
+			Version:     trainingJob.Job.MfModel.Version,
+			FactoryName: trainingJob.Job.MfModel.FactoryName,
+		}
+	}
+
 	//apped data store to training job's data stores
 	dataStores = append(dataStores, dataStore)
 	return trainingJob, &ManifestV1{
@@ -1128,6 +1355,11 @@ func getTrainingJob(params models.ExportModelParams, storage storageClient.Stora
 		TFosRequest:  &tfReq,
 		DataStores:   dataStores,
 		Framework:    &framework,
+		MFModel:      &mfModel,
+		ProxyUser:    trainingJob.Job.ProxyUser,
+		Algorithm:    trainingJob.Job.Algorithm,
+		FitParams:    trainingJob.Job.FitParams,
+		APIType:      trainingJob.Job.APIType,
 	}, nil
 }
 
@@ -1569,7 +1801,7 @@ func makeGrpcSearchTypeFromRestSearchType(st string) grpc_training_data_v1.Query
 }
 
 func handleErrorResponse(log *logger.LocLoggingEntry, description string) middleware.Responder {
-	logger.GetLogger().Error("Returning 500 error: %s", description)
+	logger.GetLogger().Errorf("Returning 500 error: %s", description)
 	return middleware.ResponderFunc(func(w http.ResponseWriter, _ runtime.Producer) {
 		w.WriteHeader(http.StatusInternalServerError)
 		//FIXME MLSS Change: change Description to Msg
@@ -1588,6 +1820,14 @@ func getUserID(r *http.Request) string {
 
 func getSuperadmin(r *http.Request) string {
 	return r.Header.Get(config.CcAuthSuperadmin)
+}
+
+func getSuperadminBool(r *http.Request) bool {
+	superAdminStr := r.Header.Get(config.CcAuthSuperadmin)
+	if "true" == superAdminStr {
+		return true
+	}
+	return false
 }
 
 // Echo the data received on the WebSocket.
@@ -2052,6 +2292,7 @@ func createModel(req *http.Request, job *grpc_storage.Job, logr *logger.LocLoggi
 		FileName:    job.FileName,
 		FilePath:    job.FilePath,
 		TFosRequest: tFosRequest,
+		ProxyUser:   job.ProxyUser,
 	}
 
 	// add data stores
@@ -2320,4 +2561,165 @@ func httpResponseHandle(status int, err error, operation string, resultMsg []byt
 			logger.GetLogger().Error(err.Error())
 		}
 	})
+}
+
+func GetJobLogByLine(params models.GetJobLogByLineParams) middleware.Responder {
+	user := getUserID(params.HTTPRequest)
+	//client, err := storageClient.NewStorage()
+	logger.GetLogger().Debugf("GetJobLogByLine params training id: %v\n", params.TrainingID)
+	address := fmt.Sprintf("di-storage-rpc.%s.svc.cluster.local:80", viper.GetString(config.PlatformNamespace))
+	client, err := storageClient.NewStorageWithAddress(address)
+	if err != nil {
+		logger.GetLogger().Error("New storage client error, ", err.Error())
+		return handleErrorResponse(log, err.Error())
+	}
+	logger.GetLogger().Debugln("GetJobLogByLine create client success.")
+	req := &grpc_storage.GetTrainedModelLogRequest{
+		TrainingId: params.TrainingID,
+		Size:       params.Size,
+		From:       params.From,
+		UserId:     user,
+	}
+	req2 := &grpc_storage.GetTrainedModelLogRequest{
+		TrainingId: params.TrainingID,
+		Size:       10000,
+		From:       0,
+		UserId:     user,
+	}
+	res, err := client.Client().GetTrainedModelLog(context.Background(), req)
+	if err != nil {
+		logger.GetLogger().Error("Get training log error, ", err.Error())
+		return handleErrorResponse(log, err.Error())
+	}
+	logger.GetLogger().Debugln("GetJobLogByLine get log success.")
+	if res == nil {
+		logger.GetLogger().Error("Response is nil")
+		return handleErrorResponse(log, "Response is nil")
+	}
+	res2, err := client.Client().GetTrainedModelLog(context.Background(), req2)
+	if err != nil {
+		logger.GetLogger().Error("Get training log error, ", err.Error())
+		return handleErrorResponse(log, err.Error())
+	}
+	if res2 == nil {
+		logger.GetLogger().Error("Response2 is nil")
+		return handleErrorResponse(log, "Response2 is nil")
+	}
+	isLastLine := "false"
+	if int64(len(res2.Logs)) <= req.Size {
+		isLastLine = "true"
+	}
+	return models.NewGetJobLogByLineOK().WithPayload(&restmodels.LogResponse{
+		Logs:       res.Logs,
+		IsLastLine: isLastLine,
+	})
+}
+
+func KillTrainingModel(params models.KillTrainingModelParams) middleware.Responder {
+	logr := logger.GetLogger()
+	logr.Debugf("deleteModel invoked: %v", params.HTTPRequest.Header)
+	storageClient, err := storageClient.NewStorage()
+	if err != nil {
+		logr.WithError(err).Errorf("Cannot create client for trainer service")
+		return handleErrorResponse(logr, err.Error())
+	}
+	defer storageClient.Close()
+
+	res, err := storageClient.Client().KillTrainingJob(params.HTTPRequest.Context(), &grpc_storage.KillRequest{
+		TrainingId: params.ModelID,
+		UserId:     getUserID(params.HTTPRequest),
+		IsSa:       getSuperadminBool(params.HTTPRequest),
+	})
+	if err != nil {
+		logr.Error("Killing Model Error: ", err.Error())
+		if grpc.Code(err) == codes.PermissionDenied {
+			return middleware.ResponderFunc(func(w http.ResponseWriter, _ runtime.Producer) {
+				w.WriteHeader(http.StatusForbidden)
+				payload, _ := json.Marshal(restmodels.Error{
+					Error: "forbidden",
+					Code:  http.StatusForbidden,
+					Msg:   err.Error(),
+				})
+				w.Write(payload)
+			})
+		}
+		return handleErrorResponse(logr, res.String())
+	}
+	if !res.Success {
+		if res.IsCompleted == true {
+			return handleErrorResponse(logr, "任务已完成，无法停止任务，请刷新页面。")
+		}
+		return handleErrorResponse(logr, res.String())
+	}
+	return models.NewKillTrainingModelOK().WithPayload(
+		&restmodels.Model{
+			Name: params.ModelID,
+		})
+
+}
+
+func CommandTransform(command string) (string, error) {
+
+	// Get ${} Expression  (\${).*?(\})
+	re := regexp.MustCompile("(\\${).*?(\\})")
+	expArr := re.FindAllString(command, -1)
+	expArrIndex := re.FindAllStringIndex(command, -1)
+
+	if expArrIndex == nil {
+		return command, nil
+	}
+
+	// For Loop Pre-Processing
+	var originStr []string
+	reCheck := regexp.MustCompile("run_date([+*/-]|\\d+)?")
+	for i := 0; i < len(expArr); i++ {
+		s := stringsUtil.TrimSpace(expArr[i])
+		if reCheck.MatchString(s) {
+			originStr = append(originStr, expArr[i])
+		}
+	}
+
+	// Cal Expression
+	var transString []string
+	for i := 0; i < len(originStr); i++ {
+		runDate, err := getRunDateFromExp(originStr[i])
+		transString = append(transString, runDate)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	if transString == nil {
+		return command, nil
+	}
+
+	// Replace ${run_date}
+	nCommand := command
+	for i := 0; i < len(originStr); i++ {
+		nCommand = stringsUtil.ReplaceAll(nCommand, originStr[i], transString[i])
+	}
+
+	return nCommand, nil
+}
+
+func getRunDateFromExp(exp string) (string, error) {
+	nExp := exp[2 : len(exp)-1]
+	re := regexp.MustCompile("\\d+|[+/*-]")
+	expArr := re.FindAllString(nExp, len("run_date")-1)
+	runDate := time.Now().AddDate(0, 0, -1)
+
+	for i := 0; i < len(expArr)-1; i++ {
+		dayInt, err := strconv.Atoi(expArr[i+1])
+		if err != nil {
+			logger.GetLogger().Error(err.Error())
+			return "", err
+		}
+		if expArr[i] == "-" {
+			runDate = runDate.AddDate(0, 0, -dayInt)
+		} else if expArr[i] == "+" {
+			runDate = runDate.AddDate(0, 0, dayInt)
+		}
+	}
+	runDateStr := runDate.Format("20060102")
+	return runDateStr, nil
 }

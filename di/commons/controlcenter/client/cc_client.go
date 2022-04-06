@@ -30,6 +30,21 @@ type UserResponse struct {
 	Token     string `json:"token,omitempty"`
 }
 
+type ProxyUserResponse struct {
+	Name      string `json:"name"`
+	GID       int    `json:"gid"`
+	UID       int    `json:"uid"`
+	Token     string `json:"token,omitempty"`
+	UserId    int `json:"user_id,omitempty"`
+	Path      string `json:"path,omitempty"`
+}
+
+type ProxyUserCheckResponse struct {
+	Code    string `json:"code"`
+	Message int    `json:"message"`
+	Result  bool   `json:"result"`
+}
+
 const CcAuthToken = "MLSS-Token"
 
 // FIXME MLSS Change: get models filter by username and namespace
@@ -137,6 +152,50 @@ func (cc *CcClient) UserNamespaceCheck(token string, userName string, namespace 
 	return nil
 }
 
+func (cc *CcClient) GetProxyUserFromCC(token string, proxyUserId string, userId string) (*ProxyUserResponse, error) {
+	apiUrl := cc.ccUrl + fmt.Sprintf("/cc/v1/proxyUser/%v/user/%v", proxyUserId, userId)
+	body, err := cc.accessCheckFromCc(token, apiUrl)
+	if err != nil {
+		return nil, err
+	}
+	var u = new(ProxyUserResponse)
+	//json.Unmarshal(body, &u)
+	err = models.GetResultData(body, &u)
+	if err != nil {
+		return nil,  errors.New("GetResultData failed" + err.Error())
+	}
+	log.Debugf("response=%+v, GID=%v, UID=%v", u, u.GID, u.UID)
+	if  (u.GID == 0 || u.UID == 0) {
+		return nil, errors.New("error GUIDCheck is on and GID or UID is 0")
+	}
+	//gid := strconv.Itoa(u.GID)
+	//uid := strconv.Itoa(u.UID)
+
+	return u, nil
+}
+
+func (cc *CcClient) GetGUIDFromProxyUserId(token string, proxyUserId string) (*string, *string, error) {
+	apiUrl := cc.ccUrl + fmt.Sprintf("/cc/v1/proxyUser/%v", proxyUserId)
+	body, err := cc.accessCheckFromCc(token, apiUrl)
+	if err != nil {
+		return nil, nil, err
+	}
+	var u = new(UserResponse)
+	//json.Unmarshal(body, &u)
+	err = models.GetResultData(body, &u)
+	if err != nil {
+		return nil, nil, errors.New("GetResultData failed")
+	}
+	log.Debugf("response=%+v, GID=%v, UID=%v", u, u.GID, u.UID)
+	if u.GUIDCheck && (u.GID == 0 || u.UID == 0) {
+		return nil, nil, errors.New("error GUIDCheck is on and GID or UID is 0")
+	}
+	gid := strconv.Itoa(u.GID)
+	uid := strconv.Itoa(u.UID)
+
+	return &gid, &uid, nil
+}
+
 func (cc *CcClient) GetGUIDFromUserId(token string, userId string) (*string, *string, error) {
 	apiUrl := cc.ccUrl + fmt.Sprintf("/cc/v1/users/name/%v", userId)
 	body, err := cc.accessCheckFromCc(token, apiUrl)
@@ -159,6 +218,7 @@ func (cc *CcClient) GetGUIDFromUserId(token string, userId string) (*string, *st
 	return &gid, &uid, nil
 }
 
+
 func (cc *CcClient) GetUserByName(token string, userId string) (*UserResponse, error) {
 	apiUrl := cc.ccUrl + fmt.Sprintf("/cc/v1/users/name/%v", userId)
 	body, err := cc.accessCheckFromCc(token, apiUrl)
@@ -174,6 +234,24 @@ func (cc *CcClient) GetUserByName(token string, userId string) (*UserResponse, e
 	log.Debugf("response=%+v, GID=%v, UID=%v", u, u.GID, u.UID)
 
 	return u, nil
+}
+
+func (cc *CcClient) ProxyUserCheck(token string, userId string, proxyUser string) (bool, error) {
+	apiUrl := cc.ccUrl + fmt.Sprintf("/cc/v1/proxyUserCheck/%v/%v", proxyUser, userId)
+	body, err := cc.accessCheckFromCc(token, apiUrl)
+	if err != nil {
+		return false, err
+	}
+	var auth bool
+	//json.Unmarshal(body, &u)
+	err = models.GetResultData(body, &auth)
+
+	if err != nil {
+		log.Error("Unmarshal Error", err)
+		return false, errors.New("Check Proxy User failed")
+	}
+
+	return auth, nil
 }
 
 func (cc *CcClient) AdminUserCheck(token string, adminUserId string, userId string) error {
@@ -303,8 +381,8 @@ func (cc *CcClient) CheckNamespaceUser(token string, namespace string, user stri
 	return nil
 }
 
-func (cc *CcClient) GetCurrentUserNamespaceWithRole(token string, roleId string, clusterName string) ([]byte, error) {
-	apiUrl := cc.ccUrl + fmt.Sprintf("/cc/v1/groups/users/roles/%v/namespaces/clusterName/%v", roleId, clusterName)
+func (cc *CcClient) GetCurrentUserNamespaceWithRole(token string, roleId string) ([]byte, error) {
+	apiUrl := cc.ccUrl + fmt.Sprintf("/cc/v1/groups/users/roles/%v/namespaces", roleId)
 	log.Debugf("get apiUrl: %v", apiUrl)
 	req, err := http.NewRequest("GET", apiUrl, strings.NewReader(""))
 	if err != nil {
@@ -329,4 +407,50 @@ func (cc *CcClient) GetCurrentUserNamespaceWithRole(token string, roleId string,
 
 	defer resp.Body.Close()
 	return body, nil
+}
+
+
+type GetGroupFromUserRequest struct {
+
+}
+
+type GetGroupFromUserResponse struct {
+	ID         int64  `gorm:"column:id; PRIMARY_KEY" json:"id"`
+	Name       string `json:"name"`
+	EnableFlag int8   `json:"enable_flag"`
+	UserId     int64  `json:"user_id"`
+	RoleId     int64  `json:"role_id"`
+	GroupId    int64  `json:"group_id"`
+	Remarks    string `json:"remarks"`
+}
+
+
+
+func (cc *CcClient) GetGroupFromUser(username string) (*GetGroupFromUserResponse,error){
+	apiUrl := cc.ccUrl + fmt.Sprintf("/cc/v1/group/username/%v",  username)
+
+	req,err := http.NewRequest("GET",apiUrl,nil)
+	if err != nil {
+		return nil,err
+	}
+
+	res,err := cc.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	resByte, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	group := GetGroupFromUserResponse{}
+	err = json.Unmarshal(resByte,&group)
+	if err != nil {
+		return nil, err
+	}
+
+	return &group,nil
+
+
 }

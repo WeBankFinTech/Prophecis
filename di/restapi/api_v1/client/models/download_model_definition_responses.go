@@ -13,7 +13,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	"webank/DI/restapi/api_v1/restmodels"
+	restmodels "webank/DI/restapi/api_v1/restmodels"
 )
 
 // DownloadModelDefinitionReader is a Reader for the DownloadModelDefinition structure.
@@ -25,21 +25,18 @@ type DownloadModelDefinitionReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *DownloadModelDefinitionReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewDownloadModelDefinitionOK(o.writer)
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 401:
 		result := NewDownloadModelDefinitionUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 404:
 		result := NewDownloadModelDefinitionNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -68,7 +65,11 @@ type DownloadModelDefinitionOK struct {
 }
 
 func (o *DownloadModelDefinitionOK) Error() string {
-	return fmt.Sprintf("[GET /v1/models/{model_id}/definition][%d] downloadModelDefinitionOK  %+v", 200, o.Payload)
+	return fmt.Sprintf("[GET /di/v1/models/{model_id}/definition][%d] downloadModelDefinitionOK  %+v", 200, o.Payload)
+}
+
+func (o *DownloadModelDefinitionOK) GetPayload() io.Writer {
+	return o.Payload
 }
 
 func (o *DownloadModelDefinitionOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -95,7 +96,11 @@ type DownloadModelDefinitionUnauthorized struct {
 }
 
 func (o *DownloadModelDefinitionUnauthorized) Error() string {
-	return fmt.Sprintf("[GET /v1/models/{model_id}/definition][%d] downloadModelDefinitionUnauthorized  %+v", 401, o.Payload)
+	return fmt.Sprintf("[GET /di/v1/models/{model_id}/definition][%d] downloadModelDefinitionUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *DownloadModelDefinitionUnauthorized) GetPayload() *restmodels.Error {
+	return o.Payload
 }
 
 func (o *DownloadModelDefinitionUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -124,7 +129,11 @@ type DownloadModelDefinitionNotFound struct {
 }
 
 func (o *DownloadModelDefinitionNotFound) Error() string {
-	return fmt.Sprintf("[GET /v1/models/{model_id}/definition][%d] downloadModelDefinitionNotFound  %+v", 404, o.Payload)
+	return fmt.Sprintf("[GET /di/v1/models/{model_id}/definition][%d] downloadModelDefinitionNotFound  %+v", 404, o.Payload)
+}
+
+func (o *DownloadModelDefinitionNotFound) GetPayload() *restmodels.Error {
+	return o.Payload
 }
 
 func (o *DownloadModelDefinitionNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

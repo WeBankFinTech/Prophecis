@@ -6,6 +6,7 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/go-openapi/runtime"
@@ -41,7 +42,7 @@ func (a *Client) DeleteModel(params *DeleteModelParams, authInfo runtime.ClientA
 	result, err := a.transport.Submit(&runtime.ClientOperation{
 		ID:                 "deleteModel",
 		Method:             "DELETE",
-		PathPattern:        "/v1/models/{model_id}",
+		PathPattern:        "/di/v1/models/{model_id}",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"https"},
@@ -54,8 +55,14 @@ func (a *Client) DeleteModel(params *DeleteModelParams, authInfo runtime.ClientA
 	if err != nil {
 		return nil, err
 	}
-	return result.(*DeleteModelOK), nil
-
+	success, ok := result.(*DeleteModelOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for deleteModel: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
@@ -72,7 +79,7 @@ func (a *Client) DownloadModelDefinition(params *DownloadModelDefinitionParams, 
 	result, err := a.transport.Submit(&runtime.ClientOperation{
 		ID:                 "downloadModelDefinition",
 		Method:             "GET",
-		PathPattern:        "/v1/models/{model_id}/definition",
+		PathPattern:        "/di/v1/models/{model_id}/definition",
 		ProducesMediaTypes: []string{"application/octet-stream"},
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"https"},
@@ -85,8 +92,14 @@ func (a *Client) DownloadModelDefinition(params *DownloadModelDefinitionParams, 
 	if err != nil {
 		return nil, err
 	}
-	return result.(*DownloadModelDefinitionOK), nil
-
+	success, ok := result.(*DownloadModelDefinitionOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for downloadModelDefinition: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
@@ -103,7 +116,7 @@ func (a *Client) DownloadTrainedModel(params *DownloadTrainedModelParams, authIn
 	result, err := a.transport.Submit(&runtime.ClientOperation{
 		ID:                 "downloadTrainedModel",
 		Method:             "GET",
-		PathPattern:        "/v1/models/{model_id}/trained_model",
+		PathPattern:        "/di/v1/models/{model_id}/trained_model",
 		ProducesMediaTypes: []string{"application/octet-stream"},
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"https"},
@@ -116,8 +129,88 @@ func (a *Client) DownloadTrainedModel(params *DownloadTrainedModelParams, authIn
 	if err != nil {
 		return nil, err
 	}
-	return result.(*DownloadTrainedModelOK), nil
+	success, ok := result.(*DownloadTrainedModelOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for downloadTrainedModel: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
 
+/*
+ExportModel exports the model definition
+
+Export the model definition
+*/
+func (a *Client) ExportModel(params *ExportModelParams, authInfo runtime.ClientAuthInfoWriter, writer io.Writer) (*ExportModelOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewExportModelParams()
+	}
+
+	result, err := a.transport.Submit(&runtime.ClientOperation{
+		ID:                 "exportModel",
+		Method:             "GET",
+		PathPattern:        "/di/v1/models/{model_id}/export",
+		ProducesMediaTypes: []string{"application/octet-stream"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"https"},
+		Params:             params,
+		Reader:             &ExportModelReader{formats: a.formats, writer: writer},
+		AuthInfo:           authInfo,
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	})
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*ExportModelOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for exportModel: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetJobLogByLine gets job log by exec Id and line
+
+Get Job Log By Exec Id And Line.
+*/
+func (a *Client) GetJobLogByLine(params *GetJobLogByLineParams, authInfo runtime.ClientAuthInfoWriter) (*GetJobLogByLineOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetJobLogByLineParams()
+	}
+
+	result, err := a.transport.Submit(&runtime.ClientOperation{
+		ID:                 "getJobLogByLine",
+		Method:             "GET",
+		PathPattern:        "/di/v1/job/{training_id}/log",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"https"},
+		Params:             params,
+		Reader:             &GetJobLogByLineReader{formats: a.formats},
+		AuthInfo:           authInfo,
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	})
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetJobLogByLineOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for getJobLogByLine: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
@@ -135,7 +228,7 @@ func (a *Client) GetLogs(params *GetLogsParams, writer io.Writer) (*GetLogsOK, e
 	result, err := a.transport.Submit(&runtime.ClientOperation{
 		ID:                 "getLogs",
 		Method:             "GET",
-		PathPattern:        "/v1/models/{model_id}/logs",
+		PathPattern:        "/di/v1/models/{model_id}/logs",
 		ProducesMediaTypes: []string{"application/octet-stream"},
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"https"},
@@ -147,16 +240,56 @@ func (a *Client) GetLogs(params *GetLogsParams, writer io.Writer) (*GetLogsOK, e
 	if err != nil {
 		return nil, err
 	}
-	return result.(*GetLogsOK), nil
-
+	success, ok := result.(*GetLogsOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for getLogs: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
-GetMetrics gets training metrics from a model training as websocket
+GetModel gets detailed information about a model
 
-Get training metrics such as learning rate, accurarcy, loss from a model training via a websocket. It returns one or more JSON payloads at a time with the following schema.
+Get detailed information about a model such as training status.
 
 */
+func (a *Client) GetModel(params *GetModelParams, authInfo runtime.ClientAuthInfoWriter) (*GetModelOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetModelParams()
+	}
+
+	result, err := a.transport.Submit(&runtime.ClientOperation{
+		ID:                 "getModel",
+		Method:             "GET",
+		PathPattern:        "/di/v1/models/{model_id}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"https"},
+		Params:             params,
+		Reader:             &GetModelReader{formats: a.formats},
+		AuthInfo:           authInfo,
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	})
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetModelOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for getModel: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+// todo
+// add by lk in v1.17.0
 func (a *Client) GetMetrics(params *GetMetricsParams, writer io.Writer) (*GetMetricsOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
@@ -183,38 +316,6 @@ func (a *Client) GetMetrics(params *GetMetricsParams, writer io.Writer) (*GetMet
 }
 
 /*
-GetModel gets detailed information about a model
-
-Get detailed information about a model such as training status.
-
-*/
-func (a *Client) GetModel(params *GetModelParams, authInfo runtime.ClientAuthInfoWriter) (*GetModelOK, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewGetModelParams()
-	}
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "getModel",
-		Method:             "GET",
-		PathPattern:        "/v1/models/{model_id}",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"https"},
-		Params:             params,
-		Reader:             &GetModelReader{formats: a.formats},
-		AuthInfo:           authInfo,
-		Context:            params.Context,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*GetModelOK), nil
-
-}
-
-/*
 ListModels gets a list of available deep learning models
 
 Get a list of all available deep learning models and their configuration that a user can see.
@@ -225,10 +326,11 @@ func (a *Client) ListModels(params *ListModelsParams, authInfo runtime.ClientAut
 	if params == nil {
 		params = NewListModelsParams()
 	}
+
 	result, err := a.transport.Submit(&runtime.ClientOperation{
 		ID:                 "listModels",
 		Method:             "GET",
-		PathPattern:        "/v1/models",
+		PathPattern:        "/di/v1/models",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"https"},
@@ -241,8 +343,14 @@ func (a *Client) ListModels(params *ListModelsParams, authInfo runtime.ClientAut
 	if err != nil {
 		return nil, err
 	}
-	return result.(*ListModelsOK), nil
-
+	success, ok := result.(*ListModelsOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for listModels: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
@@ -259,7 +367,7 @@ func (a *Client) PatchModel(params *PatchModelParams, authInfo runtime.ClientAut
 	result, err := a.transport.Submit(&runtime.ClientOperation{
 		ID:                 "patchModel",
 		Method:             "PATCH",
-		PathPattern:        "/v1/models/{model_id}",
+		PathPattern:        "/di/v1/models/{model_id}",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"https"},
@@ -272,8 +380,14 @@ func (a *Client) PatchModel(params *PatchModelParams, authInfo runtime.ClientAut
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PatchModelAccepted), nil
-
+	success, ok := result.(*PatchModelAccepted)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for patchModel: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
@@ -291,7 +405,7 @@ func (a *Client) PostModel(params *PostModelParams, authInfo runtime.ClientAuthI
 	result, err := a.transport.Submit(&runtime.ClientOperation{
 		ID:                 "postModel",
 		Method:             "POST",
-		PathPattern:        "/v1/models",
+		PathPattern:        "/di/v1/models",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"multipart/form-data"},
 		Schemes:            []string{"https"},
@@ -304,8 +418,14 @@ func (a *Client) PostModel(params *PostModelParams, authInfo runtime.ClientAuthI
 	if err != nil {
 		return nil, err
 	}
-	return result.(*PostModelCreated), nil
-
+	success, ok := result.(*PostModelCreated)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for postModel: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 // SetTransport changes the transport on the client
