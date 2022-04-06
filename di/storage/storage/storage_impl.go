@@ -22,8 +22,10 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
 	"path/filepath"
 	"sync"
+	"webank/DI/commons/util"
 	"webank/DI/commons/util/random"
 	// "webank/DI/linkisexecutor/linkisclientutils"
 	// "webank/DI/linkisexecutor/models"
@@ -44,7 +46,6 @@ import (
 	storageClient "webank/DI/storage/client"
 	"webank/DI/storage/storage/grpc_storage"
 
-	"github.com/go-kit/kit/metrics"
 	uuid "github.com/nu7hatch/gouuid"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -89,10 +90,11 @@ const (
 
 	oldEndpointInternalPageSize = 10
 
-	mongoAddressKey  = "mongo.address"
-	mongoDatabaseKey = "mongo.database"
-	mongoUsernameKey = "mongo.username"
-	mongoPasswordKey = "mongo.password"
+	mongoAddressKey  = "MONGO_ADDRESS"
+	mongoDatabaseKey = "MONGO_DATABASE"
+	mongoUsernameKey = "MONGO_USERNAME"
+	mongoPasswordKey = "MONGO_PASSWORD"
+	mongoAuthenticationDatabase = "MONGO_Authentication_Database"
 
 	gpuLimitsKey          = "gpu.limits"
 	gpuLimitsQuerySizeKey = "gpu.limits.query.size"
@@ -168,26 +170,6 @@ type Service interface {
 	StopTrainer()
 }
 
-type storageMetrics struct {
-	createTrainingJobCounter          metrics.Counter
-	deleteTrainingJobCounter          metrics.Counter
-	downloadTrainedModelJobCounter    metrics.Counter
-	downloadTrainingMetricsJobCounter metrics.Counter
-	rateLimitTrainingJobCounter       metrics.Counter
-	trainingJobFailedCounter          metrics.Counter
-	trainingJobSucceededCounter       metrics.Counter
-	uploadModelFailedCounter          metrics.Counter
-	enqueueJobCounter                 metrics.Counter
-	dequeueJobCounter                 metrics.Counter
-	deleteJobFromQueueCounter         metrics.Counter
-	queueSizeGauge                    metrics.Gauge
-	clusterWideGPUUsageGauge          metrics.Gauge
-	clusterWideGPUUsageCounter        metrics.Counter
-	createTrainingDuration            metrics.Histogram
-	storageServiceRestartCounter      metrics.Counter
-	trainerUsageCounter               metrics.Counter
-	trainerUsageGauge                 metrics.Gauge
-}
 
 type queueHandler struct {
 	stopQueue chan struct{}
@@ -231,16 +213,18 @@ func NewService() Service {
 
 	repo, err := newTrainingsRepository(viper.GetString(mongoAddressKey),
 		viper.GetString(mongoDatabaseKey), viper.GetString(mongoUsernameKey),
-		viper.GetString(mongoPasswordKey), config.GetMongoCertLocation(), "training_jobs")
+		viper.GetString(mongoPasswordKey), viper.GetString(mongoAuthenticationDatabase),
+		config.GetMongoCertLocation(), "training_jobs")
 	if err != nil {
-		logr.WithError(err).Fatalf("Cannot create Repository with %s %s %s", viper.GetString(mongoAddressKey), viper.GetString(mongoDatabaseKey), viper.GetString(mongoUsernameKey))
+		logr.WithError(err).Fatalf("Cannot create Trainings Repository with %s %s %s", viper.GetString(mongoAddressKey), viper.GetString(mongoDatabaseKey), viper.GetString(mongoUsernameKey))
 	}
 
 	jobHistoryRepo, err := newJobHistoryRepository(viper.GetString(mongoAddressKey),
 		viper.GetString(mongoDatabaseKey), viper.GetString(mongoUsernameKey),
-		viper.GetString(mongoPasswordKey), config.GetMongoCertLocation(), collectionNameJobHistory)
+		viper.GetString(mongoPasswordKey), viper.GetString(mongoAuthenticationDatabase),
+		config.GetMongoCertLocation(), collectionNameJobHistory)
 	if err != nil {
-		logr.WithError(err).Fatalf("Cannot create Repository with %s %s %s %s", viper.GetString("mongo.address"),
+		logr.WithError(err).Fatalf("Cannot create Job History Repository with %s %s %s %s", viper.GetString("mongo.address"),
 			viper.GetString(mongoDatabaseKey), viper.GetString(mongoUsernameKey), collectionNameJobHistory)
 	}
 
@@ -265,31 +249,6 @@ func NewService() Service {
 	return s
 }
 
-// NewTestService creates a new service instance for testing
-func NewTestService(ds storage.DataStore, repo Repository, jobHistoryRepo jobHistoryRepository,
-	lcm client.LcmClient, tds tdsClient.TrainingDataClient, queues map[string]*queueHandler) Service {
-
-	config.SetDefault(gpuLimitsQuerySizeKey, 100)
-	config.SetDefault(pollIntervalKey, 1) // set poll interval lower to run tests faster
-
-	s := &storageService{
-		datastore:           ds,
-		repo:                repo,
-		jobHistoryRepo:      jobHistoryRepo,
-		lcm:                 lcm,
-		modelsBucket:        getModelsBucket(),
-		trainedModelsBucket: getTrainedModelsBucket(),
-		tds:                 tds,
-		queues:              queues,
-		queuesStarted:       false,
-	}
-
-	s.RegisterService = func() {
-		grpc_storage.RegisterStorageServer(s.Server, s)
-	}
-	s.StartQueues()
-	return s
-}
 
 func debugLogger(logrr *logrus.Entry, isEnabled bool) *logger.LocLoggingEntry {
 	logr := new(logger.LocLoggingEntry)
@@ -594,6 +553,7 @@ func (s *storageService) CreateTrainingJob(ctx context.Context, req *grpc_storag
 		ExpName:      req.ExpName,
 		FileName:     req.FileName,
 		FilePath:     req.FilePath,
+		ProxyUser:    req.ProxyUser,
 	}
 	logr.Debugf("CreateTrainingJob, req.JobType: %v, reqCpu: %v, reqGpu: %v, reqMem: %v", req.JobType, req.Training.Resources.Cpus, req.Training.Resources.Gpus, req.Training.Resources.Memory)
 
@@ -689,9 +649,10 @@ func updateTrainingJobPostLock(s *storageService, req *grpc_storage.UpdateReques
 	}
 
 	if training.UserID != req.UserId {
-		msg := fmt.Sprintf("User %s does not have permission to update training data with id %s.", req.UserId, req.TrainingId)
+		msg := fmt.Sprintf("User %s does not have permission to update training data with id %s.",
+			req.UserId, req.TrainingId)
 		logr.Error(msg)
-		return nil, gerrf(codes.PermissionDenied, msg)
+		return nil, gerrf(codes.PermissionDenied, "permission denied")
 	}
 
 	ts := training.TrainingStatus
@@ -778,7 +739,7 @@ func updateTrainingJobPostLock(s *storageService, req *grpc_storage.UpdateReques
 		return nil, gerrf(codes.NotFound, "Training with id %s not found.", req.TrainingId)
 	}
 	ts = training.TrainingStatus
-	logr.Debugf("CHECKING Stored training %s, Status %s Error Code %s Message %s", req.TrainingId, ts.Status, ts.ErrorCode, ts.StatusMessage)
+	logr.Debugf("CHECKING Stored training %s, Status %s Code %s Message %s", req.TrainingId, ts.Status, ts.ErrorCode, ts.StatusMessage)
 
 	// Additionally, store any job state transitions in the job_history DB collection
 	// We store a history record if either (1) the status is different, or (2) if this is
@@ -812,6 +773,7 @@ func (s *storageService) GetTrainingJobByTrainingJobId(ctx context.Context, req 
 		logger.GetLogger().Error("Find training err, ", err)
 		return nil, errors.New(fmt.Sprintf("Find training err, %v", err))
 	}
+
 	newJob := &grpc_storage.Job{
 		UserId:          tr.UserID,
 		JobId:           tr.JobID,
@@ -834,6 +796,9 @@ func (s *storageService) GetTrainingJobByTrainingJobId(ctx context.Context, req 
 		Metrics:         tr.Metrics,
 		CodeSelector:    tr.CodeSelector,
 		TfosRequest:     tr.TFosRequest,
+		ProxyUser:       tr.ProxyUser,
+		DataSet:         tr.DataSet,
+		MfModel:         tr.MFModel,
 	}
 	return &grpc_storage.GetResponse{
 		Job: newJob,
@@ -871,6 +836,7 @@ func (s *storageService) GetAllTrainingsJobs(ctx context.Context, req *grpc_stor
 			FilePath:        job.FilePath,
 			CodeSelector:    job.CodeSelector,
 			TfosRequest:     job.TFosRequest,
+			ProxyUser:       job.ProxyUser,
 		}
 	}
 
@@ -932,6 +898,7 @@ func (s *storageService) GetAllTrainingsJobsByUserIdAndNamespace(ctx context.Con
 			FilePath:     job.FilePath,
 			CodeSelector: job.CodeSelector,
 			TfosRequest:  job.TFosRequest,
+			ProxyUser:    job.ProxyUser,
 		}
 	}
 
@@ -995,8 +962,12 @@ func (s *storageService) GetAllTrainingsJobsByUserIdAndNamespaceList(ctx context
 			FilePath:     job.FilePath,
 			CodeSelector: job.CodeSelector,
 			TfosRequest:  job.TFosRequest,
+			ProxyUser:    job.ProxyUser,
 		}
+		logr.Debugf("storageService GetAllTrainingsJobsByUserIdAndNamespaceList job[%d]: %+v", i, resp.Jobs[i])
 	}
+	logr.Debugf("storageService GetAllTrainingsJobsByUserIdAndNamespaceList length: %d", len(resp.Jobs))
+
 
 	pageStr := strconv.Itoa(jobs.Pages)
 	resp.Pages = pageStr
@@ -1041,7 +1012,8 @@ func (s *storageService) deleteJobFromQueue(trainingID string, namespaceName str
 		// FIXME MLSS Change: v_1.4.1 to create queue  when queue is nil
 		queue, err := newTrainingJobQueue(viper.GetString(mongoAddressKey),
 			viper.GetString(mongoDatabaseKey), viper.GetString(mongoUsernameKey),
-			viper.GetString(mongoPasswordKey), config.GetMongoCertLocation(), QueueName(namespaceName), LockName(namespaceName))
+			viper.GetString(mongoPasswordKey), viper.GetString(mongoAuthenticationDatabase),
+			config.GetMongoCertLocation(), QueueName(namespaceName), LockName(namespaceName))
 		if err != nil {
 			logr.WithError(err).Fatalf("Cannot create queue with %s %s %s", viper.GetString(mongoAddressKey), viper.GetString(mongoDatabaseKey), viper.GetString(mongoUsernameKey))
 		}
@@ -1145,6 +1117,7 @@ func (s *storageService) DeleteTrainingJob(ctx context.Context,
 				JobNamespace: job.JobNamespace,
 			})
 
+
 			// tolerate "not found" because it just means the job is no longer running
 			if err != nil && grpcCode(err) != codes.NotFound {
 				logr.WithError(err).Errorf("Failed to kill job '%s'", job.JobId)
@@ -1154,14 +1127,6 @@ func (s *storageService) DeleteTrainingJob(ctx context.Context,
 
 			cl.Observe("killed job in LCM")
 		}()
-
-		// delete model content from data store
-		// FIXME MLSS Change: delete tfos-job in linkis first
-		// err = killTfos(job, s, logr)
-		// if err != nil {
-		// 	logr.WithError(err).Errorf("kill Tfos in linkis failed: %v", err.Error())
-		// 	return nil, err
-		// }
 
 		// delete from DB
 		err = s.repo.Delete(job.TrainingId)
@@ -1176,42 +1141,6 @@ func (s *storageService) DeleteTrainingJob(ctx context.Context,
 	}
 	return nil, gerrf(codes.NotFound, "Training with id '%s' not found.", req.TrainingId)
 }
-
-// func killTfos(job *grpc_storage.Job, s *storageService, logr *logger.LocLoggingEntry) error {
-// 	training, err := s.repo.Find(job.TrainingId)
-// 	if err != nil {
-// 		logr.WithError(err).Errorf("Cannot retrieve training '%s'", job.TrainingId)
-// 		return err
-// 	}
-// 	if training == nil {
-// 		// training does not exist
-// 		logr.WithError(err).Errorf("Training with id %s not found.", job.TrainingId)
-// 		return err
-// 	}
-
-// 	logr.Infof(" killTfos,req.UserId:  %s, req.TrainingId:  %s, training.LinkisExecId:  %s", job.UserId, job.TrainingId, training.LinkisExecId)
-
-// 	if training.LinkisExecId != "" {
-// 		var linkisAddress = os.Getenv("LINKIS_ADDRESS")
-// 		var linkisTokenCode = os.Getenv("LINKIS_TOKEN_CODE")
-// 		logr.Infof(" killTfos,LINKIS_ADDRESS: %s, LINKIS_TOKEN_CODE: %v", linkisAddress, linkisTokenCode)
-
-// 		var requestBase = models.LinkisRequestBase{
-// 			LinkisAddress:   linkisAddress,
-// 			LinkisTokenCode: linkisTokenCode,
-// 			UserId:          job.UserId,
-// 		}
-// 		err = linkisclientutils.KillingJob(requestBase, training.LinkisExecId)
-// 		if err != nil {
-// 			logr.WithError(err).Errorf("Cannot kill training '%s': %v", job.TrainingId, err.Error())
-// 			return err
-// 		}
-// 	} else {
-// 		logr.Infof(" killTfos,training.LinkisExecId == '',no need to delete job in linkis ")
-// 	}
-
-// 	return nil
-// }
 
 func (s *storageService) ResumeTrainingJob(ctx context.Context, req *grpc_storage.ResumeRequest) (*grpc_storage.ResumeResponse, error) {
 	logr := logger.LocLogger(logWith(req.TrainingId, req.UserId))
@@ -1361,6 +1290,18 @@ func trainedModelLogRequestToTrainerQuery(req *grpc_storage.TrainedModelLogReque
 	return query
 }
 
+func trainedGetModelLogRequestToTrainerQuery(req *grpc_storage.GetTrainedModelLogRequest, size int64, from int64) *tdsService.Query {
+	query := &tdsService.Query{
+		Meta: &tdsService.MetaInfo{
+			TrainingId: req.TrainingId,
+			UserId:     req.UserId,
+		},
+		StartToEndLine: strconv.Itoa(int(size)) + ":" + strconv.Itoa(int(from)),
+		Pagesize:       1,
+	}
+	return query
+}
+
 func (s *storageService) isLearningFinished(req *grpc_storage.TrainedModelLogRequest) (bool, error) {
 	tr, err := s.repo.Find(req.TrainingId)
 	if err != nil {
@@ -1506,6 +1447,23 @@ func (s *storageService) GetTrainedModelLogs(req *grpc_storage.TrainedModelLogRe
 	return nil
 }
 
+func (s *storageService) GetTrainedModelLog(ctx context.Context, req *grpc_storage.GetTrainedModelLogRequest) (*grpc_storage.GetTrainedModelLogResponse, error) {
+	tds, err := s.tdsClient()
+	if err != nil {
+		logger.GetLogger().Error("Cannot create LCM service client")
+		return nil, err
+	}
+	query := trainedGetModelLogRequestToTrainerQuery(req, req.Size, req.From)
+	res, err := tds.Client().GetLog(ctx, query)
+	if err != nil {
+		logger.GetLogger().Error("get logs error, ", err)
+		return nil, err
+	}
+	return &grpc_storage.GetTrainedModelLogResponse{
+		Logs: res.Log,
+	}, nil
+}
+
 func marshalQuerySearchType(st grpc_storage.Query_SearchType) tdsService.Query_SearchType {
 	searchType := tdsService.Query_TERM
 
@@ -1607,35 +1565,6 @@ func (s *storageService) GetTrainingLogs(in *grpc_storage.Query,
 	return nil
 }
 
-func marshalTDSDataType2TrainerDataType(dt tdsService.Any_DataType) grpc_storage.Any_DataType {
-	dataType := grpc_storage.Any_STRING
-
-	switch dt {
-	case tdsService.Any_STRING:
-		dataType = grpc_storage.Any_STRING
-		break
-	case tdsService.Any_JSONSTRING:
-		dataType = grpc_storage.Any_JSONSTRING
-		break
-	case tdsService.Any_INT:
-		dataType = grpc_storage.Any_INT
-		break
-	case tdsService.Any_FLOAT:
-		dataType = grpc_storage.Any_FLOAT
-		break
-	}
-	return dataType
-}
-
-func marshalTDSMapToTrainerMap(tdsMap map[string]*tdsService.Any) map[string]*grpc_storage.Any {
-	grpcMap := make(map[string]*grpc_storage.Any)
-	for k, v := range tdsMap {
-		trainerDT := marshalTDSDataType2TrainerDataType(v.Type)
-		grpcMap[k] = &grpc_storage.Any{Type: trainerDT, Value: v.Value}
-	}
-	return grpcMap
-}
-
 func (s *storageService) GetVersions(ctx context.Context, req *grpc_storage.GetVersionsRequest) (*grpc_storage.Frameworks, error) {
 	//call the frameworks.go and then getAllVersions for the frameworks
 	//Return response from getAll Versions
@@ -1671,69 +1600,6 @@ func (s *storageService) validateRequest(log *logrus.Entry, req *grpc_storage.Cr
 		return s.failCreateRequest("Framework version is not set", req, log)
 	}
 
-	// FfDL Change: FIXME: temporarily disable framework validation
-	// custom image check
-	//if m.Framework.ImageLocation == nil {
-	//	if ok, msg := validateFrameworks(m.Framework); !ok {
-	//		return s.failCreateRequest(msg, req, log)
-	//	}
-	//}
-	//
-	//FIXME MLSS Change: v_1.5.1 remove logic for model definition content
-	//if len(m.Content) == 0 {
-	//	return s.failCreateRequest("Model definition content is not set", req, log)
-	//}
-
-	// validate Training object
-
-	t := req.Training
-	if t == nil {
-		return s.failCreateRequest("Training is not set", req, log)
-	}
-	if t.Command == "" {
-		return s.failCreateRequest("Training command is not set", req, log)
-	}
-	if t.InputData == nil || len(t.InputData) == 0 {
-		return s.failCreateRequest("Training input data is not set", req, log)
-	}
-	if len(t.InputData) > 1 {
-		return s.failCreateRequest("Training input data can only contain one id", req, log)
-	}
-	if t.OutputData != nil && len(t.OutputData) > 1 {
-		return s.failCreateRequest("Training output data can only contain one id", req, log)
-	}
-
-	// validate datastores
-
-	ds := req.Datastores
-	if ds == nil {
-		return s.failCreateRequest("Data stores is not set", req, log)
-	}
-	if len(ds) == 0 {
-		return s.failCreateRequest("Data stores is empty", req, log)
-	}
-
-	for _, name := range t.InputData {
-		ds := findDatastore(name, req.Datastores)
-		if ds == nil {
-			return s.failCreateRequest(fmt.Sprintf("Training input data reference '%s' does not reference an existing datastore id.", name), req, log)
-		}
-		if err := s.validateDatastore(ds, req, log); err != nil {
-			return err
-		}
-	}
-
-	if len(t.OutputData) > 0 {
-		for _, name := range t.OutputData {
-			ds := findDatastore(name, req.Datastores)
-			if ds == nil {
-				return s.failCreateRequest(fmt.Sprintf("Training output data reference '%s' does not reference an existing datastore id.", name), req, log)
-			}
-			if err := s.validateDatastore(ds, req, log); err != nil {
-				return err
-			}
-		}
-	}
 	return nil
 }
 
@@ -1746,9 +1612,6 @@ func findDatastore(id string, ds []*grpc_storage.Datastore) *grpc_storage.Datast
 	return nil
 }
 
-func FindDatastore(id string, ds []*grpc_storage.Datastore) *grpc_storage.Datastore {
-	return findDatastore(id, ds)
-}
 
 func (s *storageService) failCreateRequest(msg string, req *grpc_storage.CreateRequest, log *logrus.Entry) error {
 	return s.failCreateRequestWithCode(storageClient.ErrInvalidManifestFile, msg, req, log)
@@ -1825,6 +1688,7 @@ func (s *storageService) lcmClient() (client.LcmClient, error) {
 
 func (s *storageService) tdsClient() (tdsClient.TrainingDataClient, error) {
 	if s.tds == nil {
+		logger.GetLogger().Debugln("storageService tdsClient is nil", )
 		address := fmt.Sprintf("ffdl-trainingdata.%s.svc.cluster.local:80", config.GetPodNamespace())
 		tds, err := tdsClient.NewTrainingDataClientWithAddress(address)
 		if err != nil {
@@ -1832,6 +1696,7 @@ func (s *storageService) tdsClient() (tdsClient.TrainingDataClient, error) {
 		}
 		s.tds = tds
 	}
+	logger.GetLogger().Debugf("storageService create tdsClient pod namespace: %v\n", config.GetPodNamespace())
 	return s.tds, nil
 }
 
@@ -1958,13 +1823,6 @@ func (s *storageService) createJobConfig(tr *TrainingRecord) (*service.JobDeploy
 	envvars["GID"] = tr.GID
 	envvars["UID"] = tr.UID
 	envvars["USER_ID"] = tr.UserID
-	// FIXME MLSS Change: v_1.4.1
-	//envvars["EVENT_CHECKER"] = tr.EventChecker
-	//envvars["DEADLINE_CHECKER"] = tr.DeadlineChecker
-	//envvars["OVERTIME_CHECKER"] = tr.OvertimeChecker
-	//envvars["ALERT_LEVEL"] = tr.AlertLevel
-	//envvars["RECEIVER"] = tr.Receiver
-	//envvars["INTERVAL"] = tr.Interval
 
 	// labels
 	labels := make(map[string]string)
@@ -1983,6 +1841,8 @@ func (s *storageService) createJobConfig(tr *TrainingRecord) (*service.JobDeploy
 	var modelDefinition grpc_trainer_v2.ModelDefinition
 	var training grpc_trainer_v2.Training
 	var trainingStatus grpc_trainer_v2.TrainingStatus
+	var mfModel grpc_trainer_v2.MFModel
+	var dataSet grpc_trainer_v2.DataSet
 	err = copier.Copy(&dataStores, &tr.Datastores)
 	if err != nil {
 		logr.Debugf("Copy Datastore failed: %v", err.Error())
@@ -2010,6 +1870,20 @@ func (s *storageService) createJobConfig(tr *TrainingRecord) (*service.JobDeploy
 		return nil, err
 	}
 	logr.Debugf("Copy TrainingStatus: %+v", dataStores)
+
+	err = copier.Copy(&mfModel, &tr.MFModel)
+	if err != nil {
+		logr.Debugf("Copy MFModel failed: %v", err.Error())
+		return nil, err
+	}
+	logr.Debugf("Copy MFModel: %+v", mfModel)
+
+	err = copier.Copy(&dataSet, &tr.DataSet)
+	if err != nil {
+		logr.Debugf("Copy MFModel failed: %v", err.Error())
+		return nil, err
+	}
+	logr.Debugf("Copy MFModel: %+v", dataSet)
 
 	job := &service.JobDeploymentRequest{
 		Name:                  u4.String(),
@@ -2043,6 +1917,12 @@ func (s *storageService) createJobConfig(tr *TrainingRecord) (*service.JobDeploy
 		ExpRunId:     tr.ExpRunId,
 		FileName:     tr.FileName,
 		FilePath:     tr.FilePath,
+		DataSet:      &dataSet,
+		MfModel:      &mfModel,
+		Algorithm:    tr.Algorithm,
+		JobParams:    tr.JobParams,
+		FitParams:    tr.FitParams,
+		APIType:      tr.APIType,
 	}
 
 	return job, nil
@@ -2060,10 +1940,6 @@ func parseImageLocation(tr *TrainingRecord) *service.ImageLocation {
 		}
 	}
 	return il
-}
-
-func ParseImageLocation(tr *TrainingRecord) *service.ImageLocation {
-	return parseImageLocation(tr)
 }
 
 func setDefaultResourceRequirements(t *grpc_storage.Training) {
@@ -2106,10 +1982,6 @@ func getResourceRequirements(t *grpc_storage.Training) *service.ResourceRequirem
 	}
 }
 
-func GetResourceRequirements(t *grpc_storage.Training) *service.ResourceRequirements {
-	return getResourceRequirements(t)
-}
-
 // getOutputDatastore retrieves the output data store or return the internal datastore if none has been defined
 func (s *storageService) getOutputDatastore(outputData []string, datastores []*grpc_storage.Datastore) *grpc_storage.Datastore {
 	var ds *grpc_storage.Datastore
@@ -2127,10 +1999,6 @@ func (s *storageService) getOutputDatastore(outputData []string, datastores []*g
 	return ds
 }
 
-// getOutputStoreForService is a wrapper function to make the logic in storageService.getOutputDatastore available for testing
-func getOutputStoreForService(s *storageService, outputData []string, datastores []*grpc_storage.Datastore) *grpc_storage.Datastore {
-	return s.getOutputDatastore(outputData, datastores)
-}
 
 func getModelsBucket() string {
 	if viper.IsSet(modelsBucketKey) {
@@ -2247,7 +2115,7 @@ func (s *storageService) rateLimitTrainingJob(trainingRecord *TrainingRecord, lo
 		rateLimit = true
 		if logr.Logger.Level >= logrus.DebugLevel {
 			for _, record := range matchingGPUConsumingRecords {
-				logr.Debugf("Found a gpu consuming training %v has a status %s and using gpus %v with submission time as %v and process start time as %v and error code %v",
+				logr.Debugf("Found a gpu consuming training %v has a status %s and using gpus %v with submission time as %v and process start time as %v and code %v",
 					record.TrainingID, record.TrainingStatus.Status, record.Training.Resources.Gpus, record.TrainingStatus.SubmissionTimestamp,
 					record.TrainingStatus.ProcessStartTimestamp, record.TrainingStatus.ErrorCode)
 			}
@@ -2265,22 +2133,6 @@ func (s *storageService) rateLimitTrainingJob(trainingRecord *TrainingRecord, lo
 
 func getGpuLimitQuerySize() int {
 	return viper.GetInt(gpuLimitsQuerySizeKey)
-}
-
-func GetGpuLimitQuerySize() int {
-	return getGpuLimitQuerySize()
-}
-
-//getAllResourceTypes returns all GPU types defined in resource limits
-func getAllResourceTypes() []string {
-	types := []string{}
-	allLimits := strings.Split(viper.GetString(gpuLimitsKey), ",")
-	for _, limit := range allLimits {
-		if strings.Contains(limit, "=") {
-			types = append(types, TransformResourceName(strings.Split(limit, "=")[0]))
-		}
-	}
-	return types
 }
 
 //getGpuLimitByType returns the resource limit if it is defined, or returns 0 if not
@@ -2933,6 +2785,90 @@ func (s *storageService) reportOnCluster(method string, logr *logger.LocLoggingE
 	//logr.Debugf("cluster health (%s): %s", method, res.Status)
 }
 
+func (s *storageService) KillTrainingJob(ctx context.Context, request *grpc_storage.KillRequest) (*grpc_storage.KillResponse, error) {
+	//Init Response & Logger & LCM Client
+	logr := logger.LocLogger(logger.LogServiceBasic(logger.LogkeyStorageService))
+	killResponse := &grpc_storage.KillResponse{
+		Success: false, IsCompleted:false }
+
+	//Get Training Job From Mongo
+	trainingJob, err := s.repo.Find(request.TrainingId)
+	if err != nil {
+		logr.Errorf("Kill Training Job Error:" , err.Error())
+		return killResponse, err
+	}
+
+	if request.IsSa == false{
+		if trainingJob.UserID != request.UserId {
+			msg := fmt.Sprintf("User %s does not have permission to KILL training job with id %s.",
+				request.UserId , request.TrainingId)
+			logr.Error(msg)
+			return nil, gerrf(codes.PermissionDenied, msg)
+		}
+	}
+
+	jobStatus := trainingJob.TrainingStatus.Status
+	//IF COMPLETED OR FAILED RETURN
+	if jobStatus == grpc_storage.Status_COMPLETED || jobStatus == grpc_storage.Status_FAILED{
+		killResponse.IsCompleted = true
+		return killResponse, nil
+	}else if jobStatus == grpc_storage.Status_KILLING || jobStatus == grpc_storage.Status_CANCELLED {
+		killResponse.Success = true
+		return killResponse, nil
+	}
+
+	if jobStatus == grpc_storage.Status_QUEUED {
+		trainingJob.TrainingStatus.Status = grpc_storage.Status_CANCELLED
+	}else{
+		trainingJob.TrainingStatus.Status = grpc_storage.Status_KILLING
+	}
+	//TODO: TRANSACTION
+	err = s.repo.Store(trainingJob)
+	if err != nil {
+		logr.Errorf("Kill/Cancel Training Job Store Error:" , err.Error())
+		return killResponse, err
+	}
+
+	//IF Job is Running, Start LCM Kill
+	if jobStatus == grpc_storage.Status_RUNNING ||
+		jobStatus == grpc_storage.Status_PENDING{
+		go func() {
+			lcmClient, err := s.lcmClient()
+			if err != nil {
+				logr.Errorf("Kill Training Job Error:" , err.Error())
+				return
+			}
+			defer lcmClient.Close()
+
+			//STOP Job in LCM QUEUE
+			jobKillRequest := service.JobKillRequest{
+				TrainingId:   trainingJob.TrainingID,
+				UserId:       trainingJob.UserID,
+				JobNamespace: trainingJob.Namespace,
+				Name: trainingJob.TrainingID,
+				JobType: trainingJob.JobType,
+			}
+			_, err =  lcmClient.Client().KillMLFlowJob(context.Background(), &jobKillRequest)
+			if err != nil{
+				logr.Errorf("Kill Training Job Error:" , err.Error())
+				return
+			}
+
+			//UPDATE TO CANCEL
+			trainingJob.TrainingStatus.Status = grpc_storage.Status_CANCELLED
+			trainingJob.TrainingStatus.CompletionTimestamp = util.CurrentTimestampAsString()
+			//TODO: Transaction
+			err = s.repo.Store(trainingJob)
+			if err != nil {
+				logr.Errorf("Kill Training Job Error:" , err.Error())
+				return
+			}
+		}()
+	}
+	killResponse.Success = true
+	return killResponse, nil
+}
+
 func makeSnippetForDebug(str string, maxLen int) string {
 	//noinspection GoBoolExpressions
 	if TdsDebugMode {
@@ -3296,19 +3232,6 @@ func (s *storageService) Upload(stream grpc_storage.Storage_UploadServer) error 
 	return nil
 }
 
-func getRealBucket(s string) string {
-	if s == "" {
-		return "mlss-mf"
-	}
-	result := fmt.Sprintf("mlss-mf/%v", s)
-	return result
-}
-
-func getAbsoluteHostPath(s string) (string, error) {
-	result := fmt.Sprintf("%v/%v", viper.GetString(config.UploadContainerPath), s)
-	return result, nil
-}
-
 func (s *storageService) Download(req *grpc_storage.DownloadRequest, stream grpc_storage.Storage_DownloadServer) error {
 	getLogger := logger.GetLogger()
 	//count Download duration
@@ -3401,6 +3324,7 @@ func (s *storageService) UploadModelZip(ctx context.Context, req *grpc_storage.C
 		Msg:    "",
 		S3Path: "",
 	}
+	logger.GetLogger().Debugf("UploadModelZip req: %+v\n", *req)
 	filePath := req.HostPath + req.FileName
 	//useSSL := true
 	useSSL := false
@@ -3425,6 +3349,7 @@ func (s *storageService) UploadModelZip(ctx context.Context, req *grpc_storage.C
 	}
 	err = filepath.Walk(unFilePath, func(path string, info os.FileInfo, err error) error {
 		if !info.IsDir() {
+			logger.GetLogger().Debugf("lk-test downloadZip path: %s, info.Name: %s", path, info.Name())
 			_, err = minioClient.FPutObject(bucketName, path, path, minio.PutObjectOptions{ContentType: "application/zip"})
 			if err != nil {
 				logger.GetLogger().Error("minioClient putObject err," + err.Error())
@@ -3432,6 +3357,7 @@ func (s *storageService) UploadModelZip(ctx context.Context, req *grpc_storage.C
 			}
 		} else {
 			if dirCount == 1 {
+				logger.GetLogger().Debugf("lk-test dirCount = 1 downloadZip path: %s, info.Name: %s", path, info.Name())
 				dirName = info.Name()
 			}
 			dirCount++
@@ -3444,6 +3370,7 @@ func (s *storageService) UploadModelZip(ctx context.Context, req *grpc_storage.C
 	}
 	res.Code = "200"
 	res.S3Path = "s3://" + bucketName + "/" + uid.String() + "/" + dirName
+	logger.GetLogger().Debugf("lk-test S3Path: %s", res.S3Path)
 	return &res, err
 }
 
@@ -3453,7 +3380,8 @@ func (s *storageService) UploadCode(ctx context.Context, req *grpc_storage.CodeU
 		Msg:    "",
 		S3Path: "",
 	}
-	filePath := req.HostPath + req.FileName
+	// filePath := req.HostPath + req.FileName
+	filePath := path.Join(req.HostPath, req.FileName)
 	getLogger := logger.GetLogger()
 	//useSSL := true
 	useSSL := false
@@ -3491,8 +3419,8 @@ func (s *storageService) UploadCode(ctx context.Context, req *grpc_storage.CodeU
 	} else {
 		getLogger.Printf("Successfully created %s\n", bucketName)
 	}
-	getLogger.Debugf("Upload, endpoint: %v, accessKeyID: %v, secretAccessKey: %v, bucket: %v, fileName: %v", endpoint, accessKeyID, secretAccessKey,
-		bucketName, req.FileName)
+	getLogger.Debugf("Upload, endpoint: %v, accessKeyID: %v, secretAccessKey: %v, bucket: %v, fileName: %v, filePath: %s", endpoint, accessKeyID, secretAccessKey,
+		bucketName, req.FileName, filePath)
 
 	num, err := minioClient.FPutObject(bucketName, req.FileName, filePath, minio.PutObjectOptions{ContentType: "application/zip"})
 
@@ -3528,6 +3456,7 @@ func (s *storageService) UploadCode(ctx context.Context, req *grpc_storage.CodeU
 		res.S3Path = "s3://" + bucketName + "/" + req.FileName
 	}
 	//return nil, status.Errorf(codes.Unimplemented, "method UploadCode not implemented")
+	getLogger.Debugf("Upload response: %+v\n", res)
 	return &res, err
 }
 
@@ -3544,17 +3473,32 @@ func (s *storageService) DownloadCode(CTX context.Context, request *grpc_storage
 	}
 
 	if !strings.Contains(s3Path, "s3://") {
-		res.Msg = "s3 Path is not correct"
+		res.Msg = "s3 Path is not correct, did not contains s3:// "
 		return &res, errors.New("s3 Path is not correct")
 	}
 
 	s3Array := strings.Split(s3Path[5:], "/")
-	if len(s3Array) != 2 {
+	if len(s3Array) < 2 {
 		res.Msg = "s3 Path is not correct"
+		getLogger.Error("new minio client error," + s3Path)
 		return &res, errors.New("s3 Path is not correct")
 	}
 	bucketName := s3Array[0]
-	filename := s3Array[1]
+	filename := ""
+	filename = s3Path[(5 + len(bucketName)):]
+	// if bucketName == "mlss-mf" {
+	// 	// s3Path 应该包含upload时的uid+文件名， 例： s3://mlss-mf/09380357-a9c9-4c38-a4e7-39b04a8b886f/main.go
+	// 	// filename = "09380357-a9c9-4c38-a4e7-39b04a8b886f/main.go"
+	// 	filename = s3Path[(5 + len(bucketName)):]
+
+	// 	// todo not deal zip file,
+	// 	// because type zip file is uploaded after unzip, cannot download  zip file
+	// } else {
+	// 	filename = s3Path[(5 + len(bucketName)):]
+	// }
+
+	getLogger.Infof("DownloadCode file name %q from s3Path %q", filename, s3Path)
+
 	useSSL := false
 
 	storeConfig := config.GetDataStoreConfig()
@@ -3573,15 +3517,165 @@ func (s *storageService) DownloadCode(CTX context.Context, request *grpc_storage
 		return &res, err
 	}
 	hostpath := "/data/oss-storage/download/" + filedir.String()
+	// test zip file by lk
+	// ok
+	// filename = "b9b15716-65c5-443a-b31a-d8c9f1192f36/fluentbit-lk/fluent-bit-configmap-alexwu.yaml"
 	err = minioClient.FGetObject(bucketName, filename, hostpath+"/"+filename, minio.GetObjectOptions{})
 	if err != nil {
-		getLogger.Error("FGETObject Error Path:", hostpath+"/"+filename)
+		getLogger.Error("FGETObject Error Path:", bucketName+"/"+filename)
 		getLogger.Error("FGETObject Error: " + err.Error())
 		return &res, err
 	}
+
+	// objPrefix := "b9b15716-65c5-443a-b31a-d8c9f1192f36/fluentbit-lk"
+	// doneCh := make(chan struct{})
+	// defer close(doneCh)
+	// getLogger.Infoln("lk-test strat to list object from minio ......")
+	// for objInfo := range minioClient.ListObjects(bucketName, objPrefix, true, doneCh) {
+	// 	getLogger.Infof("lk-test listObjects %+v\n", objInfo)
+	// }
+	// getLogger.Infoln("lk-test finish to list object from minio ......")
+
+	// filename = "b9b15716-65c5-443a-b31a-d8c9f1192f36/fluentbit-lk.zip"
+	// err = minioClient.FGetObject(bucketName, filename, hostpath+"/"+filename, minio.GetObjectOptions{})
+	// if err != nil {
+	// 	getLogger.Error("[2] FGETObject Error Path:", bucketName+"/"+filename)
+	// 	getLogger.Error("[2]FGETObject Error: " + err.Error())
+	// 	return &res, err
+	// }
+
+	// filename = "b9b15716-65c5-443a-b31a-d8c9f1192f36/fluentbit-lk"
+	// err = minioClient.FGetObject(bucketName, filename, hostpath+"/"+filename, minio.GetObjectOptions{})
+	// if err != nil {
+	// 	getLogger.Error("[3] FGETObject Error Path:", bucketName+"/"+filename)
+	// 	getLogger.Error("[3]FGETObject Error: " + err.Error())
+	// 	return &res, err
+	// }
+
 	res.Bucket = bucketName
 	res.FileName = filename
 	res.HostPath = hostpath
 	res.Code = "200"
+	return &res, err
+}
+
+func (s *storageService) DownloadCodeByDir(CTX context.Context, request *grpc_storage.CodeDownloadByDirRequest) (*grpc_storage.CodeDownloadByDirResponse, error) {
+	s3Path := request.S3Path
+
+	getLogger := logger.GetLogger()
+	res := grpc_storage.CodeDownloadByDirResponse{
+		RespList: make([]*grpc_storage.CodeDownloadResponse, 0),
+	}
+
+	if !strings.Contains(s3Path, "s3://") {
+		resSub := grpc_storage.CodeDownloadResponse{
+			Code: "500",
+		}
+		resSub.Msg = "s3 Path is not correct, did not contains s3:// "
+		res.RespList = append(res.RespList, &resSub)
+		return &res, errors.New("s3 Path is not correct, did not contains s3://")
+	}
+
+	s3Array := strings.Split(s3Path[5:], "/")
+	logger.GetLogger().Debugf("lk-test s3Array: %+v, length: %d\n", s3Array, len(s3Array))
+	if len(s3Array) < 2 {
+		resSub := grpc_storage.CodeDownloadResponse{
+			Code: "500",
+		}
+		resSub.Msg = "s3 Path is not correct"
+		res.RespList = append(res.RespList, &resSub)
+		getLogger.Error("new minio client error," + s3Path)
+		return &res, fmt.Errorf("s3 Path is not correct, s3Array: %+v, length: %d", s3Array, len(s3Array))
+	}
+	bucketName := s3Array[0]
+	filename := s3Path[(5 + len(bucketName) + 1):]
+
+	getLogger.Infof("DownloadCode file name %q from s3Path %q", filename, s3Path)
+
+	useSSL := false
+	storeConfig := config.GetDataStoreConfig()
+	endpoint := storeConfig[config.AuthURLKey]
+	accessKeyID := storeConfig[config.UsernameKey]
+	secretAccessKey := storeConfig[config.PasswordKey]
+	minioClient, err := minio.New(endpoint, accessKeyID, secretAccessKey, useSSL)
+	if err != nil {
+		resSub := grpc_storage.CodeDownloadResponse{
+			Code: "500",
+		}
+		resSub.Msg = fmt.Sprintf("new minio client error, %s", err.Error())
+		res.RespList = append(res.RespList, &resSub)
+		getLogger.Error("new minio client error," + err.Error())
+		return &res, err
+	}
+
+	filedir, err := uuid.NewV4()
+	if err != nil {
+		resSub := grpc_storage.CodeDownloadResponse{
+			Code: "500",
+		}
+		resSub.Msg = fmt.Sprintf("download code uuid new Error Path, %s", err.Error())
+		res.RespList = append(res.RespList, &resSub)
+		getLogger.Error("download code uuid new Error Path:", err.Error())
+		return &res, err
+	}
+	hostpath := "/data/oss-storage/download/" + filedir.String()
+
+	if strings.Contains(filename, ".zip") {
+		//eg: objPrefix = "b9b15716-65c5-443a-b31a-d8c9f1192f36"
+		objPrefix := s3Array[1]
+		doneCh := make(chan struct{})
+		defer close(doneCh)
+		getLogger.Infoln("lk-test start to list object from minio ......")
+		for objInfo := range minioClient.ListObjects(bucketName, objPrefix, true, doneCh) {
+			getLogger.Infof("lk-test listObjects %+v\n", objInfo)
+			resSub := grpc_storage.CodeDownloadResponse{
+				Code:     "500",
+				Msg:      "",
+				FileName: "",
+				HostPath: "",
+				Bucket:   "",
+			}
+
+			//todo
+			// Key:b9311acd-6ae0-4624-a9a7-87c134827a61/fluentbit-lk/fluent-bit-role.yaml
+			err = minioClient.FGetObject(bucketName, objInfo.Key, hostpath+"/"+objInfo.Key, minio.GetObjectOptions{})
+			if err != nil {
+				getLogger.Error("FGETObject Error Path:", bucketName+"/"+filename)
+				getLogger.Error("FGETObject Error: " + err.Error())
+				resSub.Msg = fmt.Sprintf("fail to get object, %s", err.Error())
+				res.RespList = append(res.RespList, &resSub)
+				return &res, err
+			}
+			resSub.Bucket = bucketName
+			resSub.FileName = objInfo.Key
+			resSub.HostPath = hostpath
+			resSub.Code = "200"
+			res.RespList = append(res.RespList, &resSub)
+			getLogger.Debugf("lk-test sub object FileName: %s, HostPath: %s\n", resSub.FileName, resSub.HostPath)
+		}
+	} else {
+		// eg: filename = "b9b15716-65c5-443a-b31a-d8c9f1192f36/fluentbit-lk/fluent-bit-configmap-alexwu.yaml"
+		resSub := grpc_storage.CodeDownloadResponse{
+			Code:     "500",
+			Msg:      "",
+			FileName: "",
+			HostPath: "",
+			Bucket:   "",
+		}
+		err = minioClient.FGetObject(bucketName, filename, hostpath+"/"+filename, minio.GetObjectOptions{})
+		if err != nil {
+			getLogger.Error("FGETObject Error Path:", bucketName+"/"+filename)
+			getLogger.Error("FGETObject Error: " + err.Error())
+			resSub.Msg = fmt.Sprintf("fail to get object, %s", err.Error())
+			res.RespList = append(res.RespList, &resSub)
+			return &res, err
+		}
+		resSub.Bucket = bucketName
+		resSub.FileName = filename
+		resSub.HostPath = hostpath
+		resSub.Code = "200"
+		res.RespList = append(res.RespList, &resSub)
+	}
+
 	return &res, err
 }

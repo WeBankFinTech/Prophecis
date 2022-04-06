@@ -6,10 +6,9 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"net/http"
 	"time"
-
-	"golang.org/x/net/context"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
@@ -25,7 +24,7 @@ func NewDownloadModelDefinitionParams() *DownloadModelDefinitionParams {
 		versionDefault = string("2017-02-13")
 	)
 	return &DownloadModelDefinitionParams{
-		Version: versionDefault,
+		Version: &versionDefault,
 
 		timeout: cr.DefaultTimeout,
 	}
@@ -38,7 +37,7 @@ func NewDownloadModelDefinitionParamsWithTimeout(timeout time.Duration) *Downloa
 		versionDefault = string("2017-02-13")
 	)
 	return &DownloadModelDefinitionParams{
-		Version: versionDefault,
+		Version: &versionDefault,
 
 		timeout: timeout,
 	}
@@ -51,7 +50,7 @@ func NewDownloadModelDefinitionParamsWithContext(ctx context.Context) *DownloadM
 		versionDefault = string("2017-02-13")
 	)
 	return &DownloadModelDefinitionParams{
-		Version: versionDefault,
+		Version: &versionDefault,
 
 		Context: ctx,
 	}
@@ -64,7 +63,7 @@ func NewDownloadModelDefinitionParamsWithHTTPClient(client *http.Client) *Downlo
 		versionDefault = string("2017-02-13")
 	)
 	return &DownloadModelDefinitionParams{
-		Version:    versionDefault,
+		Version:    &versionDefault,
 		HTTPClient: client,
 	}
 }
@@ -83,7 +82,7 @@ type DownloadModelDefinitionParams struct {
 	  The release date of the version of the API you want to use. Specify dates in YYYY-MM-DD format.
 
 	*/
-	Version string
+	Version *string
 
 	timeout    time.Duration
 	Context    context.Context
@@ -135,13 +134,13 @@ func (o *DownloadModelDefinitionParams) SetModelID(modelID string) {
 }
 
 // WithVersion adds the version to the download model definition params
-func (o *DownloadModelDefinitionParams) WithVersion(version string) *DownloadModelDefinitionParams {
+func (o *DownloadModelDefinitionParams) WithVersion(version *string) *DownloadModelDefinitionParams {
 	o.SetVersion(version)
 	return o
 }
 
 // SetVersion adds the version to the download model definition params
-func (o *DownloadModelDefinitionParams) SetVersion(version string) {
+func (o *DownloadModelDefinitionParams) SetVersion(version *string) {
 	o.Version = version
 }
 
@@ -158,13 +157,20 @@ func (o *DownloadModelDefinitionParams) WriteToRequest(r runtime.ClientRequest, 
 		return err
 	}
 
-	// query param version
-	qrVersion := o.Version
-	qVersion := qrVersion
-	if qVersion != "" {
-		if err := r.SetQueryParam("version", qVersion); err != nil {
-			return err
+	if o.Version != nil {
+
+		// query param version
+		var qrVersion string
+		if o.Version != nil {
+			qrVersion = *o.Version
 		}
+		qVersion := qrVersion
+		if qVersion != "" {
+			if err := r.SetQueryParam("version", qVersion); err != nil {
+				return err
+			}
+		}
+
 	}
 
 	if len(res) > 0 {
