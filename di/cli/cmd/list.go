@@ -59,11 +59,13 @@ func (cmd *ListCmd) Run(cliContext *cli.Context) error {
 	params := models.NewListModelsParams().WithTimeout(defaultOpTimeout)
 	params.Userid = &userid
 	params.Namespace = &namespace
-	params.Page = &page
-	params.Size = &size
-
+	if page != "" {
+		params.Page = &page
+	}
+	if size != "" {
+		params.Size = &size
+	}
 	modelz, err := c.Models.ListModels(params, BasicAuth())
-
 	if err != nil {
 		lflog().WithError(err).Debugf("ListModels failed")
 		var s string
@@ -84,7 +86,8 @@ func (cmd *ListCmd) Run(cliContext *cli.Context) error {
 		table.Add(v.ModelID, v.Name, v.Framework.Name+":"+v.Framework.Version, ts.Status, formatTimestamp(ts.Submitted), formatTimestamp(ts.Completed))
 	}
 	table.Print()
-	cmd.ui.Say("\n%d records found.", len(modelz.Payload.Models))
+	cmd.ui.Say("\n%d records found,  current page: %v, page size: %v, total page: %d, total records: %d",
+		len(modelz.Payload.Models), *params.Page, *params.Size, modelz.Payload.Pages, modelz.Payload.Total)
 	return nil
 }
 

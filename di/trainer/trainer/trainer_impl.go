@@ -39,7 +39,6 @@ import (
 	trainerClient "webank/DI/trainer/client"
 	"webank/DI/trainer/trainer/grpc_trainer_v2"
 
-	"github.com/go-kit/kit/metrics"
 	uuid "github.com/nu7hatch/gouuid"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -51,8 +50,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-
-	"gopkg.in/yaml.v2"
 
 	"errors"
 	"webank/DI/trainer/instrumentation"
@@ -80,16 +77,22 @@ const (
 
 	oldEndpointInternalPageSize = 10
 
-	mongoAddressKey  = "mongo.address"
-	mongoDatabaseKey = "mongo.database"
-	mongoUsernameKey = "mongo.username"
-	mongoPasswordKey = "mongo.password"
+	mongoAddressKey  = "MONGO_ADDRESS"
+	mongoDatabaseKey = "MONGO_DATABASE"
+	mongoUsernameKey = "MONGO_USERNAME"
+	mongoPasswordKey = "MONGO_PASSWORD"
+	MongoAuthenticationDatabase = "MONGO_Authentication_Database"
 
 	gpuLimitsKey          = "gpu.limits"
 	gpuLimitsQuerySizeKey = "gpu.limits.query.size"
 
 	pollIntervalKey = "queue.poll.interval"
-	defaultValue    = "default"
+
+	bdp          = "bdp"
+	bdap         = "bdap"
+	bdapsafe     = "bdapsafe"
+	safe         = "safe"
+	defaultValue = "default"
 )
 
 const (
@@ -112,27 +115,6 @@ type Service interface {
 	StopTrainer()
 }
 
-type trainerMetrics struct {
-	createTrainingJobCounter          metrics.Counter
-	deleteTrainingJobCounter          metrics.Counter
-	haltTrainingJobCounter            metrics.Counter
-	downloadTrainedModelJobCounter    metrics.Counter
-	downloadTrainingMetricsJobCounter metrics.Counter
-	rateLimitTrainingJobCounter       metrics.Counter
-	trainingJobFailedCounter          metrics.Counter
-	trainingJobSucceededCounter       metrics.Counter
-	uploadModelFailedCounter          metrics.Counter
-	enqueueJobCounter                 metrics.Counter
-	dequeueJobCounter                 metrics.Counter
-	deleteJobFromQueueCounter         metrics.Counter
-	queueSizeGauge                    metrics.Gauge
-	clusterWideGPUUsageGauge          metrics.Gauge
-	clusterWideGPUUsageCounter        metrics.Counter
-	createTrainingDuration            metrics.Histogram
-	trainerServiceRestartCounter      metrics.Counter
-	trainerUsageCounter               metrics.Counter
-	trainerUsageGauge                 metrics.Gauge
-}
 
 type queueHandler struct {
 	stopQueue chan struct{}
@@ -173,13 +155,16 @@ func NewService() Service {
 
 	repo, err := newTrainingsRepository(viper.GetString(mongoAddressKey),
 		viper.GetString(mongoDatabaseKey), viper.GetString(mongoUsernameKey),
-		viper.GetString(mongoPasswordKey), config.GetMongoCertLocation(), "training_jobs")
+		viper.GetString(mongoPasswordKey), viper.GetString(config.MongoAuthenticationDatabase),
+		config.GetMongoCertLocation(), "training_jobs")
 	if err != nil {
-		logr.WithError(err).Fatalf("Cannot create Repository with %s %s %s", viper.GetString(mongoAddressKey), viper.GetString(mongoDatabaseKey), viper.GetString(mongoUsernameKey))
+		logr.WithError(err).Fatalf("Cannot create Repository with %s %s %s %s", viper.GetString(mongoAddressKey),
+			viper.GetString(mongoDatabaseKey), viper.GetString(mongoUsernameKey), viper.Get(config.MongoAuthenticationDatabase))
 	}
 	jobHistoryRepo, err := newJobHistoryRepository(viper.GetString(mongoAddressKey),
 		viper.GetString(mongoDatabaseKey), viper.GetString(mongoUsernameKey),
-		viper.GetString(mongoPasswordKey), config.GetMongoCertLocation(), collectionNameJobHistory)
+		viper.GetString(mongoPasswordKey),  viper.GetString(config.MongoAuthenticationDatabase),
+		config.GetMongoCertLocation(), collectionNameJobHistory)
 	if err != nil {
 		logr.WithError(err).Fatalf("Cannot create Repository with %s %s %s %s", viper.GetString("mongo.address"),
 			viper.GetString(mongoDatabaseKey), viper.GetString(mongoUsernameKey), collectionNameJobHistory)
@@ -420,207 +405,6 @@ func (s *trainerService) pullJobFromQueue(gpuType string) {
 	s.jobHistoryRepo.RecordJobStatus(e)
 }
 
-//func init() {
-//	shortidGenHigh, err := shortid.New(1, "0123456789abcdefghijklmnopqrstuvwxyz-", 2342)
-//	if err != nil {
-//
-//	}
-//	shortidGenLow, err := shortid.New(1, "0123456789abcdefghijklmnopqrstuvwxyz", 2343)
-//	if err != nil {
-//
-//	}
-//}
-
-func (s *trainerService) CreateTrainingJob(ctx context.Context, req *grpc_trainer_v2.CreateRequest) (*grpc_trainer_v2.CreateResponse, error) {
-	// duration := metrics.NewTimer(s.metrics.createTrainingDuration)
-	// defer duration.ObserveDuration()
-
-	//sClient, err := storageClient.NewStorage()
-	getLogger := logger.GetLogger()
-	startTime := time.Now()
-	getLogger.Debugf("CreateTrainingJob startTime: %v", startTime.String())
-
-	// FIXME MLSS Change: The job name must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character
-	sidHigh := random.String(9, random.Lowercase+random.Numeric+"-")
-	sidLow := random.String(9, random.Lowercase+random.Numeric)
-
-	id := fmt.Sprintf("training-%s%s", sidHigh, sidLow)
-
-	logr := logger.LocLogger(logWith(id, req.UserId))
-
-	logr.Infof("CreateTrainingJob, req.TFosRequest: %v", req.TFosRequest)
-
-	cl := instrumentation.NewCallLogger(ctx, "CreateTrainingJob", logr)
-	defer cl.Returned()
-
-	if err := s.validateRequest(logr.Logger, req); err != nil {
-		return nil, err
-	}
-
-	setDefaultResourceRequirements(req.Training)
-
-	//request is validated, now bump up the counter
-	logFrameworkVersionValue := fmt.Sprintf("%s-%s", req.ModelDefinition.Framework.Name, req.ModelDefinition.Framework.Version)
-	logGpuTypeUsagesValue := fmt.Sprintf("%s-%v", req.Training.Resources.GpuType, req.Training.Resources.Gpus)
-	logr = logr.WithFields(logrus.Fields{
-		logger.LogkeyFramework:        req.ModelDefinition.Framework.Name,
-		logger.LogkeyFrameworkVersion: logFrameworkVersionValue,
-		logger.LogkeyGpuType:          req.Training.Resources.GpuType,
-		logger.LogkeyGpuUsage:         logGpuTypeUsagesValue,
-	})
-
-	logr.Debug(" metrics for total number of training jobs ")
-
-	// s.metrics.createTrainingJobCounter.With("framework", req.ModelDefinition.Framework.Name,
-	// 	"version", req.ModelDefinition.Framework.Version,
-	// 	"gpus", strconv.Itoa(int(req.Training.Resources.Gpus)),
-	// 	"cpus", strconv.Itoa(int(req.Training.Resources.Cpus)),
-	// 	"gpuType", req.Training.Resources.GpuType,
-	// 	"memory", strconv.Itoa(int(req.Training.Resources.Memory))).Add(1)
-
-	//TODO get ds
-	outputDatastore := s.getOutputDatastore(req.Training.OutputData, req.Datastores)
-
-	//---------------
-	//---------------
-
-	// upload model definition ZIP file to object store and set location
-	logr.Debugf("debug_1.5.1 start to s3")
-	if req.ModelDefinition.Content != nil {
-		logr.Debugf("debug_1.5.1 start to s3 is nil")
-		// MLSS Change: upload model to object store no matter what output datastore is used
-		//if outputDatastore.Type != "mount_volume" {
-		// Upload to DLaaS Object store.
-		logr.Debugf("Uploading content to: %s filename: %s", s.modelsBucket, getModelZipFileName(id))
-		//err := s.datastore.UploadArchive(s.modelsBucket, getModelZipFileName(id), req.ModelDefinition.Content)
-		//todo mlss 1.10.0
-		err := uploadArchive(s.modelsBucket, getModelZipFileName(id), req.ModelDefinition.Content, true)
-
-		if err != nil {
-			logr.WithError(err).Errorf("Error uploading model to object store")
-			// s.metrics.uploadModelFailedCounter.With("kind", dlaasStoreKind).Add(1)
-			return nil, err
-		}
-		req.ModelDefinition.Location = fmt.Sprintf("%s/%s.zip", s.modelsBucket, id)
-		cl.Observe("uploaded model to minio object store: %s", req.ModelDefinition.Location)
-
-		// Upload to user's result object store.
-		logr.Debugf("Upload to user's result object store, type: %s bucket: %s", outputDatastore.Type, outputDatastore.Fields["bucket"])
-
-		//todo do upload
-		//ds, err := storage.CreateDataStore(outputDatastore.Type, outputDatastore.Connection)
-		//if err != nil {
-		//	s.metrics.uploadModelFailedCounter.With("kind", userStoreKind).Add(1)
-		//	logr.WithError(err).Fatalf("Cannot create datastore for output data store %s", outputDatastore.Id)
-		//	return nil, err
-		//}
-		//err = ds.Connect()
-		//if err != nil {
-		//	s.metrics.uploadModelFailedCounter.With("kind", userStoreKind).Add(1)
-		//	logr.WithError(err).Fatalf("Cannot connect to output object store %s", outputDatastore.Id)
-		//	return nil, err
-		//}
-		//defer ds.Disconnect()
-		bucket := outputDatastore.Fields["bucket"]
-		object := fmt.Sprintf("%s/_submitted_code/model.zip", id)
-		logr.Debugf("Writing to output object store: %s -> %s, length: %d", bucket, object, len(req.ModelDefinition.Content))
-		//err = ds.UploadArchive(bucket, object, req.ModelDefinition.Content)
-		//todo
-		err = uploadArchive(bucket, object, req.ModelDefinition.Content, true)
-		if err != nil {
-			// s.metrics.uploadModelFailedCounter.With("kind", userStoreKind).Add(1)
-			logr.WithError(err).Errorf("Error uploading model to output object store")
-			return nil, err
-		}
-
-		cl.Observe("uploaded model to user's object store")
-		//}
-	}
-	elapsed := time.Since(startTime)
-	getLogger.Debugf("uploadArchive endTime: %v", elapsed.String())
-
-	// create a copy of the model definition without the content field (do not store it to the database)
-	modelWithoutContent := *req.ModelDefinition
-	modelWithoutContent.Content = nil
-
-	// get evaluation metrics from create request
-	evaluationMetricsSpec := ""
-	if req.EvaluationMetrics != nil {
-		logr.Debugf("EMExtractionSpec ImageTag: %s", req.EvaluationMetrics.ImageTag)
-		wrapper := make(map[string]interface{})
-		wrapper["evaluation_metrics"] = req.EvaluationMetrics
-		data, err := yaml.Marshal(wrapper)
-		if err != nil {
-			logr.WithError(err).Errorf("Can't re-marshal evaluation metrics specification")
-		}
-		evaluationMetricsSpec = string(data)
-		logr.Debugf("Set evaluation_metrics to: %s<eof>", evaluationMetricsSpec)
-	}
-
-	trainStatus := grpc_trainer_v2.TrainingStatus{
-		Status:              grpc_trainer_v2.Status_QUEUED,
-		SubmissionTimestamp: trainerClient.CurrentTimestampAsString(),
-	}
-	tr := &TrainingRecord{
-		TrainingID:            id,
-		UserID:                req.UserId,
-		ModelDefinition:       &modelWithoutContent,
-		Training:              req.Training,
-		Datastores:            req.Datastores,
-		TrainingStatus:        &trainStatus,
-		Metrics:               nil,
-		EvaluationMetricsSpec: evaluationMetricsSpec,
-		Namespace:             req.Namespace,
-		GID:                   req.Gid,
-		UID:                   req.Uid,
-		GuardianToken:         req.Token,
-		JobAlert:              req.JobAlert,
-		CodeSelector:          req.CodeSelector,
-		PSs:                   req.PSs,
-		PSCPU:                 req.PSCpu,
-		PSImage:               req.PSImage,
-		PSMemory:              req.PSMemory,
-		DataPath:              req.DataPath,
-		JobType:               req.JobType,
-		TFosRequest:           req.TFosRequest,
-		ExpRunId:              req.ExpRunId,
-		ExpName:               req.ExpName,
-		FileName:              req.FileName,
-		FilePath:              req.FilePath,
-	}
-	if req.ExpRunId == "0" {
-		tr.ExpRunId = ""
-	}
-	logr.Debugf("CreateTrainingJob, req.JobType: %v, reqCpu: %v, reqGpu: %v, reqMem: %v, fileName: %v, filePath: %v", req.JobType, req.Training.Resources.Cpus, req.Training.Resources.Gpus, req.Training.Resources.Memory, req.FileName, req.FilePath)
-
-	elapsed = time.Since(startTime)
-	getLogger.Debugf("submitJobToLCM startTime: %v", elapsed.String())
-	getLogger.Debugf("submitJobToLCM STATUS: %v", tr.TrainingStatus)
-	err := s.submitJobToLCM(tr, logr)
-
-	elapsed = time.Since(startTime)
-	getLogger.Debugf("submitJobToLCM endTime: %v", elapsed.String())
-
-	if err != nil {
-		// err logged in submitJobToLCM
-		return nil, err
-	}
-	cl.Observe("submitted job to lcm")
-	//}
-
-	//request is validated, now bump up the counter
-	logUserGpuValue := fmt.Sprintf("%s-%s-%v", req.UserId, req.Training.Resources.GpuType, req.Training.Resources.Gpus)
-
-	logUserFrameworkVersionGpuValue := fmt.Sprintf("%s-%s-%s-%s-%v", req.UserId, req.Training.Resources.GpuType, req.ModelDefinition.Framework.Name, req.ModelDefinition.Framework.Version, req.Training.Resources.Gpus)
-
-	logr.WithFields(logrus.Fields{
-		"userid_gputype_gpus":           logUserGpuValue,
-		"userid_framework_gputype_gpus": logUserFrameworkVersionGpuValue,
-	}).Debug(" incrementing userid log")
-
-	return &grpc_trainer_v2.CreateResponse{TrainingId: id}, nil
-}
-
 func uploadArchive(bucket string, file string, bytes []byte, onlyMinio bool) error {
 	getLogger := logger.GetLogger()
 	sClient, err := storageClient.NewStorage()
@@ -667,6 +451,165 @@ func uploadArchive(bucket string, file string, bytes []byte, onlyMinio bool) err
 	}
 	getLogger.Debugf("upload response: %+v", response)
 	return nil
+}
+
+func (s *trainerService) CreateTrainingJob(ctx context.Context, req *grpc_trainer_v2.CreateRequest) (*grpc_trainer_v2.CreateResponse, error) {
+	// duration := metrics.NewTimer(s.metrics.createTrainingDuration)
+	// defer duration.ObserveDuration()
+
+	//sClient, err := storageClient.NewStorage()
+	getLogger := logger.GetLogger()
+	startTime := time.Now()
+	getLogger.Debugf("CreateTrainingJob startTime: %v", startTime.String())
+
+	// FIXME MLSS Change: The job name must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character
+	sidHigh := random.String(9, random.Lowercase+random.Numeric+"-")
+	sidLow := random.String(9, random.Lowercase+random.Numeric)
+
+	id := fmt.Sprintf("training-%s%s", sidHigh, sidLow)
+
+	logr := logger.LocLogger(logWith(id, req.UserId))
+
+	logr.Infof("CreateTrainingJob, req.TFosRequest: %v", req.TFosRequest)
+
+	cl := instrumentation.NewCallLogger(ctx, "CreateTrainingJob", logr)
+	defer cl.Returned()
+
+	if err := s.validateRequest(logr.Logger, req); err != nil {
+		return nil, err
+	}
+
+	setDefaultResourceRequirements(req.Training)
+
+	//request is validated, now bump up the counter
+	logFrameworkVersionValue := fmt.Sprintf("%s-%s", req.ModelDefinition.Framework.Name, req.ModelDefinition.Framework.Version)
+	logGpuTypeUsagesValue := fmt.Sprintf("%s-%v", req.Training.Resources.GpuType, req.Training.Resources.Gpus)
+	logr = logr.WithFields(logrus.Fields{
+		logger.LogkeyFramework:        req.ModelDefinition.Framework.Name,
+		logger.LogkeyFrameworkVersion: logFrameworkVersionValue,
+		logger.LogkeyGpuType:          req.Training.Resources.GpuType,
+		logger.LogkeyGpuUsage:         logGpuTypeUsagesValue,
+	})
+
+	logr.Debug(" metrics for total number of training jobs ")
+
+	//TODO get ds
+	outputDatastore := s.getOutputDatastore(req.Training.OutputData, req.Datastores)
+
+	// upload model definition ZIP file to object store and set location
+	logr.Debugf("debug_1.5.1 start to s3")
+	if req.ModelDefinition.Content != nil {
+		logr.Debugf("debug_1.5.1 start to s3 is nil")
+		// MLSS Change: upload model to object store no matter what output datastore is used
+		//if outputDatastore.Type != "mount_volume" {
+		// Upload to DLaaS Object store.
+		logr.Debugf("Uploading content to: %s filename: %s", s.modelsBucket, getModelZipFileName(id))
+		//err := s.datastore.UploadArchive(s.modelsBucket, getModelZipFileName(id), req.ModelDefinition.Content)
+		//todo mlss 1.10.0
+		err := uploadArchive(s.modelsBucket, getModelZipFileName(id), req.ModelDefinition.Content, true)
+
+		if err != nil {
+			logr.WithError(err).Errorf("Error uploading model to object store")
+			// s.metrics.uploadModelFailedCounter.With("kind", dlaasStoreKind).Add(1)
+			return nil, err
+		}
+		req.ModelDefinition.Location = fmt.Sprintf("%s/%s.zip", s.modelsBucket, id)
+		cl.Observe("uploaded model to minio object store: %s", req.ModelDefinition.Location)
+
+		// Upload to user's result object store.
+		logr.Debugf("Upload to user's result object store, type: %s bucket: %s", outputDatastore.Type, outputDatastore.Fields["bucket"])
+
+		bucket := outputDatastore.Fields["bucket"]
+		object := fmt.Sprintf("%s/_submitted_code/model.zip", id)
+		logr.Debugf("Writing to output object store: %s -> %s, length: %d", bucket, object, len(req.ModelDefinition.Content))
+		//err = ds.UploadArchive(bucket, object, req.ModelDefinition.Content)
+		//todo
+		err = uploadArchive(bucket, object, req.ModelDefinition.Content, true)
+		if err != nil {
+			// s.metrics.uploadModelFailedCounter.With("kind", userStoreKind).Add(1)
+			logr.WithError(err).Errorf("Error uploading model to output object store")
+			return nil, err
+		}
+
+		cl.Observe("uploaded model to user's object store")
+		//}
+	}
+	elapsed := time.Since(startTime)
+	getLogger.Debugf("uploadArchive endTime: %v", elapsed.String())
+
+	// create a copy of the model definition without the content field (do not store it to the database)
+	modelWithoutContent := *req.ModelDefinition
+	modelWithoutContent.Content = nil
+
+	trainStatus := grpc_trainer_v2.TrainingStatus{
+		Status:              grpc_trainer_v2.Status_QUEUED,
+		SubmissionTimestamp: trainerClient.CurrentTimestampAsString(),
+	}
+	tr := &TrainingRecord{
+		TrainingID:            id,
+		UserID:                req.UserId,
+		ModelDefinition:       &modelWithoutContent,
+		Training:              req.Training,
+		Datastores:            req.Datastores,
+		TrainingStatus:        &trainStatus,
+		Metrics:               nil,
+		Namespace:             req.Namespace,
+		GID:                   req.Gid,
+		UID:                   req.Uid,
+		GuardianToken:         req.Token,
+		JobAlert:              req.JobAlert,
+		CodeSelector:          req.CodeSelector,
+		PSs:                   req.PSs,
+		PSCPU:                 req.PSCpu,
+		PSImage:               req.PSImage,
+		PSMemory:              req.PSMemory,
+		DataPath:              req.DataPath,
+		JobType:               req.JobType,
+		TFosRequest:           req.TFosRequest,
+		ExpRunId:              req.ExpRunId,
+		ExpName:               req.ExpName,
+		FileName:              req.FileName,
+		FilePath:              req.FilePath,
+		ProxyUser:             req.ProxyUser,
+		DataSet: 			   req.DataSet,
+		MFModel: 			   req.MfModel,
+		Algorithm:             req.Algorithm,
+		JobParams:             req.JobParams,
+		FitParams: 			   req.FitParams,
+		APIType: 			   req.APIType,
+	}
+
+	if req.ExpRunId == "0" {
+		tr.ExpRunId = ""
+	}
+	logr.Debugf("CreateTrainingJob, req.JobType: %v, reqCpu: %v, reqGpu: %v, reqMem: %v, fileName: %v, filePath: %v", req.JobType, req.Training.Resources.Cpus, req.Training.Resources.Gpus, req.Training.Resources.Memory, req.FileName, req.FilePath)
+
+	elapsed = time.Since(startTime)
+	getLogger.Debugf("submitJobToLCM startTime: %v", elapsed.String())
+	getLogger.Debugf("submitJobToLCM STATUS: %v", tr.TrainingStatus)
+	err := s.submitJobToLCM(tr, logr)
+
+	elapsed = time.Since(startTime)
+	getLogger.Debugf("submitJobToLCM endTime: %v", elapsed.String())
+
+	if err != nil {
+		// err logged in submitJobToLCM
+		return nil, err
+	}
+	cl.Observe("submitted job to lcm")
+	//}
+
+	//request is validated, now bump up the counter
+	logUserGpuValue := fmt.Sprintf("%s-%s-%v", req.UserId, req.Training.Resources.GpuType, req.Training.Resources.Gpus)
+
+	logUserFrameworkVersionGpuValue := fmt.Sprintf("%s-%s-%s-%s-%v", req.UserId, req.Training.Resources.GpuType, req.ModelDefinition.Framework.Name, req.ModelDefinition.Framework.Version, req.Training.Resources.Gpus)
+
+	logr.WithFields(logrus.Fields{
+		"userid_gputype_gpus":           logUserGpuValue,
+		"userid_framework_gputype_gpus": logUserFrameworkVersionGpuValue,
+	}).Debug(" incrementing userid log")
+
+	return &grpc_trainer_v2.CreateResponse{TrainingId: id}, nil
 }
 
 func (s *trainerService) GetTrainingJob(ctx context.Context, req *grpc_trainer_v2.GetRequest) (*grpc_trainer_v2.GetResponse, error) {
@@ -734,6 +677,7 @@ func updateTrainingJobPostLock(s *trainerService, req *grpc_trainer_v2.UpdateReq
 		return nil, err
 	}
 	if training == nil {
+		// training does not exist
 		return nil, gerrf(codes.NotFound, "Training with id %s not found.", req.TrainingId)
 	}
 
@@ -774,12 +718,6 @@ func updateTrainingJobPostLock(s *trainerService, req *grpc_trainer_v2.UpdateReq
 			ts.ProcessStartTimestamp = req.Timestamp
 		}
 	}
-	// if req.Status == grpc_trainer_v2.Status_STORING {
-	// 	ts.StoreStartTimestamp = nowMillis
-	// 	if req.Timestamp != "" {
-	// 		ts.StoreStartTimestamp = req.Timestamp
-	// 	}
-	// }
 
 	// send monitoring metrics for failed/succeeded jobs
 	if req.Status == grpc_trainer_v2.Status_COMPLETED || req.Status == grpc_trainer_v2.Status_FAILED {
@@ -816,16 +754,6 @@ func updateTrainingJobPostLock(s *trainerService, req *grpc_trainer_v2.UpdateReq
 			"userid_framework_gputype_gpus": logUserFrameworkVersionGpuValue,
 		}).Debug(" decrementing userid log")
 
-		// s.metrics.trainerUsageGauge.With("userid", req.UserId,
-		// 	"gpuType", training.Training.GetResources().GpuType,
-		// 	"framework", training.ModelDefinition.Framework.Name,
-		// 	"version", training.ModelDefinition.Framework.Version).Add(float64(gpusUsed) * -1)
-
-		// counter.With("framework", training.ModelDefinition.Framework.Name,
-		// 	"version", training.ModelDefinition.Framework.Version,
-		// 	"gpus", strconv.Itoa(int(training.Training.Resources.Gpus)),
-		// 	"cpus", strconv.Itoa(int(training.Training.Resources.Cpus)),
-		// 	"memory", strconv.Itoa(int(training.Training.Resources.Memory))).Add(1)
 	}
 	err = s.repo.Store(training)
 	if err != nil {
@@ -1059,7 +987,8 @@ func (s *trainerService) deleteJobFromQueue(trainingID string, namespaceName str
 		// FIXME MLSS Change: v_1.4.1 to create queue  when queue is nil
 		queue, err := newTrainingJobQueue(viper.GetString(mongoAddressKey),
 			viper.GetString(mongoDatabaseKey), viper.GetString(mongoUsernameKey),
-			viper.GetString(mongoPasswordKey), config.GetMongoCertLocation(), QueueName(namespaceName), LockName(namespaceName))
+			viper.GetString(mongoPasswordKey),  viper.GetString(config.MongoAuthenticationDatabase),
+			config.GetMongoCertLocation(), QueueName(namespaceName), LockName(namespaceName))
 		if err != nil {
 			logr.WithError(err).Fatalf("Cannot create queue with %s %s %s", viper.GetString(mongoAddressKey), viper.GetString(mongoDatabaseKey), viper.GetString(mongoUsernameKey))
 			// s.metrics.trainerServiceRestartCounter.With("reason", "createqueue").Add(1)
@@ -1718,54 +1647,54 @@ func (s *trainerService) validateRequest(log *logrus.Entry, req *grpc_trainer_v2
 
 	// validate Training object
 
-	t := req.Training
-	if t == nil {
-		return s.failCreateRequest("Training is not set", req, log)
-	}
-	if t.Command == "" {
-		return s.failCreateRequest("Training command is not set", req, log)
-	}
-	if t.InputData == nil || len(t.InputData) == 0 {
-		return s.failCreateRequest("Training input data is not set", req, log)
-	}
-	if len(t.InputData) > 1 {
-		return s.failCreateRequest("Training input data can only contain one id", req, log)
-	}
-	if t.OutputData != nil && len(t.OutputData) > 1 {
-		return s.failCreateRequest("Training output data can only contain one id", req, log)
-	}
+	// t := req.Training
+	// if t == nil {
+	// 	return s.failCreateRequest("Training is not set", req, log)
+	// }
+	// if t.Command == "" {
+	// 	return s.failCreateRequest("Training command is not set", req, log)
+	// }
+	// if t.InputData == nil || len(t.InputData) == 0 {
+	// 	return s.failCreateRequest("Training input data is not set", req, log)
+	// }
+	// if len(t.InputData) > 1 {
+	// 	return s.failCreateRequest("Training input data can only contain one id", req, log)
+	// }
+	// if t.OutputData != nil && len(t.OutputData) > 1 {
+	// 	return s.failCreateRequest("Training output data can only contain one id", req, log)
+	// }
 
-	// validate datastores
+	// // validate datastores
 
-	ds := req.Datastores
-	if ds == nil {
-		return s.failCreateRequest("Data stores is not set", req, log)
-	}
-	if len(ds) == 0 {
-		return s.failCreateRequest("Data stores is empty", req, log)
-	}
+	// ds := req.Datastores
+	// if ds == nil {
+	// 	return s.failCreateRequest("Data stores is not set", req, log)
+	// }
+	// if len(ds) == 0 {
+	// 	return s.failCreateRequest("Data stores is empty", req, log)
+	// }
 
-	for _, name := range t.InputData {
-		ds := findDatastore(name, req.Datastores)
-		if ds == nil {
-			return s.failCreateRequest(fmt.Sprintf("Training input data reference '%s' does not reference an existing datastore id.", name), req, log)
-		}
-		if err := s.validateDatastore(ds, req, log); err != nil {
-			return err
-		}
-	}
+	// for _, name := range t.InputData {
+	// 	ds := findDatastore(name, req.Datastores)
+	// 	if ds == nil {
+	// 		return s.failCreateRequest(fmt.Sprintf("Training input data reference '%s' does not reference an existing datastore id.", name), req, log)
+	// 	}
+	// 	if err := s.validateDatastore(ds, req, log); err != nil {
+	// 		return err
+	// 	}
+	// }
 
-	if len(t.OutputData) > 0 {
-		for _, name := range t.OutputData {
-			ds := findDatastore(name, req.Datastores)
-			if ds == nil {
-				return s.failCreateRequest(fmt.Sprintf("Training output data reference '%s' does not reference an existing datastore id.", name), req, log)
-			}
-			if err := s.validateDatastore(ds, req, log); err != nil {
-				return err
-			}
-		}
-	}
+	// if len(t.OutputData) > 0 {
+	// 	for _, name := range t.OutputData {
+	// 		ds := findDatastore(name, req.Datastores)
+	// 		if ds == nil {
+	// 			return s.failCreateRequest(fmt.Sprintf("Training output data reference '%s' does not reference an existing datastore id.", name), req, log)
+	// 		}
+	// 		if err := s.validateDatastore(ds, req, log); err != nil {
+	// 			return err
+	// 		}
+	// 	}
+	// }
 	return nil
 }
 
@@ -2048,6 +1977,7 @@ func (s *trainerService) createJobConfig(tr *TrainingRecord) (*service.JobDeploy
 
 	logr.Debugf("Training job env vars: %v", envvars)
 	logr.Debugf(" tr.Training: %v", tr.Training)
+	logr.Debugf(" tr.ProxyUser: %v", tr.ProxyUser)
 	job := &service.JobDeploymentRequest{
 		Name:                  u4.String(),
 		Resources:             getResourceRequirements(tr.Training),
@@ -2080,6 +2010,13 @@ func (s *trainerService) createJobConfig(tr *TrainingRecord) (*service.JobDeploy
 		ExpName:      tr.ExpName,
 		FileName:     tr.FileName,
 		FilePath:     tr.FilePath,
+		ProxyUser:    tr.ProxyUser,
+		DataSet:      tr.DataSet,
+		MfModel: 	  tr.MFModel,
+		Algorithm:     tr.Algorithm,
+		JobParams:  tr.JobParams,
+		FitParams: tr.FitParams,
+		APIType: tr.APIType,
 	}
 
 	return job, nil
@@ -2201,14 +2138,6 @@ func (s *trainerService) submitJobToLCM(tr *TrainingRecord, logr *logger.LocLogg
 		return gerrf(codes.Internal, grpcErrorDesc(err))
 	}
 	logr.Debugf("submitJobToLCM jobConfig.EnvVars TOKEN: %v", jobConfig.EnvVars["GUARDIAN_TOKEN"])
-
-	// store training record with PENDING status
-	//tr.TrainingStatus.Status = grpc_trainer_v2.Status_PENDING
-	//err = s.repo.Store(tr)
-	//if err != nil {
-	//	logr.WithError(err).Errorf("Failed to resolve output datastore")
-	//	return gerrf(codes.Internal, grpcErrorDesc(err))
-	//}
 
 	lcm, err := s.lcmClient()
 	if err != nil {
@@ -2368,17 +2297,6 @@ func (s *trainerService) DeleteSubmittedCode(ctx context.Context, req *grpc_trai
 	//ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	ctx, cancel := context.WithTimeout(context.Background(), 8*time.Minute)
 	defer cancel()
-	//resp, err := s.GetTrainingJob(ctx, &grpc_trainer_v2.GetRequest{
-	//	TrainingId: req.TrainingId,
-	//	UserId:     req.UserId,
-	//})
-	//if err != nil {
-	//	logr.WithError(err).Errorf("Error reading training with id: %s", req.TrainingId)
-	//	return nil, err
-	//}
-	//if resp == nil || resp.Job == nil {
-	//	//return gerrf(codes.NotFound, "Training with id '%s' not found.", req.TrainingId)url
-	//}
 
 	//ds := s.getOutputDatastore(resp.Job.Training.OutputData, resp.Job.Datastores)
 

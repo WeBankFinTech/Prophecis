@@ -19,8 +19,9 @@ package helper
 import (
 	"k8s.io/client-go/kubernetes"
 
-	v1core "k8s.io/api/core/v1"
 	"webank/DI/commons/config"
+
+	v1core "k8s.io/api/core/v1"
 )
 
 //ETCDVolume ...
@@ -104,23 +105,6 @@ func (volumes Volumes) CreateDataVolumeMount() v1core.VolumeMount {
 	}
 }
 
-//CreateDataVolumeMount ...
-//func (volumes Volumes) CreateDataVolumeMount() v1core.VolumeMount {
-//	if volumes.SharedNonSplitLearnerHelperVolume != nil {
-//		return localEmptyDirVolumeMount(volumes.SharedNonSplitLearnerHelperVolume.Name, volumes.SharedNonSplitLearnerHelperVolume.MountSpec.MountPath, volumes.SharedNonSplitLearnerHelperVolume.MountSpec.SubPath)
-//	}
-//	return sharedVolumeMount(volumes.SharedSplitLearnerHelperVolume.Name, volumes.SharedSplitLearnerHelperVolume.MountSpec.MountPath, volumes.SharedSplitLearnerHelperVolume.MountSpec.SubPath)
-//}
-
-////DynamicPVCReference ...
-//func (volumes Volumes) DynamicPVCReference() *v1core.PersistentVolumeClaim {
-//	if volumes.SharedSplitLearnerHelperVolume == nil {
-//		return nil
-//	}
-//	return volumes.SharedSplitLearnerHelperVolume.PVC
-//
-//}
-
 func createETCDVolumeMount(name string) v1core.VolumeMount {
 	return v1core.VolumeMount{
 		Name:      name,
@@ -147,35 +131,6 @@ func createETCDVolume(name string) v1core.Volume {
 	}
 }
 
-//func localEmptyDirVolume(name string) v1core.Volume {
-//	return v1core.Volume{
-//		Name:         name,
-//		VolumeSource: v1core.VolumeSource{EmptyDir: &v1core.EmptyDirVolumeSource{}},
-//	}
-//}
-//
-//func localEmptyDirVolumeMount(name, baseDirectory, trainingID string) v1core.VolumeMount {
-//
-//	return v1core.VolumeMount{
-//		Name:      name,
-//		MountPath: baseDirectory,
-//		SubPath:   trainingID,
-//	}
-//}
-//
-//func sharedVolume(name, pvcClaimName string) v1core.Volume {
-//	return v1core.Volume{
-//		Name: name,
-//		VolumeSource: v1core.VolumeSource{
-//			PersistentVolumeClaim: &v1core.PersistentVolumeClaimVolumeSource{ClaimName: pvcClaimName},
-//		},
-//	}
-//}
-//
-//func sharedVolumeMount(name, baseDirectory, trainingID string) v1core.VolumeMount {
-//	return localEmptyDirVolumeMount(name, baseDirectory, trainingID)
-//}
-
 func localEmptyDirVolume(name string) v1core.Volume {
 	return v1core.Volume{
 		Name:         name,
@@ -201,8 +156,4 @@ func sharedVolume(name string, path string, pathType v1core.HostPathType) v1core
 			},
 		},
 	}
-}
-
-func sharedVolumeMount(name, baseDirectory, trainingID string) v1core.VolumeMount {
-	return localEmptyDirVolumeMount(name, baseDirectory, trainingID)
 }
