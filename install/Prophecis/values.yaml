@@ -1,96 +1,253 @@
 namespace: prophecis
-env: prod
+#env: dev
+envir: prophecis
 platformNodeSelectors:
   mlss-node-role: platform
-envir: prophecis
-has_static_volumes: true
-ceph_host_path: /cosdata/mlss-test
-
-server_ui_gateway: 127.0.0.1:30778
-
-server_repository: wedatasphere/prophecis
-
-
-
-database:
+ceph_path: /data/bdap-ss/mlss-data
+db:
   server: 127.0.0.1
   port: 3306
-  name: di_dev
-  user: di_test
-  pwd: test
-  encryptPwd: ""
-  privKey: ""
+  name: prophecis_db
+  user: prophecis
+  pwd: prophecis@wedatasphere
+image:
+  registry: uat.sf.dockerhub.stgwebank/webank/prophecis
+  pullPolicy: Always
+gateway:
+  address: 127.0.0.1
+  port: 30778
 
+#persistent
+minio:
+  server: 127.0.0.1
+  port: 32001
+  keyid: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+  accesskey: AKIAIOSFODNN7EXAMPLE
+mongo:
+  address: mongo.prophecis.svc.cluster.local
+  username: mlssopr
+  password: mlssopr
+  database: mlsstest
+  authenticationDatabase: admin
+etcd:
+  address: http://etcd.prophecis.svc.cluster.local:2379
+  username: test
+  password: test
+  prefix: test
+objectstore:
+  type: s3_datastore
+  username: AKIAIOSFODNN7EXAMPLE
+  password: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+elasticsearch:
+  address: http://elasticsearch.prophecis.svc.cluster.local:9200
+  host: elasticsearch.prophecis.svc.cluster.local
+  port: "9200"
+  username: test
+  password: test
+  scheme: http
+persistent:
+  etcd:
+    path: /cosdata/prophecis/test/etcd
+  localstack:
+    path: /cosdata/prophecis/test/localstack
+  mongo:
+    path: /cosdata/prophecis/test/mongo
+
+
+
+#mlflow service
+trainer:
+  version: trainer-v0.3.0
+  replicas: 1
+  cpus: 5000m
+  memory: 2048Mi
+
+storage:
+  version: storage-v0.3.0
+  replicas: 1
+  cpus: 500m
+  memory: 5000Mi
+  uploadContainerPath: /uploaded-models
+  share_storage_dir: tmp
+  storageEnvServerName: prophecis
+  storageServerName: dlaas.ibm.com
+  storageTls: true
+  platformNamespace: prophecis
+  storageCA: MIIFdTCCA12gAwIBAgIJAMpWS0cTdN/xMA0GCSqGSIb3DQEBCwUAMFExCzAJBgNVBAYTAlVTMQswCQYDVQQIDAJOWTEPMA0GA1UEBwwGQXJtb25rMQwwCgYDVQQKDANJQk0xFjAUBgNVBAMMDWRsYWFzLmlibS5jb20wHhcNMTkwODAxMDk0MDE1WhcNMjkwNzI5MDk0MDE1WjBRMQswCQYDVQQGEwJVUzELMAkGA1UECAwCTlkxDzANBgNVBAcMBkFybW9uazEMMAoGA1UECgwDSUJNMRYwFAYDVQQDDA1kbGFhcy5pYm0uY29tMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEA1qB+XOvdAPLBz7xIzsmK7wHvS9TMFmg70yC7+cvPQlXstSn7dSPHLJ/IRBrWkVIY0qbFioHAUWaAG59AVBHt2gd98FR8cMwaOAMr8mz20JHjyme01DvTuqri5UNXt1rIszI9h83lP/Ih+szrFcf2ZvsOROItQ2rcs/nY2/nt1A9SWO26x4Vy8UZKhml3OXFE1TzAc4cvjb8WrhwUUzNHEK0Lwq7KhQuMzSUALlBAwDzYKQPr8PXU8DKV4YO1Cs6hjYJirOCpCjq+jfRLnh3vcACbCazUSWLUzVbpSNWa5yA3emGccetT4VZBGl/2B9dp/Gh8H75pmcyzy6ziJAFXHWeV2lzdLDUDhuArHWIGskBUos/fW8QtkL5Suad0fMAsoRHE8sL0D+BiGF39i0Rjk6PKcLCxcLcJyU1felQMevjMFsDShHtY82NM0rsyLFAvWfv0cH+0LVO/Mo3I3xzt6Yg16UaQ9wU/qOjEw7mhqGw0fuB12HrLoBstof4Jyb3IMRkWM2TmlH918SKABuT69Dyrc4xX90arGI5ZqafiwVSLnzam73AmKgqJSUa2AwVIL5ZMX1Au7O9wi3U9p8gjb5+MOrjR4i2IPoz//9gwVj3pdu2tx2Ai9muH1Yi3tTh+IWMUB/LuOQSsdSd1kHt74mF5HzC8/3TJRyv4uNBfho0CAwEAAaNQME4wHQYDVR0OBBYEFHx/O0IFLMrFpYtbfUH6uojZHVNQMB8GA1UdIwQYMBaAFHx/O0IFLMrFpYtbfUH6uojZHVNQMAwGA1UdEwQFMAMBAf8wDQYJKoZIhvcNAQELBQADggIBAKKYsj9Mjy819DOFKmE6eY+DIcBlkJGNzknZr0qp1eieDa/ZRADowbcw18iQDiXi01BNAygMSLf6132RVMNY9p92U2s4KWom1gfdBAykEnWuPB5uIXN7w5vV0X+Vp+kRI6op1UEhvf0fnpDKLjpfPx1wmUVZB2ARuXq2z18b67K7PkF5fgm07ngE1O+ByIC05xEpNE9UBCSlgDLfjUFtFGPeCfhIMlYeh2kgUY441U/ALneCv7WBR+09yUl51CEDENk4MCYq1qWqzYHuI9nlZzbU0G+JOVE0vPpgDkUOyZwbz244nI4jhI1cuFR00TMpXlQUe6rY3ndHImQD5NmS4kBr9xJm2e+H5cwY+/0GjNXOxx5olXcMiLl4R9VA+KMPS9kYKl7E/J0M2WUeXjEGcGHqg12/QKiI9fgIwd1WwkiJARDciUqYTw2GAOZrJ2lytH8WvV8lZIPUp8awUDnZzmg+iFIYlADCjtOu4bdlnFVTGURCvPvrYA+8evtdFhXimWB/Chfof/EYv3r4qImL2/+N192jxilFkb/OBMkmG9t97iLvJykjmTFKkzysRy53F4CVlgAAOst8MQsJ6tewmSvgHVWOT1Ohi3eNzMCW/fTEjsf9hO/j23DHjwzZ3JIQxwNmNpdk8yIyhEQNnBQGjsZxB3MANqyOiZcm1al/Tkxw
+
+restapi:
+  version: restapi-v0.3.0
+  port: 30960
+  replicas: 1
+  cpus: 5000m
+  memory: 6400Mi
+#  mfserver:
+#    url: http://127.0.0.1:30803
+
+lcm:
+  version: lcm-v0.3.0
+  nodeport:
+   start: 40000
+   end: 50000
+  replicas: 1
+  cpus: 1000m
+  memory: 1000Mi
+  load_training_data_mem_in_mb: 300
+  milli_cpu: 60
+  mem_in_mb: 300
+  device_plugin: true
+  shared_volume_storage_class: ""
+  mlssGroupId: 6002
+  fluent_bit_log_path: /mlss/di/jobs/
+
+jm:
+  version: jobmonitor-v0.3.0
+
+trainingdata:
+  version: metrics-v0.3.0
+  replicas: 1
+  cpus: 50m
+  memory: 64Mi
+
+grafana:
+  port: 3000
 log:
   level: DEBUG
+
 cc:
   image:
-    tag: cc-apiserver-v0.2.0
+    tag: cc-apiserver-v0.3.0
+  containerPort:
+    portHttp: 6666
+    portHttps: 443
+  service:
+    type: NodePort
+    port: 6666
+    targetPort: 6666
+    portHttps: 443
+    targetPortHttps: 443
+    nodePort: 30803
+  subSystemId: 5265
+  encodeFlag: true
+  mlss:
+    gid: 6002
+    uid: 6002
+  spec:
+    volumes:
+      hostPath:
+        path: /appcom/log/controlcenter
+      hostPath:
+        mlssData: /data/bdap-ss/mlss-data
+  admin:
+    user: hadoop
+    password: hadoop
   ldap:
     address: ldap://127.0.0.1:1389/
     baseDN: dc=webank,dc=com
+
 ccGateway:
   image:
-    tag: cc-apigateway-v0.2.0
+    tag: cc-apigateway-v0.3.0
+  service:
+    type: NodePort
+    port: 8081
+    targetPort: 8081
+    nodePort: 30778
+  deployNode: mlssdi010001
+
 aide:
   image:
-    tag: mllabis-v0.1.1
-  hadoop:
-    enable: "false"
-    installPath: "/data/Install"
-    commonlibPath: "/data/commonlib"
-    configPath: "/data/config"
-    javaPath: "/data/jdk1.8.0_141"
-    sourceConfigPath: "/data/config/Notebook_ENV.sh"
-    hostFilePath: "/data/config/MLSS-config/MLSS_AIDE-config/HOST_ENV.sh"
+    tag: mllabis-v0.3.0
+  service:
+    type: NodePort
+    port: 8080
+    targetPort: 8080
+    nodePort: 30790
+  startPort: "32768"
+  endPort: "50000"
+  maxSparkSessionNum: 3
+
 ui:
   image:
-    tag: ui-v0.2.0
+    tag: ui-v0.3.0
   service:
     bdap:
+      type: NodePort
+      port: 80
+      targetPort: 80
       nodePort: 30803
+  config:
+    bdap:
+      uiServer: bdap-ui
+      filterUiServer: true
+  notebook:
+    mlssToken: MLSSTOKEN
+    env: SIT
+    clusterName: 
+      bdap: BDAP
+  spec:
+    volumes:
+      hostPath:
+        bdapPath: /appcom/log/ui-bdap
+  diApiVersion: v1
+  aideApiVersion: v1
+  ccApiVersion: v1
   grafana:
-    url: ""
+    url: http://127.0.0.1:30780
   dashboard:
-    url: ""
+    url: http://127.0.0.1:30080
   prometheus:
-    url: ""
+    url: http://127.0.0.1:30778
   kibana:
-    url: ""
-  aide:
-    image:
-      notebookTags:
-        - name: MLSS-AIDE_1.8.0_tensorflow-2.0.0-jupyterlab-gpu-v0.5.0
-        - name: MLSS-AIDE_1.8.0_tensorflow-1.13.1-jupyterlab-cpu-v0.5.0
-        - name: MLSS-AIDE_1.8.0_tensorflow-1.13.1-jupyterlab-gpu-v0.5.0
-        - name: MLSS-AIDE_1.8.0_tensorflow-1.12.0-jupyterlab-gpu-v0.5.0
-        - name: MLSS-AIDE_1.8.0_tensorflow-1.12.0-jupyterlab-cpu-v0.5.0
+    url: http://127.0.0.1:30783
   di:
     image:
       trainingTags:
-        - name: tensorflow-1.5.0-gpu-py3-wml-v1
-livy:
-  address: http://127.0.0.1:8998
-restapi:
-  version: restapi-0.2.0
-trainer:
-  version: trainer-0.2.0
-storage:
-  version: storage-0.2.0
-  uploadHostPath: /uploaded-models
-  uploadContainerPath: /uploaded-models
-lcm:
-  version: lcm-0.2.0
-jm:
-  version: jobmonitor-0.2.0
-trainingdata:
-  version: metrics-0.2.0
-learner:
-  tag: master-97
-persistent:
-  etcd:
-    path: /cosdata/mlss-test/prophecis/etcd
-  localstack:
-    path: /cosdata/mlss-test/prophecis/localstack
-  mongo:
-    path: /cosdata/mlss-test/prophecis/mongo
+      - name: MLSS-AIDE_1.15.0_tensorflow-1.12.0-notebook-gpu-v0.4.0-mlpipeline
+    baseHDFSPath: hdfs:///tmp/linkis
+    linkis:
+      hdfsBaseDir: hdfs:///tmp/linkis
+      pythonOption:
+      - tensorflow-1.12.0: hdfs:///tmp/linkis/mlss/tf_env.zip
+  aide:
+    image:
+      notebookTags:
+      - name: MLSS-AIDE_1.8.0_tensorflow-1.12.0-jupyterlab-cpu-v0.5
+
+linkis:
+  address: 127.0.0.1:8088
+  tokenCode: BML-AUTH
+linkispro:
+  address: 127.0.0.1:8088
+  tokenCode: BML-AUTH
+
+mlflow:
+  address: 127.0.0.1:31525
+  port: 31525
+
+tfjob:
+  image:
+    mpiOperator: wedatasphere/prophecis:mpi-operator-v1.0.0
+    tfOperator: wedatasphere/prophecis:tf-operator-v1.0.0
+    delivery: wedatasphere/prophecis:kubectl-delivery-1.0.0
+
+mf:
+  image:
+    tag: mf-server-v0.3.0
+  service:
+    type: NodePort
+    port: 8080
+    targetPort: 8080
+    portHttps: 443
+    targetPortHttps: 443
+    nodePort: 30803
+  cpus: 1500m
+  memory: 1500Mi
+  containerEngineCpu: 1
+  containerEngineMemory: 1
+  containerEngineGpu: "0"
+  istioSideCarCpu: 2
+  istioSideCarMemory: 1
+  istioSideCarGpu: 0 
+  CCAddress: https://controlcenter-go
+

@@ -33,18 +33,20 @@ data:
       platformNS: {{.Values.namespace}}
       datasource:
         driverClassName: com.mysql.jdbc.Driver
-        url: jdbc:mysql://{{.Values.database.server}}/{{.Values.database.name}}?useUnicode=true&characterEncoding=utf-8
-        username: {{.Values.database.user}}
-        password: {{.Values.database.pwd}}
-        ip: {{.Values.database.server}}
-        port: {{.Values.database.port}}
-        db: {{.Values.database.name}}
+        url: jdbc:mysql://{{.Values.db.server}}/{{.Values.db.name}}?useUnicode=true&characterEncoding=utf-8
+        username: {{.Values.db.user}}
+        password: {{.Values.db.pwd}}
+        ip: {{.Values.db.server}}
+        port: {{.Values.db.port}}
+        db: {{.Values.db.name}}
       admin:
-        user: admin
-        password: admin
+        user: {{.Values.cc.admin.user}}
+        password: {{.Values.cc.admin.password}}
       ldap: 
         server: {{.Values.cc.ldap.address}}
         baseDN: {{.Values.cc.ldap.baseDN}}
+    encodeFlag: {{.Values.encodeFlag}}
+    aideAddress: {{.Values.cc.aideAddress}}
     server:
       port: 6666
       servlet:
@@ -77,7 +79,7 @@ data:
           - "/v1/auth/access/namespaces/**/notebooks/**"
         - name: AuthInterceptor
           add:
-          - "/v1/**"
+          - "/v1/**"  
           exclude:
           - "/v1/login"
           - "/v1/logout"
@@ -99,7 +101,7 @@ data:
         learnerIndex: dlaas_learner_data
         dateIndex: logstash-
       gateway:
-         bdapAddress: http://127.0.0.1:30803
+        bdapAddress: {{.Values.gateway.address}}
       authAddress:
         user: http://controlcenter-go:6666/cc/v1/inter/user
         auth: http://controlcenter-go:6666/cc/v1/inter/auth
@@ -110,6 +112,10 @@ data:
       cookie:
         defaultTime: 86400
         path: "/"
+      mlss:
+        gid: {{.Values.cc.mlss.gid}}
+        uid: {{.Values.cc.mlss.uid}}
+
 
   logback-spring-xml: |
     <?xml version="1.0" encoding="UTF-8"?>
@@ -203,7 +209,6 @@ data:
             <appender-ref ref="FILE_ERROR"/>
         </root>
     </configuration>
-
   server-crt: |
     -----BEGIN CERTIFICATE-----
     MIICzDCCAbQCCQCVrtRO5rcr1DANBgkqhkiG9w0BAQUFADAoMQswCQYDVQQGEwJD
@@ -251,3 +256,4 @@ data:
     CB8vT/N7IEL9IjjmYo2JMNYiqMHmS9rTId8e9tdTgi8AAkYupkDGIqMkUeewgnxx
     k+1+nsLxQD6MWoNiquRPPAL+bt/KV3FWMB4FsOK1cW3XrD/UrF1Dlg==
     -----END RSA PRIVATE KEY-----
+
