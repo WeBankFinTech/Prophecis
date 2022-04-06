@@ -48,9 +48,13 @@ var (
 	authType string
 	username string
 	password string
+	appid    string
+	appts    string
+	appToken string
 )
 
 const (
+	//watsonUserInfoHeader = "X-Watson-Userinfo"
 	CcAuthType       = "MLSS-Auth-Type"
 	CcAuthSSOTicket  = "MLSS-Ticket"
 	CcAuthUser       = "MLSS-UserID"
@@ -111,6 +115,9 @@ func NewDlaaSClient() (*dlaasClient.Dlaas, error) {
 			authType = os.Getenv("MLSS_AUTH_TYPE")
 			username = os.Getenv("MLSS_AUTH_USER")
 			password = os.Getenv("MLSS_AUTH_PASSWD")
+			appid = os.Getenv("MLSS_APPID")
+			appts = os.Getenv("MLSS_APPTimestamp")
+			appToken = os.Getenv("MLSS_APPSignature")
 			_authType = authType
 			_username = username
 			_password = password
@@ -123,7 +130,6 @@ func NewDlaaSClient() (*dlaasClient.Dlaas, error) {
 		lflog().Debugf("basicAuth: %+v", BasicAuth)
 
 		transport := client.New(u.Host, u.Path, schemes)
-		// FIXME this should not be there and a bug in go-swagger - without this the zip download fails
 
 		transport.Transport = createRoundTripper()
 		return dlaasClient.New(transport, strfmt.Default), nil
@@ -180,6 +186,7 @@ type roundTripper struct {
 
 func (r *roundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	// we set the dummy header if it is not set so we can use the CLI internally too (without going through Datapower)
+	//lflog().Debugf("X-Watson-Userinfo: %s", req.Header.Get(watsonUserInfoHeader))
 	if req.Header.Get(CcAuthType) == "" {
 		lflog().Debugf("Adding %s: %s", CcAuthType, authType)
 		req.Header.Add(CcAuthType, authType)
@@ -191,6 +198,9 @@ func (r *roundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	if req.Header.Get(CcAuthPWD) == "" {
 		req.Header.Add(CcAuthPWD, password)
 	}
+	req.Header.Add(CcAuthAppID, appid)
+	req.Header.Add(CcAuthAppTS, appts)
+	req.Header.Add(CcAuthAppToken, appToken)
 	return http.DefaultTransport.RoundTrip(req)
 }
 
@@ -222,7 +232,6 @@ func LocationToID(location string) string {
 
 // IsValidManifest returns true if the data is a valid manifest file.
 func IsValidManifest(manifest []byte) bool {
-	// TODO fix this - we should not pull the whole dlaas-platform-apis just for this.
 	return true
 }
 

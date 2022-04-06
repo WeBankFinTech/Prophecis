@@ -19,31 +19,18 @@ package cmd
 import (
 	"fmt"
 	"github.com/urfave/cli"
-	"webank/DI/restapi/api_v1/client/models"
 )
 
-// ModelIDCompletion provide bash auto completion options for a model ID.
-func ModelIDCompletion(c *cli.Context) {
-	n := c.NArg()
-	if n > 1 {
-		return
+// EMetricsCompletion provide bash auto completion options
+func EMetricsCompletion(c *cli.Context) {
+	args := c.NArg()
+	flags := c.NumFlags()
+
+	if args == 0 {
+		ModelIDCompletion(c)
 	}
 
-	client, err := NewDlaaSClient()
-	if err != nil {
-		return
+	if flags == 0 {
+		fmt.Println("--follow")
 	}
-
-	params := models.NewListModelsParams().  //todo
-		WithTimeout(defaultOpTimeout)
-
-	modelz, err := client.Models.ListModels(params, BasicAuth())
-	if err != nil {
-		return
-	}
-
-	for _, v := range modelz.Payload.Models {
-		fmt.Println(v.ModelID)
-	}
-	return
 }

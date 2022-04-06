@@ -92,7 +92,7 @@ var (
 			Namespace:   deepLearningNS,
 			Name:        Train,
 			Description: "Trains a model",
-			Usage:       "bx dl train MANIFEST_FILE (MODEL_DEFINITION_ZIP|MODEL_DEFINITION_DIR) (Optional params: -P key=value,key=value...)",
+			Usage:       "bx dl train MANIFEST_FILE (MODEL_DEFINITION_ZIP|MODEL_DEFINITION_DIR)",
 			PluginFlags: []plugin.Flag{
 				{
 					Name:        "m",
