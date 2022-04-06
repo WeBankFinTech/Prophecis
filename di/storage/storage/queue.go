@@ -77,11 +77,12 @@ type LockEntry struct {
 }
 
 // newTrainingJobQueue creates a new queue for training jobs
-func newTrainingJobQueue(mongoURI string, database string, username string, password string, cert string, queueCollection string, lockCollection string) (*TrainingJobQueue, error) {
+func newTrainingJobQueue(mongoURI string, database string, username string, password string, authenticationDatabase string,
+	cert string, queueCollection string, lockCollection string) (*TrainingJobQueue, error) {
 	log := logger.LocLogger(log.StandardLogger().WithField("module", "trainingQueue"))
 	log.Debugf("Creating mongo queue Repository for %s", mongoURI)
 
-	session, err := ConnectMongo(mongoURI, database, username, password, cert)
+	session, err := ConnectMongo(mongoURI, database, username, password, authenticationDatabase, cert)
 	if err != nil {
 		return nil, err
 	}
@@ -107,8 +108,9 @@ func newTrainingJobQueue(mongoURI string, database string, username string, pass
 }
 
 // FIXME MLSS Change: v_1.4.1
-func GetNewTrainingJobQueue(mongoURI string, database string, username string, password string, cert string, queueCollection string, lockCollection string) (*TrainingJobQueue, error) {
-	return newTrainingJobQueue(mongoURI, database, username, password, cert, queueCollection, lockCollection)
+func GetNewTrainingJobQueue(mongoURI string, database string, username string, password string,authenticationDatabase string ,
+	cert string, queueCollection string, lockCollection string) (*TrainingJobQueue, error) {
+	return newTrainingJobQueue(mongoURI, database, username, password, authenticationDatabase,cert, queueCollection, lockCollection)
 }
 
 // Enqueue adds a training job id to the queue

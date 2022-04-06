@@ -13,7 +13,7 @@ import (
 
 // PostModelURL generates an URL for the post model operation
 type PostModelURL struct {
-	Version string
+	Version *string
 
 	_basePath string
 	// avoid unkeyed usage
@@ -49,7 +49,10 @@ func (o *PostModelURL) Build() (*url.URL, error) {
 
 	qs := make(url.Values)
 
-	versionQ := o.Version
+	var versionQ string
+	if o.Version != nil {
+		versionQ = *o.Version
+	}
 	if versionQ != "" {
 		qs.Set("version", versionQ)
 	}

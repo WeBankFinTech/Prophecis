@@ -13,7 +13,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	"webank/DI/restapi/api_v1/restmodels"
+	restmodels "webank/DI/restapi/api_v1/restmodels"
 )
 
 // GetLoglinesReader is a Reader for the GetLoglines structure.
@@ -24,14 +24,12 @@ type GetLoglinesReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *GetLoglinesReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewGetLoglinesOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 401:
 		result := NewGetLoglinesUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -61,6 +59,10 @@ func (o *GetLoglinesOK) Error() string {
 	return fmt.Sprintf("[GET /di/v1/logs/{model_id}/loglines][%d] getLoglinesOK  %+v", 200, o.Payload)
 }
 
+func (o *GetLoglinesOK) GetPayload() *restmodels.V1LogLinesList {
+	return o.Payload
+}
+
 func (o *GetLoglinesOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(restmodels.V1LogLinesList)
@@ -88,6 +90,10 @@ type GetLoglinesUnauthorized struct {
 
 func (o *GetLoglinesUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /di/v1/logs/{model_id}/loglines][%d] getLoglinesUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *GetLoglinesUnauthorized) GetPayload() *restmodels.Error {
+	return o.Payload
 }
 
 func (o *GetLoglinesUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
