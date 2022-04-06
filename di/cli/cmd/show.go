@@ -119,6 +119,16 @@ func (cmd *ShowCmd) Run(cliContext *cli.Context) error {
 				}
 			}
 			cmd.ui.Say("Summary metrics:")
+			//for _, mr := range m.Metrics {
+			//	cmd.ui.Say("  Type: %s {", mr.Type)
+			//	cmd.ui.Say("  	Iteration: %d", mr.Iteration)
+			//	cmd.ui.Say("  	Timestamp: %s", mr.Timestamp)
+			//	for k, v := range mr.Values {
+			//		cmd.ui.Say("  	%s: %v", k, v)
+			//	}
+			//	cmd.ui.Say("  }")
+			//}
+
 			cmd.ui.Ok()
 		}
 	}

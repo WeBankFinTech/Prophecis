@@ -34,25 +34,6 @@ func generateContainerSpec(name, image, cmd string, vars []v1core.EnvVar, resour
 	privileged := false
 	allowPrivilegeEscalation := true
 
-	//caps := v1core.Capabilities{
-	//	Drop: []v1core.Capability{
-	//		"CHOWN",
-	//		"DAC_OVERRIDE",
-	//		"FOWNER",
-	//		"FSETID",
-	//		"KILL",
-	//		"SETPCAP",
-	//		"NET_RAW",
-	//		"MKNOD",
-	//		"SETFCAP",
-	//		// The remaining capabilities below are necessary. Dropping these will break the containers.
-	//		// "SETGID",
-	//		// "SETUID",
-	//		// "NET_BIND_SERVICE", // Needed for ssh
-	//		// "SYS_CHROOT",
-	//		// "AUDIT_WRITE", // Needed for ssh
-	//	},
-	//}
 	securityContext := v1core.SecurityContext{
 		//Capabilities: &caps,
 		AllowPrivilegeEscalation: &allowPrivilegeEscalation,
