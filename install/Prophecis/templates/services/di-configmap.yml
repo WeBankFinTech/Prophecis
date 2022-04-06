@@ -1,18 +1,36 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: aide-config
+  name: di-config
   namespace: {{.Values.namespace}}
 data:
-  config.yml: |
+  config-{{.Values.envir}}.yml: |
     mlssVersion: v1.3.0
+    #ccAddress: http://controlcenter.{{.Values.namespace}}.svc.cluster.local:7777
     #ccAddress: http://controlcenter-go.{{.Values.namespace}}.svc.cluster.local:6666
-    #ccAddress: http://controlcenter-gateway.{{.Values.namespace}}.svc.cluster.local:8081
     ccAddress: https://controlcenter-go
     platformNamespace: {{.Values.namespace}}
+    queuePollInterval: 10
+    queueSize: 200
     mlssGroupId: 6002
     caCertPath: /etc/mlss/server.crt
-    maxSparkSessionNum: {{.Values.aide.maxSparkSessionNum}}
+    linkisLogCollector:
+      replicas: 2
+    linkis:
+      address: {{.Values.linkis.address}}
+      tokenCode: {{.Values.linkis.tokenCode}}
+    mlflow:
+      address: {{.Values.mlflow.address}}
+    linkispro:
+      address: {{.Values.linkispro.address}}
+      tokenCode: {{.Values.linkispro.tokenCode}}
+    datasource:
+      userName: {{.Values.db.user}}
+      userPwd: {{.Values.db.pwd}}
+      url: {{.Values.db.server}}
+      port: {{.Values.db.port}}
+      db: {{.Values.db.name}}
+    encodeFlag: {{.Values.encodeFlag}}
   server.crt: |
     -----BEGIN CERTIFICATE-----
     MIICzDCCAbQCCQCVrtRO5rcr1DANBgkqhkiG9w0BAQUFADAoMQswCQYDVQQGEwJD
