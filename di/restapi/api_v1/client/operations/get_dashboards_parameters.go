@@ -20,8 +20,11 @@ import (
 // NewGetDashboardsParams creates a new GetDashboardsParams object
 // with the default values initialized.
 func NewGetDashboardsParams() *GetDashboardsParams {
-
+	var (
+		clusterNameDefault = string("")
+	)
 	return &GetDashboardsParams{
+		ClusterName: &clusterNameDefault,
 
 		timeout: cr.DefaultTimeout,
 	}
@@ -30,8 +33,11 @@ func NewGetDashboardsParams() *GetDashboardsParams {
 // NewGetDashboardsParamsWithTimeout creates a new GetDashboardsParams object
 // with the default values initialized, and the ability to set a timeout on a request
 func NewGetDashboardsParamsWithTimeout(timeout time.Duration) *GetDashboardsParams {
-
+	var (
+		clusterNameDefault = string("")
+	)
 	return &GetDashboardsParams{
+		ClusterName: &clusterNameDefault,
 
 		timeout: timeout,
 	}
@@ -40,8 +46,11 @@ func NewGetDashboardsParamsWithTimeout(timeout time.Duration) *GetDashboardsPara
 // NewGetDashboardsParamsWithContext creates a new GetDashboardsParams object
 // with the default values initialized, and the ability to set a context for a request
 func NewGetDashboardsParamsWithContext(ctx context.Context) *GetDashboardsParams {
-
+	var (
+		clusterNameDefault = string("")
+	)
 	return &GetDashboardsParams{
+		ClusterName: &clusterNameDefault,
 
 		Context: ctx,
 	}
@@ -50,9 +59,12 @@ func NewGetDashboardsParamsWithContext(ctx context.Context) *GetDashboardsParams
 // NewGetDashboardsParamsWithHTTPClient creates a new GetDashboardsParams object
 // with the default values initialized, and the ability to set a custom HTTPClient for a request
 func NewGetDashboardsParamsWithHTTPClient(client *http.Client) *GetDashboardsParams {
-
+	var (
+		clusterNameDefault = string("")
+	)
 	return &GetDashboardsParams{
-		HTTPClient: client,
+		ClusterName: &clusterNameDefault,
+		HTTPClient:  client,
 	}
 }
 
@@ -60,6 +72,13 @@ func NewGetDashboardsParamsWithHTTPClient(client *http.Client) *GetDashboardsPar
 for the get dashboards operation typically these are written to a http.Request
 */
 type GetDashboardsParams struct {
+
+	/*ClusterName
+	  entity clusterName
+
+	*/
+	ClusterName *string
+
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
@@ -98,6 +117,17 @@ func (o *GetDashboardsParams) SetHTTPClient(client *http.Client) {
 	o.HTTPClient = client
 }
 
+// WithClusterName adds the clusterName to the get dashboards params
+func (o *GetDashboardsParams) WithClusterName(clusterName *string) *GetDashboardsParams {
+	o.SetClusterName(clusterName)
+	return o
+}
+
+// SetClusterName adds the clusterName to the get dashboards params
+func (o *GetDashboardsParams) SetClusterName(clusterName *string) {
+	o.ClusterName = clusterName
+}
+
 // WriteToRequest writes these params to a swagger request
 func (o *GetDashboardsParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Registry) error {
 
@@ -105,6 +135,22 @@ func (o *GetDashboardsParams) WriteToRequest(r runtime.ClientRequest, reg strfmt
 		return err
 	}
 	var res []error
+
+	if o.ClusterName != nil {
+
+		// query param clusterName
+		var qrClusterName string
+		if o.ClusterName != nil {
+			qrClusterName = *o.ClusterName
+		}
+		qClusterName := qrClusterName
+		if qClusterName != "" {
+			if err := r.SetQueryParam("clusterName", qClusterName); err != nil {
+				return err
+			}
+		}
+
+	}
 
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)

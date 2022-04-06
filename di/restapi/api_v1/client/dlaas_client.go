@@ -11,8 +11,12 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	"webank/DI/restapi/api_v1/client/events"
+	"webank/DI/restapi/api_v1/client/dss_user_info"
+	"webank/DI/restapi/api_v1/client/experiment_runs"
+	"webank/DI/restapi/api_v1/client/experiments"
+	"webank/DI/restapi/api_v1/client/linkis_job"
 	"webank/DI/restapi/api_v1/client/models"
+	"webank/DI/restapi/api_v1/client/operations"
 	"webank/DI/restapi/api_v1/client/training_data"
 )
 
@@ -22,10 +26,10 @@ var Default = NewHTTPClient(nil)
 const (
 	// DefaultHost is the default Host
 	// found in Meta (info) section of spec file
-	DefaultHost string = "gateway.watsonplatform.net"
+	DefaultHost string = "di.prophecis.com"
 	// DefaultBasePath is the default BasePath
 	// found in Meta (info) section of spec file
-	DefaultBasePath string = "/di"
+	DefaultBasePath string = "/"
 )
 
 // DefaultSchemes are the default schemes found in Meta (info) section of spec file
@@ -40,9 +44,6 @@ func NewHTTPClient(formats strfmt.Registry) *Dlaas {
 // using a customizable transport config.
 func NewHTTPClientWithConfig(formats strfmt.Registry, cfg *TransportConfig) *Dlaas {
 	// ensure nullable parameters have default
-	if formats == nil {
-		formats = strfmt.Default
-	}
 	if cfg == nil {
 		cfg = DefaultTransportConfig()
 	}
@@ -54,12 +55,25 @@ func NewHTTPClientWithConfig(formats strfmt.Registry, cfg *TransportConfig) *Dla
 
 // New creates a new dlaas client
 func New(transport runtime.ClientTransport, formats strfmt.Registry) *Dlaas {
+	// ensure nullable parameters have default
+	if formats == nil {
+		formats = strfmt.Default
+	}
+
 	cli := new(Dlaas)
 	cli.Transport = transport
 
-	cli.Events = events.New(transport, formats)
+	cli.DssUserInfo = dss_user_info.New(transport, formats)
+
+	cli.ExperimentRuns = experiment_runs.New(transport, formats)
+
+	cli.Experiments = experiments.New(transport, formats)
+
+	cli.LinkisJob = linkis_job.New(transport, formats)
 
 	cli.Models = models.New(transport, formats)
+
+	cli.Operations = operations.New(transport, formats)
 
 	cli.TrainingData = training_data.New(transport, formats)
 
@@ -107,9 +121,17 @@ func (cfg *TransportConfig) WithSchemes(schemes []string) *TransportConfig {
 
 // Dlaas is a client for dlaas
 type Dlaas struct {
-	Events *events.Client
+	DssUserInfo *dss_user_info.Client
+
+	ExperimentRuns *experiment_runs.Client
+
+	Experiments *experiments.Client
+
+	LinkisJob *linkis_job.Client
 
 	Models *models.Client
+
+	Operations *operations.Client
 
 	TrainingData *training_data.Client
 
@@ -120,9 +142,17 @@ type Dlaas struct {
 func (c *Dlaas) SetTransport(transport runtime.ClientTransport) {
 	c.Transport = transport
 
-	c.Events.SetTransport(transport)
+	c.DssUserInfo.SetTransport(transport)
+
+	c.ExperimentRuns.SetTransport(transport)
+
+	c.Experiments.SetTransport(transport)
+
+	c.LinkisJob.SetTransport(transport)
 
 	c.Models.SetTransport(transport)
+
+	c.Operations.SetTransport(transport)
 
 	c.TrainingData.SetTransport(transport)
 

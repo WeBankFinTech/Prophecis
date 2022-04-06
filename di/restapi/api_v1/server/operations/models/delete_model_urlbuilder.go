@@ -16,7 +16,7 @@ import (
 type DeleteModelURL struct {
 	ModelID string
 
-	Version string
+	Version *string
 
 	_basePath string
 	// avoid unkeyed usage
@@ -59,7 +59,10 @@ func (o *DeleteModelURL) Build() (*url.URL, error) {
 
 	qs := make(url.Values)
 
-	versionQ := o.Version
+	var versionQ string
+	if o.Version != nil {
+		versionQ = *o.Version
+	}
 	if versionQ != "" {
 		qs.Set("version", versionQ)
 	}
