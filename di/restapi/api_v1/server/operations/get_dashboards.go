@@ -12,16 +12,16 @@ import (
 )
 
 // GetDashboardsHandlerFunc turns a function with the right signature into a get dashboards handler
-type GetDashboardsHandlerFunc func(GetDashboardsParams) middleware.Responder
+type GetDashboardsHandlerFunc func(GetDashboardsParams, interface{}) middleware.Responder
 
 // Handle executing the request and returning a response
-func (fn GetDashboardsHandlerFunc) Handle(params GetDashboardsParams) middleware.Responder {
-	return fn(params)
+func (fn GetDashboardsHandlerFunc) Handle(params GetDashboardsParams, principal interface{}) middleware.Responder {
+	return fn(params, principal)
 }
 
 // GetDashboardsHandler interface for that can handle valid get dashboards params
 type GetDashboardsHandler interface {
-	Handle(GetDashboardsParams) middleware.Responder
+	Handle(GetDashboardsParams, interface{}) middleware.Responder
 }
 
 // NewGetDashboards creates a new http.Handler for the get dashboards operation
@@ -48,12 +48,25 @@ func (o *GetDashboards) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 	var Params = NewGetDashboardsParams()
 
+	uprinc, aCtx, err := o.Context.Authorize(r, route)
+	if err != nil {
+		o.Context.Respond(rw, r, route.Produces, route, err)
+		return
+	}
+	if aCtx != nil {
+		r = aCtx
+	}
+	var principal interface{}
+	if uprinc != nil {
+		principal = uprinc
+	}
+
 	if err := o.Context.BindValidRequest(r, route, &Params); err != nil { // bind params
 		o.Context.Respond(rw, r, route.Produces, route, err)
 		return
 	}
 
-	res := o.Handler.Handle(Params) // actually handle the request
+	res := o.Handler.Handle(Params, principal) // actually handle the request
 
 	o.Context.Respond(rw, r, route.Produces, route, res)
 

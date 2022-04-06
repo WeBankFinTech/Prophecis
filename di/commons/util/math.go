@@ -16,7 +16,11 @@
 
 package util
 
-import "math"
+import (
+	"fmt"
+	"math"
+	"time"
+)
 
 // RoundPlus rounds a float64 to places
 func RoundPlus(f float64, places int) float64 {
@@ -30,4 +34,9 @@ func Round(f float64) float64 {
 		return math.Ceil(f - .5)
 	}
 	return math.Floor(f + .5)
+}
+
+func CurrentTimestampAsString() string {
+	epochMillis := time.Now().UnixNano() / 1000000
+	return fmt.Sprintf("%v", epochMillis)
 }

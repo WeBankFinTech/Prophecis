@@ -66,6 +66,9 @@ service Storage {
     rpc GetTrainedModelLogs (TrainedModelLogRequest) returns (stream ByteStreamResponse) {
     }
 
+    rpc GetTrainedModelLog (GetTrainedModelLogRequest) returns (GetTrainedModelLogResponse) {
+    }
+
     rpc GetTrainingLogs (Query) returns (stream LogLine) {
     }
 
@@ -155,6 +158,12 @@ service Storage {
     rpc UploadModelZip(CodeUploadRequest) returns (CodeUploadResponse){}
 
     rpc DownloadCode(CodeDownloadRequest) returns (CodeDownloadResponse){}
+
+    rpc DownloadCodeByDir(CodeDownloadByDirRequest) returns (CodeDownloadByDirResponse){}
+
+    // Kill(Stop) a training job with a given ID.
+    rpc KillTrainingJob (KillRequest) returns (KillResponse) {
+    }
 }
 
 message CreateRequest {
@@ -175,10 +184,33 @@ message CreateRequest {
     string ps_image = 15;
     string ps_memory = 16;
     string tfos_request = 17;
-    string  exp_run_id = 18;
+    string exp_run_id = 18;
     string exp_name = 19;
     string file_name = 20;
     string file_path = 21;
+    string proxy_user = 22;
+    string job_params = 23;
+    DataSet data_set = 24;
+    MFModel mf_model = 25;
+    string algorithm = 26;
+    string fitParams = 27;
+    string API_type = 28;
+}
+
+message DataSet {
+    string training_data_path = 1;
+    string training_label_path = 2;
+    string testing_data_path = 3;
+    string testing_label_path = 4;
+    string validation_data_path = 5;
+    string validation_label_path = 6;
+}
+
+message MFModel {
+    string group_id = 1;
+    string model_name = 2;
+    string version = 3;
+    string factory_name = 4;
 }
 
 // EMExtractionSpec represents the specification for extracting structured evaluation metrics from training jobs.
@@ -474,6 +506,13 @@ message Job {
     string file_name = 19;
     string file_path = 20;
     string code_selector = 21;
+    string proxy_user = 22;
+    string algorithm = 23;
+    string jobParams = 24;
+    string fitParams = 25;
+    MFModel mf_model = 26;
+    DataSet data_set = 27;
+    string API_type = 28;
 }
 
 message ModelDefinition {
@@ -583,6 +622,8 @@ enum Status {
     RUNNING = 4;
     COMPLETED = 5;
     FAILED  = 6;
+    KILLING  = 7;
+    CANCELLED = 8;
 }
 
 
@@ -604,6 +645,18 @@ message TrainedModelLogRequest {
     // These are for internal use only, and will be eventually removed!
     bool is_metrics = 3;
     bool is_summary = 4;
+}
+
+
+message GetTrainedModelLogRequest {
+    string training_id = 1;
+    string user_id = 2;
+    int64 size = 3;
+    int64 from = 4;
+}
+
+message GetTrainedModelLogResponse {
+    repeated string logs = 1;
 }
 
 
@@ -716,3 +769,25 @@ message CodeDownloadResponse {
     string host_path = 4;
     string bucket = 5;
   }
+
+message CodeDownloadByDirRequest {
+    string code = 1;
+    string msg = 2;
+    string s3_path = 3;
+}
+
+message CodeDownloadByDirResponse {
+    repeated CodeDownloadResponse resp_list = 1;
+  }
+
+
+message KillResponse {
+    bool success = 1;
+    bool isCompleted = 2;
+}
+
+message KillRequest {
+    string training_id = 1;
+    string user_id = 2;
+    bool is_sa = 3;
+}

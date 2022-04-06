@@ -21,18 +21,24 @@ import (
 // with the default values initialized.
 func NewListModelsParams() *ListModelsParams {
 	var (
-		namespaceDefault = string("")
-		pageDefault      = string("")
-		sizeDefault      = string("")
-		useridDefault    = string("")
-		versionDefault   = string("2017-02-13")
+		clusterNameDefault = string("")
+		expIDDefault       = string("")
+		expRunIDDefault    = string("")
+		namespaceDefault   = string("")
+		pageDefault        = string("1")
+		sizeDefault        = string("10")
+		useridDefault      = string("")
+		versionDefault     = string("2017-02-13")
 	)
 	return &ListModelsParams{
-		Namespace: &namespaceDefault,
-		Page:      &pageDefault,
-		Size:      &sizeDefault,
-		Userid:    &useridDefault,
-		Version:   versionDefault,
+		ClusterName: &clusterNameDefault,
+		ExpID:       &expIDDefault,
+		ExpRunID:    &expRunIDDefault,
+		Namespace:   &namespaceDefault,
+		Page:        &pageDefault,
+		Size:        &sizeDefault,
+		Userid:      &useridDefault,
+		Version:     &versionDefault,
 
 		timeout: cr.DefaultTimeout,
 	}
@@ -42,18 +48,24 @@ func NewListModelsParams() *ListModelsParams {
 // with the default values initialized, and the ability to set a timeout on a request
 func NewListModelsParamsWithTimeout(timeout time.Duration) *ListModelsParams {
 	var (
-		namespaceDefault = string("")
-		pageDefault      = string("")
-		sizeDefault      = string("")
-		useridDefault    = string("")
-		versionDefault   = string("2017-02-13")
+		clusterNameDefault = string("")
+		expIDDefault       = string("")
+		expRunIDDefault    = string("")
+		namespaceDefault   = string("")
+		pageDefault        = string("1")
+		sizeDefault        = string("10")
+		useridDefault      = string("")
+		versionDefault     = string("2017-02-13")
 	)
 	return &ListModelsParams{
-		Namespace: &namespaceDefault,
-		Page:      &pageDefault,
-		Size:      &sizeDefault,
-		Userid:    &useridDefault,
-		Version:   versionDefault,
+		ClusterName: &clusterNameDefault,
+		ExpID:       &expIDDefault,
+		ExpRunID:    &expRunIDDefault,
+		Namespace:   &namespaceDefault,
+		Page:        &pageDefault,
+		Size:        &sizeDefault,
+		Userid:      &useridDefault,
+		Version:     &versionDefault,
 
 		timeout: timeout,
 	}
@@ -63,18 +75,24 @@ func NewListModelsParamsWithTimeout(timeout time.Duration) *ListModelsParams {
 // with the default values initialized, and the ability to set a context for a request
 func NewListModelsParamsWithContext(ctx context.Context) *ListModelsParams {
 	var (
-		namespaceDefault = string("")
-		pageDefault      = string("")
-		sizeDefault      = string("")
-		useridDefault    = string("")
-		versionDefault   = string("2017-02-13")
+		clusterNameDefault = string("")
+		expIdDefault       = string("")
+		expRunIdDefault    = string("")
+		namespaceDefault   = string("")
+		pageDefault        = string("1")
+		sizeDefault        = string("10")
+		useridDefault      = string("")
+		versionDefault     = string("2017-02-13")
 	)
 	return &ListModelsParams{
-		Namespace: &namespaceDefault,
-		Page:      &pageDefault,
-		Size:      &sizeDefault,
-		Userid:    &useridDefault,
-		Version:   versionDefault,
+		ClusterName: &clusterNameDefault,
+		ExpID:       &expIdDefault,
+		ExpRunID:    &expRunIdDefault,
+		Namespace:   &namespaceDefault,
+		Page:        &pageDefault,
+		Size:        &sizeDefault,
+		Userid:      &useridDefault,
+		Version:     &versionDefault,
 
 		Context: ctx,
 	}
@@ -84,19 +102,25 @@ func NewListModelsParamsWithContext(ctx context.Context) *ListModelsParams {
 // with the default values initialized, and the ability to set a custom HTTPClient for a request
 func NewListModelsParamsWithHTTPClient(client *http.Client) *ListModelsParams {
 	var (
-		namespaceDefault = string("")
-		pageDefault      = string("")
-		sizeDefault      = string("")
-		useridDefault    = string("")
-		versionDefault   = string("2017-02-13")
+		clusterNameDefault = string("")
+		expIdDefault       = string("")
+		expRunIdDefault    = string("")
+		namespaceDefault   = string("")
+		pageDefault        = string("1")
+		sizeDefault        = string("10")
+		useridDefault      = string("")
+		versionDefault     = string("2017-02-13")
 	)
 	return &ListModelsParams{
-		Namespace:  &namespaceDefault,
-		Page:       &pageDefault,
-		Size:       &sizeDefault,
-		Userid:     &useridDefault,
-		Version:    versionDefault,
-		HTTPClient: client,
+		ClusterName: &clusterNameDefault,
+		ExpID:       &expIdDefault,
+		ExpRunID:    &expRunIdDefault,
+		Namespace:   &namespaceDefault,
+		Page:        &pageDefault,
+		Size:        &sizeDefault,
+		Userid:      &useridDefault,
+		Version:     &versionDefault,
+		HTTPClient:  client,
 	}
 }
 
@@ -105,6 +129,21 @@ for the list models operation typically these are written to a http.Request
 */
 type ListModelsParams struct {
 
+	/*ClusterName
+	  entity clusterName
+
+	*/
+	ClusterName *string
+	/*ExpID
+	  experiment's id.
+
+	*/
+	ExpID *string
+	/*ExpRunID
+	  experiment run's id.
+
+	*/
+	ExpRunID *string
 	/*Namespace
 	  job's namespace.
 
@@ -129,7 +168,7 @@ type ListModelsParams struct {
 	  The release date of the version of the API you want to use. Specify dates in YYYY-MM-DD format.
 
 	*/
-	Version string
+	Version *string
 
 	timeout    time.Duration
 	Context    context.Context
@@ -167,6 +206,39 @@ func (o *ListModelsParams) WithHTTPClient(client *http.Client) *ListModelsParams
 // SetHTTPClient adds the HTTPClient to the list models params
 func (o *ListModelsParams) SetHTTPClient(client *http.Client) {
 	o.HTTPClient = client
+}
+
+// WithClusterName adds the clusterName to the list models params
+func (o *ListModelsParams) WithClusterName(clusterName *string) *ListModelsParams {
+	o.SetClusterName(clusterName)
+	return o
+}
+
+// SetClusterName adds the clusterName to the list models params
+func (o *ListModelsParams) SetClusterName(clusterName *string) {
+	o.ClusterName = clusterName
+}
+
+// WithExpID adds the expID to the list models params
+func (o *ListModelsParams) WithExpID(expID *string) *ListModelsParams {
+	o.SetExpID(expID)
+	return o
+}
+
+// SetExpID adds the expId to the list models params
+func (o *ListModelsParams) SetExpID(expID *string) {
+	o.ExpID = expID
+}
+
+// WithExpRunID adds the expRunID to the list models params
+func (o *ListModelsParams) WithExpRunID(expRunID *string) *ListModelsParams {
+	o.SetExpRunID(expRunID)
+	return o
+}
+
+// SetExpRunID adds the expRunId to the list models params
+func (o *ListModelsParams) SetExpRunID(expRunID *string) {
+	o.ExpRunID = expRunID
 }
 
 // WithNamespace adds the namespace to the list models params
@@ -214,13 +286,13 @@ func (o *ListModelsParams) SetUserid(userid *string) {
 }
 
 // WithVersion adds the version to the list models params
-func (o *ListModelsParams) WithVersion(version string) *ListModelsParams {
+func (o *ListModelsParams) WithVersion(version *string) *ListModelsParams {
 	o.SetVersion(version)
 	return o
 }
 
 // SetVersion adds the version to the list models params
-func (o *ListModelsParams) SetVersion(version string) {
+func (o *ListModelsParams) SetVersion(version *string) {
 	o.Version = version
 }
 
@@ -231,6 +303,54 @@ func (o *ListModelsParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Re
 		return err
 	}
 	var res []error
+
+	if o.ClusterName != nil {
+
+		// query param clusterName
+		var qrClusterName string
+		if o.ClusterName != nil {
+			qrClusterName = *o.ClusterName
+		}
+		qClusterName := qrClusterName
+		if qClusterName != "" {
+			if err := r.SetQueryParam("clusterName", qClusterName); err != nil {
+				return err
+			}
+		}
+
+	}
+
+	if o.ExpID != nil {
+
+		// query param exp_id
+		var qrExpID string
+		if o.ExpID != nil {
+			qrExpID = *o.ExpID
+		}
+		qExpID := qrExpID
+		if qExpID != "" {
+			if err := r.SetQueryParam("exp_id", qExpID); err != nil {
+				return err
+			}
+		}
+
+	}
+
+	if o.ExpRunID != nil {
+
+		// query param exp_run_id
+		var qrExpRunID string
+		if o.ExpRunID != nil {
+			qrExpRunID = *o.ExpRunID
+		}
+		qExpRunID := qrExpRunID
+		if qExpRunID != "" {
+			if err := r.SetQueryParam("exp_run_id", qExpRunID); err != nil {
+				return err
+			}
+		}
+
+	}
 
 	if o.Namespace != nil {
 
@@ -296,13 +416,20 @@ func (o *ListModelsParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Re
 
 	}
 
-	// query param version
-	qrVersion := o.Version
-	qVersion := qrVersion
-	if qVersion != "" {
-		if err := r.SetQueryParam("version", qVersion); err != nil {
-			return err
+	if o.Version != nil {
+
+		// query param version
+		var qrVersion string
+		if o.Version != nil {
+			qrVersion = *o.Version
 		}
+		qVersion := qrVersion
+		if qVersion != "" {
+			if err := r.SetQueryParam("version", qVersion); err != nil {
+				return err
+			}
+		}
+
 	}
 
 	if len(res) > 0 {

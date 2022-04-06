@@ -6,10 +6,9 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"net/http"
 	"time"
-
-	"golang.org/x/net/context"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
@@ -25,7 +24,7 @@ func NewGetModelParams() *GetModelParams {
 		versionDefault = string("2017-02-13")
 	)
 	return &GetModelParams{
-		Version: versionDefault,
+		Version: &versionDefault,
 
 		timeout: cr.DefaultTimeout,
 	}
@@ -38,7 +37,7 @@ func NewGetModelParamsWithTimeout(timeout time.Duration) *GetModelParams {
 		versionDefault = string("2017-02-13")
 	)
 	return &GetModelParams{
-		Version: versionDefault,
+		Version: &versionDefault,
 
 		timeout: timeout,
 	}
@@ -51,7 +50,7 @@ func NewGetModelParamsWithContext(ctx context.Context) *GetModelParams {
 		versionDefault = string("2017-02-13")
 	)
 	return &GetModelParams{
-		Version: versionDefault,
+		Version: &versionDefault,
 
 		Context: ctx,
 	}
@@ -64,7 +63,7 @@ func NewGetModelParamsWithHTTPClient(client *http.Client) *GetModelParams {
 		versionDefault = string("2017-02-13")
 	)
 	return &GetModelParams{
-		Version:    versionDefault,
+		Version:    &versionDefault,
 		HTTPClient: client,
 	}
 }
@@ -83,7 +82,7 @@ type GetModelParams struct {
 	  The release date of the version of the API you want to use. Specify dates in YYYY-MM-DD format.
 
 	*/
-	Version string
+	Version *string
 
 	timeout    time.Duration
 	Context    context.Context
@@ -135,13 +134,13 @@ func (o *GetModelParams) SetModelID(modelID string) {
 }
 
 // WithVersion adds the version to the get model params
-func (o *GetModelParams) WithVersion(version string) *GetModelParams {
+func (o *GetModelParams) WithVersion(version *string) *GetModelParams {
 	o.SetVersion(version)
 	return o
 }
 
 // SetVersion adds the version to the get model params
-func (o *GetModelParams) SetVersion(version string) {
+func (o *GetModelParams) SetVersion(version *string) {
 	o.Version = version
 }
 
@@ -158,13 +157,20 @@ func (o *GetModelParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Regi
 		return err
 	}
 
-	// query param version
-	qrVersion := o.Version
-	qVersion := qrVersion
-	if qVersion != "" {
-		if err := r.SetQueryParam("version", qVersion); err != nil {
-			return err
+	if o.Version != nil {
+
+		// query param version
+		var qrVersion string
+		if o.Version != nil {
+			qrVersion = *o.Version
 		}
+		qVersion := qrVersion
+		if qVersion != "" {
+			if err := r.SetQueryParam("version", qVersion); err != nil {
+				return err
+			}
+		}
+
 	}
 
 	if len(res) > 0 {

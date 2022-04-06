@@ -13,7 +13,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	"webank/DI/restapi/api_v1/restmodels"
+	restmodels "webank/DI/restapi/api_v1/restmodels"
 )
 
 // DeleteModelReader is a Reader for the DeleteModel structure.
@@ -24,21 +24,18 @@ type DeleteModelReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *DeleteModelReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewDeleteModelOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 401:
 		result := NewDeleteModelUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 404:
 		result := NewDeleteModelNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -65,7 +62,11 @@ type DeleteModelOK struct {
 }
 
 func (o *DeleteModelOK) Error() string {
-	return fmt.Sprintf("[DELETE /v1/models/{model_id}][%d] deleteModelOK  %+v", 200, o.Payload)
+	return fmt.Sprintf("[DELETE /di/v1/models/{model_id}][%d] deleteModelOK  %+v", 200, o.Payload)
+}
+
+func (o *DeleteModelOK) GetPayload() *restmodels.BasicModel {
+	return o.Payload
 }
 
 func (o *DeleteModelOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -94,7 +95,11 @@ type DeleteModelUnauthorized struct {
 }
 
 func (o *DeleteModelUnauthorized) Error() string {
-	return fmt.Sprintf("[DELETE /v1/models/{model_id}][%d] deleteModelUnauthorized  %+v", 401, o.Payload)
+	return fmt.Sprintf("[DELETE /di/v1/models/{model_id}][%d] deleteModelUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *DeleteModelUnauthorized) GetPayload() *restmodels.Error {
+	return o.Payload
 }
 
 func (o *DeleteModelUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -123,7 +128,11 @@ type DeleteModelNotFound struct {
 }
 
 func (o *DeleteModelNotFound) Error() string {
-	return fmt.Sprintf("[DELETE /v1/models/{model_id}][%d] deleteModelNotFound  %+v", 404, o.Payload)
+	return fmt.Sprintf("[DELETE /di/v1/models/{model_id}][%d] deleteModelNotFound  %+v", 404, o.Payload)
+}
+
+func (o *DeleteModelNotFound) GetPayload() *restmodels.Error {
+	return o.Payload
 }
 
 func (o *DeleteModelNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

@@ -28,11 +28,10 @@ import (
 	"github.com/alecthomas/units"
 	"google.golang.org/grpc/grpclog"
 
-	"runtime"
-
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	v1core "k8s.io/api/core/v1"
+	"runtime"
 )
 
 const (
@@ -147,6 +146,12 @@ const (
 	// learner pods should not be cleaned up
 	NoCleanup = "nocleanup"
 
+	MongoAddressKey             = "MONGO_ADDRESS"
+	MongoDatabaseKey            = "MONGO_DATABASE"
+	MongoUsernameKey            = "MONGO_USERNAME"
+	MongoPasswordKey            = "MONGO_PASSWORD"
+	MongoAuthenticationDatabase = "MONGO_Authentication_Database"
+
 	DlaasResourceLimit          = "resource.limit"
 	DlaasResourceLimitQuerySize = "resource.limit.query.size"
 
@@ -195,6 +200,7 @@ func InitViper() {
 		// FfDL Change:Most likely be "standard" in Minikube and "ibmc-s3fs-standard" in DIND, (other value is "default" or "")
 		viper.SetDefault(SharedVolumeStorageClassKey, "")
 
+
 		// enable ENV vars and defaults
 		viper.AutomaticEnv()
 		viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_", ".", "_"))
@@ -203,6 +209,11 @@ func InitViper() {
 		setLogLevel()
 		viper.SetDefault(PortKey, 8080)
 
+		viper.SetDefault(MongoAddressKey,os.Getenv(MongoAddressKey))
+		viper.SetDefault(MongoDatabaseKey,os.Getenv(MongoDatabaseKey))
+		viper.SetDefault(MongoUsernameKey,os.Getenv(MongoUsernameKey))
+		viper.SetDefault(MongoPasswordKey,os.Getenv(MongoPasswordKey))
+		viper.SetDefault(MongoAuthenticationDatabase,os.Getenv(MongoAuthenticationDatabase))
 		viper.SetDefault(ServicesTagKey, "prod") // or "latest" as the default?
 
 		viper.SetDefault(LearnerTagKey, "prod")
@@ -463,6 +474,11 @@ func GetDataStoreConfig() map[string]string {
 	if val != "" {
 		m[RegionKey] = val
 	}
+	// FfDL Change: This was in the older PR, supposing not needed?
+	//val = viper.GetString("objectstore." + UsernameKey)
+	//if val != "" {
+	//	m[UsernameKey] = val
+	//}
 
 	val = viper.GetString("objectstore." + ProjectKey)
 	if val != "" {
@@ -472,6 +488,7 @@ func GetDataStoreConfig() map[string]string {
 	if val != "" {
 		m[StorageType] = val
 	}
+
 
 	return m
 }

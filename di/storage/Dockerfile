@@ -18,6 +18,8 @@
 # FROM dlaas-service-base:ubuntu16.04
 #FROM ffdl/ffdl-trainer:v0.1.1
 FROM ubuntu:latest
+## debug
+#FROM golang-dlv:latest
 
 # switch to root
 USER root

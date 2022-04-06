@@ -6,10 +6,9 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"net/http"
 	"time"
-
-	"golang.org/x/net/context"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
@@ -17,7 +16,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	"webank/DI/restapi/api_v1/restmodels"
+	restmodels "webank/DI/restapi/api_v1/restmodels"
 )
 
 // NewPatchModelParams creates a new PatchModelParams object
@@ -176,12 +175,10 @@ func (o *PatchModelParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Re
 		return err
 	}
 
-	if o.Payload == nil {
-		o.Payload = new(restmodels.TrainingUpdate)
-	}
-
-	if err := r.SetBodyParam(o.Payload); err != nil {
-		return err
+	if o.Payload != nil {
+		if err := r.SetBodyParam(o.Payload); err != nil {
+			return err
+		}
 	}
 
 	// query param version
