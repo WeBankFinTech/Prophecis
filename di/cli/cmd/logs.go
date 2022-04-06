@@ -131,6 +131,22 @@ func (cmd *LogsCmd) Run(cliContext *cli.Context) error {
 			} else {
 				wsprotocol = "ws"
 			}
+
+			//var authStr string
+			//if u.User != nil {
+			//	password, _ := u.User.Password()
+			//	basicAuth = client.BasicAuth(u.User.Username(), password)
+			//	authStr = base64.StdEncoding.EncodeToString([]byte(u.User.Username() + ":" + password))
+			//} else {
+			//	username := os.Getenv("DLAAS_USERNAME")
+			//	password := os.Getenv("DLAAS_PASSWORD")
+			//	if username == "" || password == "" {
+			//		return errors.New("Username and password not set")
+			//	}
+			//	basicAuth = client.BasicAuth(username, password)
+			//	authStr = base64.StdEncoding.EncodeToString([]byte(username + ":" + password))
+			//}
+
 			var logsOrMetrics string
 			if isMetrics {
 				logsOrMetrics = "metrics"
@@ -141,14 +157,28 @@ func (cmd *LogsCmd) Run(cliContext *cli.Context) error {
 			var fullpath = fmt.Sprintf("%s/v1/models/%s/%s", u.Path, trainingID, logsOrMetrics)
 			trainingLogURL := url.URL{Scheme: wsprotocol, Host: streamHost, Path: fullpath, RawQuery: "version=2017-03-17&mlss-token-for-logs=dc4e9956-594c-48f4-af3d-36f2fff1a428&mlss-userid=hduser05"}
 
+			//headers := make(http.Header, 2)
+			//// FIXME MLSS Change: remove watson header
+			////headers.Set(watsonUserInfoHeader, watsonUserInfo)
+			//headers.Set("Authorization", "Basic "+authStr)
+
 			//FIXME wtss
 			headers := http.Header{
 				"Accept-Encoding": []string{"gzip, deflate"},
 				"Cache-Control":   []string{"no-cache"},
+				//"MLSS-Token":        []string{"dc4e9956-594c-48f4-af3d-36f2fff1a428"},
 				"MLSS-UserID":    []string{username},
 				"MLSS-Passwd":    []string{password},
 				"MLSS-Auth-Type": []string{authType},
 				"Authorization":  []string{"Basic dGVkOndlbGNvbWUx"},
+				//"X-Watson-Userinfo": []string{"bluemix-instance-id=test-user"},
+
+				//"Upgrade": []string{"websocket"}
+				//"Connection": []string{"Upgrade"},
+				//"Sec-WebSocket-Key": []string{challengeKey},
+				//"Sec-WebSocket-Version": []string{"13"},
+				//"Host": []string{host},
+				//"Origin": []string{dlaasURL},
 			}
 
 			log.Debugf("call: websocket.Dial: %s\n", trainingLogURL.String())
@@ -212,7 +242,10 @@ func (cmd *LogsCmd) Run(cliContext *cli.Context) error {
 							}
 							fmt.Printf("\n")
 						}
+
+						// fmt.Printf("%+v\n", metricsRecords)
 					}
+
 				} else {
 					fmt.Printf("line: %v: %s\n", line, msg[:nread])
 					line++
@@ -222,8 +255,7 @@ func (cmd *LogsCmd) Run(cliContext *cli.Context) error {
 
 		} else {
 			if isMetrics {
-				params :=
-					models.NewGetMetricsParams().WithModelID(trainingID).WithTimeout(10 * time.Hour)
+				params := models.NewGetMetricsParams().WithModelID(trainingID).WithTimeout(10 * time.Hour)
 				log.Debugf("debug training-logs: doing http")
 				r, w := io.Pipe()
 
@@ -261,6 +293,8 @@ func (cmd *LogsCmd) Run(cliContext *cli.Context) error {
 				}
 			}
 		}
+		//cmd.ui.Ok() // don't print OK after as we do with other commands, as it may be interpreted as part
+		// of the logs
 	}
 	return nil
 }

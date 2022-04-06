@@ -1,13 +1,22 @@
 package learner
 
 import (
+	"os"
+	"strconv"
+	"sync"
+	"webank/DI/commons/constants"
+
 	"k8s.io/api/apps/v1beta1"
-	"k8s.io/api/batch/v1"
+	v1 "k8s.io/api/batch/v1"
 	v1core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"os"
-	"webank/DI/commons/constants"
+	"k8s.io/client-go/kubernetes"
 )
+
+const portArrayLen = 10001
+
+var mutex sync.Mutex
+var portArray [portArrayLen]bool
 
 //CreatePodSpec ...
 // FIXME MLSS Change: add nodeSelectors to deployment/sts pods
@@ -49,7 +58,7 @@ func CreatePodSpec(containers []v1core.Container, volumes []v1core.Volume, label
 func CreatePodSpecForJob(containers []v1core.Container, volumes []v1core.Volume, labels map[string]string, nodeSelector map[string]string, imagePullSecret string) v1core.PodTemplateSpec {
 	labels["service"] = "dlaas-learner" //label that denies ingress/egress
 	automountSeviceToken := false
-	return v1core.PodTemplateSpec{
+	podSpec := v1core.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
 			Labels: labels,
 			Annotations: map[string]string{
@@ -81,6 +90,9 @@ func CreatePodSpecForJob(containers []v1core.Container, volumes []v1core.Volume,
 			RestartPolicy: "Never",
 		},
 	}
+	labels["service"] = "dlaas-learner"
+	labels["service"] = "dlaas-learner"
+	return podSpec
 }
 
 //CreateStatefulSetSpecForLearner ...
@@ -124,30 +136,77 @@ func CreateJobSpecForLearner(name string, podTemplateSpec v1core.PodTemplateSpec
 }
 
 //CreateServiceSpec ... this service will govern the statefulset
-func CreateServiceSpec(name string, trainingID string) *v1core.Service {
-
+func CreateServiceSpec(name string, trainingID string, k8sClient kubernetes.Interface) *v1core.Service {
+	startPort, _ := strconv.Atoi(os.Getenv(constants.DI_START_NODEPORT))
+	endport, _ := strconv.Atoi(os.Getenv(constants.DI_END_NODEPORT))
+	_, arr := GenerateNodePort(startPort, endport, k8sClient)
 	return &v1core.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
+			Name: trainingID,
 			Labels: map[string]string{
-				"training_id": trainingID,
+				"job-name": trainingID,
 			},
 		},
 		Spec: v1core.ServiceSpec{
-			Selector: map[string]string{"training_id": trainingID},
+			Selector: map[string]string{"job-name": trainingID},
+			Type:     v1core.ServiceTypeNodePort,
 			Ports: []v1core.ServicePort{
 				v1core.ServicePort{
-					Name:     "ssh",
+					Name:     "sparkcontextport",
 					Protocol: v1core.ProtocolTCP,
-					Port:     22,
+					Port:     int32(arr[0]),
+					NodePort: int32(arr[0]),
 				},
 				v1core.ServicePort{
-					Name:     "tf-distributed",
+					Name:     "sparkblockmanagerport",
 					Protocol: v1core.ProtocolTCP,
-					Port:     2222,
+					Port:     int32(arr[1]),
+					NodePort: int32(arr[1]),
 				},
 			},
-			ClusterIP: "None",
 		},
 	}
+}
+
+func GenerateNodePort(startPort int, endPort int, k8sClient kubernetes.Interface) (error, [2]int) {
+	mutex.Lock()
+	defer mutex.Unlock()
+	// clusterService, _, err := k8sClient.CoreV1().Services().List()
+	clusterService, err := k8sClient.CoreV1().Services("").List(metav1.ListOptions{})
+
+	// portLen := (endPort - startPort) + 1
+	// portArray = make([]bool, portLen, portLen)
+	nodePortArray := [2]int{-1, -1}
+
+	if err != nil {
+		return err, nodePortArray
+	}
+
+	for _, serviceItem := range clusterService.Items {
+		if serviceItem.Spec.Type == "NodePort" {
+			usedNodeportList := serviceItem.Spec.Ports
+			for _, usedNodeportItem := range usedNodeportList {
+				usedNodeport := int(usedNodeportItem.NodePort)
+				if usedNodeport >= startPort && usedNodeport <= endPort {
+					portArray[usedNodeport-startPort] = true
+				}
+			}
+		}
+	}
+	flag := 0
+	for i, value := range portArray {
+		if value != true {
+			portArray[i] = true
+			nodePortArray[flag] = i + startPort + 1
+			flag = flag + 1
+			if flag >= 2 {
+				break
+			}
+		}
+	}
+
+
+
+	// mutex.Unlock()
+	return err, nodePortArray
 }

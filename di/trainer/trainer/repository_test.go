@@ -32,7 +32,7 @@ import (
 	"webank/DI/trainer/trainer/grpc_trainer_v2"
 )
 
-var mongoAddress, mongoDatabase, mongoUsername, mongoPassword, mongoCertLocation string
+var mongoAddress, mongoDatabase, mongoUsername, mongoPassword, mongoCertLocation,authenticationDatabase string
 
 func init() {
 	config.InitViper()
@@ -71,7 +71,9 @@ func TestMongoRepository(t *testing.T) {
 	logEntry().Debugf("Using Mongo address: %s", mongoAddress)
 
 	collectionName := fmt.Sprintf("itest_trainer_repo_%d", time.Now().Unix())
-	r, err := newTrainingsRepository(mongoAddress, mongoDatabase, mongoUsername, mongoPassword,
+
+
+	r, err := newTrainingsRepository(mongoAddress, mongoDatabase, mongoUsername, mongoPassword, authenticationDatabase,
 		mongoCertLocation, collectionName)
 	assert.NoError(t, err)
 	defer r.Close()
@@ -121,7 +123,7 @@ func TestMongoRepository(t *testing.T) {
 	assert.EqualValues(t, "bar-name", tr2.ModelDefinition.Name)
 
 	// manually connect to Mongo to check state of soft-deleted records
-	sess, _ := ConnectMongo(mongoAddress, mongoDatabase, mongoUsername, mongoPassword, mongoCertLocation)
+	sess, _ := ConnectMongo(mongoAddress, mongoDatabase, mongoUsername, mongoPassword, authenticationDatabase, mongoCertLocation)
 	coll := sess.DB(mongoDatabase).C(collectionName)
 	defer sess.Close()
 

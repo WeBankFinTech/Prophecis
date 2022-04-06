@@ -16,11 +16,7 @@
 
 package learner
 
-import (
-	//"webank/DI/commons/config"
-	v1core "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-)
+//"webank/DI/commons/config"
 
 //COSVolumeSecret ...
 type COSVolumeSecret struct {
@@ -43,44 +39,44 @@ type Secrets struct {
 }
 
 //CreateVolumeSecretsSpec ...
-func CreateVolumeSecretsSpec(secrets Secrets) []*v1core.Secret {
+// func CreateVolumeSecretsSpec(secrets Secrets) []*v1core.Secret {
 
-	var secretSpecs []*v1core.Secret
-	if secrets.TrainingDataSecret != nil {
-		cosTrainingDataVolumeSecretParams := secrets.TrainingDataSecret
-		//secretSpecs = append(secretSpecs, generateCOSVolumeSecret(cosTrainingDataVolumeSecretParams.ID, cosTrainingDataVolumeSecretParams.TrainingID, cosTrainingDataVolumeSecretParams.Username, cosTrainingDataVolumeSecretParams.APIKey))
-		// FIXME MLSS Change: specify namespace
-		secretSpecs = append(secretSpecs, generateCOSVolumeSecret(cosTrainingDataVolumeSecretParams.ID, cosTrainingDataVolumeSecretParams.TrainingID, cosTrainingDataVolumeSecretParams.Username, cosTrainingDataVolumeSecretParams.APIKey, cosTrainingDataVolumeSecretParams.Namespace))
-	}
+// 	var secretSpecs []*v1core.Secret
+// 	if secrets.TrainingDataSecret != nil {
+// 		cosTrainingDataVolumeSecretParams := secrets.TrainingDataSecret
+// 		//secretSpecs = append(secretSpecs, generateCOSVolumeSecret(cosTrainingDataVolumeSecretParams.ID, cosTrainingDataVolumeSecretParams.TrainingID, cosTrainingDataVolumeSecretParams.Username, cosTrainingDataVolumeSecretParams.APIKey))
+// 		// FIXME MLSS Change: specify namespace
+// 		secretSpecs = append(secretSpecs, generateCOSVolumeSecret(cosTrainingDataVolumeSecretParams.ID, cosTrainingDataVolumeSecretParams.TrainingID, cosTrainingDataVolumeSecretParams.Username, cosTrainingDataVolumeSecretParams.APIKey, cosTrainingDataVolumeSecretParams.Namespace))
+// 	}
 
-	if secrets.ResultsDirSecret != nil {
-		cosResultDirVolumeSecretParams := secrets.ResultsDirSecret
-		//secretSpecs = append(secretSpecs, generateCOSVolumeSecret(cosResultDirVolumeSecretParams.ID, cosResultDirVolumeSecretParams.TrainingID, cosResultDirVolumeSecretParams.Username, cosResultDirVolumeSecretParams.APIKey))
-		// FIXME MLSS Change: specify namespace
-		secretSpecs = append(secretSpecs, generateCOSVolumeSecret(cosResultDirVolumeSecretParams.ID, cosResultDirVolumeSecretParams.TrainingID, cosResultDirVolumeSecretParams.Username, cosResultDirVolumeSecretParams.APIKey, cosResultDirVolumeSecretParams.Namespace))
-	}
+// 	if secrets.ResultsDirSecret != nil {
+// 		cosResultDirVolumeSecretParams := secrets.ResultsDirSecret
+// 		//secretSpecs = append(secretSpecs, generateCOSVolumeSecret(cosResultDirVolumeSecretParams.ID, cosResultDirVolumeSecretParams.TrainingID, cosResultDirVolumeSecretParams.Username, cosResultDirVolumeSecretParams.APIKey))
+// 		// FIXME MLSS Change: specify namespace
+// 		secretSpecs = append(secretSpecs, generateCOSVolumeSecret(cosResultDirVolumeSecretParams.ID, cosResultDirVolumeSecretParams.TrainingID, cosResultDirVolumeSecretParams.Username, cosResultDirVolumeSecretParams.APIKey, cosResultDirVolumeSecretParams.Namespace))
+// 	}
 
-	return secretSpecs
-}
+// 	return secretSpecs
+// }
 
 //func generateCOSVolumeSecret(id, trainingID, username, apikey string) *v1core.Secret {
 // FIXME MLSS Change: specify namespace
-func generateCOSVolumeSecret(id, trainingID, username, apikey, namespace string) *v1core.Secret {
-	// create secret
-	spec := v1core.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: id,
-			//Namespace: config.GetLearnerNamespace(),
-			// FIXME MLSS Change: specify namespace
-			Namespace: namespace,
-			Labels:    map[string]string{"training_id": trainingID},
-		},
-		Type: cosMountDriverName,
-		StringData: map[string]string{
-			"access-key": username,
-			"secret-key": apikey,
-		},
-	}
+// func generateCOSVolumeSecret(id, trainingID, username, apikey, namespace string) *v1core.Secret {
+// 	// create secret
+// 	spec := v1core.Secret{
+// 		ObjectMeta: metav1.ObjectMeta{
+// 			Name: id,
+// 			//Namespace: config.GetLearnerNamespace(),
+// 			// FIXME MLSS Change: specify namespace
+// 			Namespace: namespace,
+// 			Labels:    map[string]string{"training_id": trainingID},
+// 		},
+// 		Type: cosMountDriverName,
+// 		StringData: map[string]string{
+// 			"access-key": username,
+// 			"secret-key": apikey,
+// 		},
+// 	}
 
-	return &spec
-}
+// 	return &spec
+// }

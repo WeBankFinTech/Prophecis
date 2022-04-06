@@ -117,8 +117,22 @@ message CreateRequest {
     string exp_name = 20;
     string file_name = 21;
     string file_path = 22;
+    string proxy_user = 23;
+
+    string job_params = 24;
+    DataSet data_set = 25;
+    MFModel mf_model = 26;
+    string algorithm = 27;
+    string fit_params = 28;
+    string API_type = 29;
 }
 
+message MFModel {
+    string group_id = 1;
+    string model_name = 2;
+    string version = 3;
+    string factory_name = 4;
+}
 // EMExtractionSpec represents the specification for extracting structured evaluation metrics from training jobs.
 // It is used across all log collectors, so some fields may not be relevent for all log collectors.
 // Note: Don't use enums with this, as need to do untyped YAML convert to string and back
@@ -395,6 +409,21 @@ message Job {
     string exp_name = 18;
     string file_name = 19;
     string file_path = 20;
+    string proxy_user = 21;
+    string job_params = 22;
+    DataSet data_set = 23;
+    MFModel mf_model = 24;
+    string algorithm = 25;
+    string fit_params = 26;
+}
+
+message DataSet {
+    string training_data_path = 1;
+    string training_label_path = 2;
+    string testing_data_path = 3;
+    string testing_label_path = 4;
+    string validation_data_path = 5;
+    string validation_label_path = 6;
 }
 
 message ModelDefinition {
@@ -504,6 +533,8 @@ enum Status {
     RUNNING = 4;
     COMPLETED = 5;
     FAILED  = 6;
+    KILLING  = 7;
+    CANCELLED = 8;
 }
 
 
