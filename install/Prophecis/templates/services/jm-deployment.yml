@@ -1,0 +1,111 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: di-jm
+  namespace: {{.Values.namespace}}
+  labels:
+    service: di-jm
+    environment: {{.Values.envir}}
+spec:
+  selector:
+    matchLabels:
+      service: di-jm
+      environment: {{.Values.envir}}
+  replicas: {{.Values.lcm.replicas}}
+  template:
+    metadata:
+      labels:
+        service: di-jm
+        environment: {{.Values.envir}}
+        version:  {{.Values.lcm.version}}
+    spec:
+      volumes:
+        - name: di-config
+          configMap:
+            name: di-config
+        - name: ffdl-certs
+          configMap:
+            name: ffdl-certs
+        - name: timezone-volume
+          hostPath:
+            path: /usr/share/zoneinfo/Asia/Shanghai
+            type: File
+      serviceAccount: {{.Values.image.image_prefix}}lcm
+      serviceAccountName: {{.Values.image.image_prefix}}lcm
+      containers:
+      - name: jm
+        image: {{.Values.image.registry}}:{{.Values.jm.version}}
+{{ if .Values.image.pullPolicy }}
+        imagePullPolicy: {{.Values.image.pullPolicy}}
+{{ end }}
+        volumeMounts:
+        - mountPath: /etc/mlss/
+          name: di-config
+        - mountPath: /etc/ssl/dlaas/
+          name: ffdl-certs
+        - name: timezone-volume
+          mountPath: /etc/localtime
+        env:
+        - name: DLAAS_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: DLAAS_POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: DLAAS_LEARNER_KUBE_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: DLAAS_LOAD_TRAINING_DATA_MEM_IN_MB
+          value: "{{.Values.lcm.load_training_data_mem_in_mb}}"
+        - name: DLAAS_MILLI_CPU
+          value: "{{.Values.lcm.milli_cpu}}"
+        - name: DLAAS_MEM_IN_MB
+          value: "{{.Values.lcm.mem_in_mb}}"
+        - name: DLAAS_DEVICE_PLUGIN
+          value: "{{.Values.lcm.device_plugin}}"
+        - name: DLAAS_IMAGE_TAG
+          value: {{.Values.restapi.version}}
+        - name: DLAAS_IMAGE_PULL_POLICY
+          value: {{.Values.image.pullPolicy}}
+        - name: DLAAS_ENV
+          value: {{.Values.envir}}
+        - name: DLAAS_LOGLEVEL
+          value: {{.Values.log.level}}
+        - name: DLAAS_IMAGE_PREFIX
+          value: {{.Values.image.image_prefix}}
+        - name: LINKIS_ADDRESS
+          value: {{.Values.linkis.address}}
+        - name: LINKIS_ADDRESS
+          value: {{.Values.linkis.address}}
+        - name: LINKIS_TOKEN_CODE
+          value: {{.Values.linkis.tokenCode}}
+        - name: ENVIR
+          value: {{.Values.envir}}
+        - name: DLAAS_PUSH_METRICS_ENABLED
+          value: "true"
+        - name: MONGO_ADDRESS
+          value: {{.Values.mongo.address}}
+        - name: MONGO_USERNAME
+          value: {{.Values.mongo.username}}
+        - name: MONGO_PASSWORD
+          value: {{.Values.mongo.password}}
+        - name: MONGO_DATABASE
+          value: {{.Values.mongo.database}}
+        - name: MONGO_Authentication_Database
+          value: {{.Values.mongo.authenticationDatabase}}
+        command: ["/bin/sh", "-c"]
+        args: ["DLAAS_PORT=8443 /main"]
+        resources:
+          limits:
+            cpu: {{.Values.lcm.cpus}}
+            memory: {{.Values.lcm.memory}}
+      imagePullSecrets:
+      - name: hubsecret
+      nodeSelector:
+       {{range $key,$val := .Values.platformNodeSelectors}}
+         {{$key}}: {{$val}}
+       {{end}}
+

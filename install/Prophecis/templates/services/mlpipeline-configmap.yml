@@ -1,0 +1,1385 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mlpipeline-script
+  namespace: {{.Values.namespace}}
+data:
+  lr.py: |
+  
+    # -*- coding: utf-8 -*-
+    """
+    Created on Mon Aug  2 14:06:30 2021
+    
+    @author: alexwu
+    """
+    
+    import pickle
+    from sklearn.linear_model import LogisticRegression
+    import requests
+    import joblib
+    import sys
+    import argparse
+    import json
+    from minio import Minio
+    import uuid
+    import os
+    
+    
+    MINIO_URL = "{{.Values.minio.server}}"
+    
+    MODEL_FACTORY_URL = "{{.Values.gateway.address}}:{{.Values.gateway.port}}"
+    MODEL_ADD_URL = "/mf/v1/model"
+    MODEL_PUSH_URL = "/mf/v1/modelVersion/push"
+    
+    
+    MLSS_APP_TIMESTAMP_KEY = "MLSS-AppTimestamp"
+    MLSS_AUTH_TYPE_KEY = "MLSS-Auth-Type"
+    MLSS_AUTH_TYPE_VAL = "SYSTEM"
+    MLSS_APP_ID_KEY = "MLSS-APPID"
+    MLSS_APP_ID_VAL = "MLFLOW"
+    MLSS_APP_SIGNATURE_KEY = "MLSS-APPSignature"
+    MLSS_APP_SIGNATURE_VAL = "MLFLOW"
+    MLSS_USER_ID_KEY = "MLSS-UserID"
+    
+    def lr_train(dataset,job_params, model_name,result_dir, fit_params):
+        training_data_path = "/workspace/" + dataset["training_data_path"]
+        training_label_path = "/workspace/" + dataset["training_label_path"]
+        
+        training_data = open(training_data_path,"rb")
+        train = pickle.load(training_data)
+        training_data.close()
+        training_label = open(training_label_path,"rb")
+        train_label = pickle.load(training_label)
+        training_label.close()
+        
+        if "sample_weight" in fit_params:
+            sample_weight_path = "/workspace/" + fit_params["sample_weight"]
+            sample_weight_data = open(sample_weight_path,"rb")
+            sample_weight = pickle.load(sample_weight_data)
+            sample_weight_data.close()
+            fit_params["sample_weight"]=sample_weight
+        
+        clf = LogisticRegression(**job_params)
+        fit_params["X"]=train
+        fit_params["y"]=train_label
+        clf.fit(**fit_params)
+        print("fit completed, clf:"+str(clf)+"\n")
+        score = clf.score(train,train_label)
+        print("training set score:"+str(score)+"\n")
+        
+        if "testing_data_path" in dataset:
+            testing_data_path = "/workspace/" + dataset["testing_data_path"]
+            testing_label_path = "/workspace/" + dataset["testing_label_path"]
+            
+            testing_data = open(testing_data_path,"rb")
+            test_X = pickle.load(testing_data)
+            testing_data.close()
+            testing_label = open(testing_label_path,"rb")
+            testing_Y = pickle.load(testing_label)
+            testing_label.close()     
+            test_score = clf.score(train,train_label)
+            print("testing set score:"+str(test_score)+"\n")
+            
+            
+        
+        model_file = open(result_dir+"/"+model_name+".pickle", "wb")
+        pickle.dump(clf, model_file)
+        model_file.close()
+        guid = int(os.environ.get("UID"))
+        os.chown(result_dir+"/"+model_name+".pickle",guid,guid)
+        
+        return None, 0
+    
+    def model_upload(result_dir,model_name):    
+        minioClient = Minio(MINIO_URL,
+                      access_key='AKIAIOSFODNN7EXAMPLE',
+                      secret_key='wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
+                      secure=False)
+        try:
+            obj_name = str(uuid.uuid1()) 
+            upload_path = obj_name + "/" + model_name + ".pickle"
+            source = "s3://mlss-mf/" + obj_name
+            res = minioClient.fput_object('mlss-mf', upload_path, result_dir+"/"+model_name+".pickle")
+            result = {"source":source}        
+            return result, 0
+        except Exception as err:
+            print(err)
+            return None, -1
+        
+    def model_register(model_name, source, group_id, headers):    
+        params = {
+              "model_name": model_name,
+              "model_type": "MLPipeline",
+              "file_name": model_name+".pickle",
+              "s3_path": source,
+              "group_id": int(float(group_id)),
+              "training_id": model_name,
+              "training_flag": 1,
+            }
+        
+        r = requests.post(MODEL_FACTORY_URL+MODEL_ADD_URL,data=json.dumps(params),headers=headers)
+        res_data = r.content.decode()
+        status_code = r.status_code
+        if status_code == 200:
+            return json.loads(res_data), 0
+        else:
+            return res_data, -1
+    
+    def model_push(model_id, model_version_id, factory_name):
+        if factory_name == "None":
+            return "Factory Name is none, Skip Model Push.", 0        
+      
+        params = {
+            "factory_name": factory_name,
+            "model_type": "Logistic_Regression",
+            "model_usage": "Classification"
+        }
+        r = requests.post(MODEL_FACTORY_URL+MODEL_PUSH_URL+"/"+str(model_version_id),data=json.dumps(params),headers=headers)
+        res_data = r.content.decode()
+        status_code = r.status_code
+        if status_code == 200:
+            return json.loads(res_data), 0
+        else:
+            return res_data, -1
+        
+    
+    def header_gen(user_id):
+        headers = {
+            MLSS_APP_TIMESTAMP_KEY:"20210803",
+            MLSS_AUTH_TYPE_KEY:MLSS_AUTH_TYPE_VAL,
+            MLSS_APP_ID_KEY:MLSS_APP_ID_VAL,
+            MLSS_APP_SIGNATURE_KEY:MLSS_APP_SIGNATURE_VAL,
+            MLSS_USER_ID_KEY:user_id
+            }
+        return headers
+    
+        
+    if __name__ == "__main__":
+        parser = argparse.ArgumentParser(description='MLPipeline LogisticRegression Train.')  
+        parser.add_argument('--job_params', dest='job_params', type=json.loads,
+                        help='LogisticRegression Job Params, set all params in dict, example:')
+        parser.add_argument('--dataset', dest='dataset', type=json.loads,
+                        help='LogisticRegression DataSet, set as a dict, example:')
+        parser.add_argument('--model', dest='model', type=json.loads,
+                        help='mlflow training model msg')
+        parser.add_argument('--factory_name', dest='factory_name', type=str,
+                        help='factory name')
+        parser.add_argument('--result_dir', dest='result_dir', type=str,
+                        help='training model result')
+        parser.add_argument('--fit_params', dest='fit_params', type=json.loads,
+                        help='fit params')
+        
+        print("Start LogisticRegression training job, params :\n"+  str(sys.argv) +"\n")
+        args = parser.parse_args()
+        job_params = args.job_params
+        print("LogisticRegression job parmas:" + str(job_params) + "\n")
+        dataset = args.dataset
+        print("LogisticRegression dataSet:" + str(dataset)   + "\n")
+        model = args.model
+        print(model)
+        result_dir = args.result_dir
+        print("LogisticRegression result dir:" + result_dir + "\n")    
+        factory_name = args.factory_name
+        print("LogisticRegression factory name:" + factory_name + "\n")    
+        fit_params = args.fit_params
+        print("LogisticRegression fit params:" + str(fit_params) + "\n")  
+
+        if fit_params==None:
+            fit_params={}
+         
+        print("Step 1 LogisticRegression training:\n")
+        result,ret_code = lr_train(dataset,job_params, model["model_name"],result_dir,fit_params)
+        if ret_code != 0:
+            print("LogisticRegression train err, stop job....\n")
+            print("Error Msg:"+reuslt+"\n")
+            sys.exit(-1)
+        print("Training finish, start storage model...\n")
+        
+        
+        print("Step 2 Model Upload to MinIO: \n")
+        result,ret_code = model_upload(result_dir, model["model_name"])
+        if ret_code != 0:
+            print("model storage err, stop job....error msg: " + result + "\n")
+            sys.exit(-1)
+        print("Storage model finish, start model registe...\n")
+        
+        print("Step 3 Model Registe:\n")
+        source = result["source"]
+        headers = header_gen(os.environ.get("USER_ID"))
+        result,ret_code = model_register(model["model_name"], source, model["group_id"], headers)
+        if ret_code != 0:
+            print("model register, stop job....,err msg: "+ result)
+            sys.exit(-1)
+        print("Registe model finish, start model push...")
+    
+        print("Step 4 Model Push, start push model to FPS and send RMB msg\n")
+        model_id = result["result"]["model_id"]
+        model_version_id = result["result"]["model_version_id"]
+        result,ret_code = model_push(model_id, model_version_id, factory_name)
+        if ret_code != 0:
+            print("model push error, stop job....err msg: "+ result+"\n")
+        print("Model push finish, job complete...\n")
+        print("Job End..\n")
+        sys.exit()
+        
+
+
+
+       
+  decision_tree.py: |
+
+    # -*- coding: utf-8 -*-
+    """
+    Created on Tue Aug  3 00:14:04 2021
+    
+    @author: alexwu
+    """
+    
+    import pickle
+    from sklearn.tree import DecisionTreeClassifier
+    import requests
+    import joblib
+    import sys
+    import argparse
+    import json
+    from minio import Minio
+    import uuid
+    import os
+    
+    MINIO_URL = "{{.Values.minio.server}}"
+    
+    MODEL_FACTORY_URL = "{{.Values.gateway.address}}:{{.Values.gateway.port}}"
+    MODEL_ADD_URL = "/mf/v1/model"
+    MODEL_PUSH_URL = "/mf/v1/modelVersion/push"
+    
+    
+    MLSS_APP_TIMESTAMP_KEY = "MLSS-AppTimestamp"
+    MLSS_AUTH_TYPE_KEY = "MLSS-Auth-Type"
+    MLSS_AUTH_TYPE_VAL = "SYSTEM"
+    MLSS_APP_ID_KEY = "MLSS-APPID"
+    MLSS_APP_ID_VAL = "MLFLOW"
+    MLSS_APP_SIGNATURE_KEY = "MLSS-APPSignature"
+    MLSS_APP_SIGNATURE_VAL = "MLFLOW"
+    MLSS_USER_ID_KEY = "MLSS-UserID"
+    
+    
+    def decision_tree_train(dataset,job_params, model_name,result_dir, fit_params):
+        training_data_path = "/workspace/" + dataset["training_data_path"]
+        training_label_path = "/workspace/" + dataset["training_label_path"]
+        
+        training_data = open(training_data_path,"rb")
+        train = pickle.load(training_data)
+        training_data.close()
+        training_label = open(training_label_path,"rb")
+        train_label = pickle.load(training_label)
+        training_label.close()
+        
+        if "sample_weight" in fit_params:
+            sample_weight_path = "/workspace/" + fit_params["sample_weight"]
+            sample_weight_data = open(sample_weight_path,"rb")
+            sample_weight = pickle.load(sample_weight_data)
+            sample_weight_data.close()
+            fit_params["sample_weight"]=sample_weight
+        
+        clf = DecisionTreeClassifier(**job_params)
+        fit_params["X"]=train
+        fit_params["y"]=train_label
+        clf.fit(**fit_params)
+        print("fit completed, clf:"+str(clf)+"\n")
+        score = clf.score(train,train_label)
+        print("training set score:"+str(score)+"\n")
+        
+        if "testing_data_path" in dataset:
+            testing_data_path = "/workspace/" + dataset["testing_data_path"]
+            testing_label_path = "/workspace/" + dataset["testing_label_path"]
+            
+            testing_data = open(testing_data_path,"rb")
+            test_X = pickle.load(testing_data)
+            testing_data.close()
+            testing_label = open(testing_label_path,"rb")
+            testing_Y = pickle.load(testing_label)
+            testing_label.close()     
+            test_score = clf.score(test_X,testing_Y)
+            print("testing set score:"+str(test_score)+"\n")
+            
+        model_file = open(result_dir+"/"+model_name+".pickle", "wb")
+        pickle.dump(clf, model_file)
+        model_file.close()
+        guid = int(os.environ.get("UID"))
+        os.chown(result_dir+"/"+model_name+".pickle",guid,guid)
+        
+        return None, 0
+    
+    def model_upload(result_dir,model_name):    
+        minioClient = Minio(MINIO_URL,
+                      access_key='AKIAIOSFODNN7EXAMPLE',
+                      secret_key='wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
+                      secure=False)
+        try:
+            obj_name = str(uuid.uuid1()) 
+            upload_path = obj_name + "/" + model_name + ".pickle"
+            source = "s3://mlss-mf/" + obj_name
+            res = minioClient.fput_object('mlss-mf', upload_path, result_dir+"/"+model_name+".pickle")
+            result = {"source":source}        
+            return result, 0
+        except Exception as err:
+            print(err)
+            return None, -1
+        
+    def model_register(model_name, source, group_id, headers):    
+        params = {
+              "model_name": model_name,
+              "model_type": "MLPipeline",
+              "file_name": model_name+".pickle",
+              "s3_path": source,
+              "group_id": int(float(group_id)),
+              "training_id": model_name,
+              "training_flag": 1,
+            }
+        
+        r = requests.post(MODEL_FACTORY_URL+MODEL_ADD_URL,data=json.dumps(params),headers=headers)
+        res_data = r.content.decode()
+        status_code = r.status_code
+        if status_code == 200:
+            return json.loads(res_data), 0
+        else:
+            return res_data, -1
+    
+    def model_push(model_id, model_version_id, factory_name):
+        if factory_name == "None":
+            return "Factory Name is none, Skip Model Push.", 0        
+      
+        params = {
+            "factory_name": factory_name,
+            "model_type": "Decision_Tree",
+            "model_usage": "Classification"
+        }
+        r = requests.post(MODEL_FACTORY_URL+MODEL_PUSH_URL+"/"+str(model_version_id),data=json.dumps(params),headers=headers)
+        res_data = r.content.decode()
+        status_code = r.status_code
+        if status_code == 200:
+            return json.loads(res_data), 0
+        else:
+            return res_data, -1
+        
+    def param_user():
+        pass
+    
+    
+    def header_gen(user_id):
+        headers = {
+            MLSS_APP_TIMESTAMP_KEY:"20210803",
+            MLSS_AUTH_TYPE_KEY:MLSS_AUTH_TYPE_VAL,
+            MLSS_APP_ID_KEY:MLSS_APP_ID_VAL,
+            MLSS_APP_SIGNATURE_KEY:MLSS_APP_SIGNATURE_VAL,
+            MLSS_USER_ID_KEY:user_id
+            }
+        return headers
+    
+    
+    
+    if __name__ == "__main__":
+        parser = argparse.ArgumentParser(description='MLPipeline DecisionTree Train.')  
+        parser.add_argument('--job_params', dest='job_params', type=json.loads,
+                        help='DecisionTree Job Params, set all params in dict, example:')
+        parser.add_argument('--dataset', dest='dataset', type=json.loads,
+                        help='DecisionTree DataSet, set as a dict, example:')
+        parser.add_argument('--model', dest='model', type=json.loads,
+                        help='mlflow training model msg')
+        parser.add_argument('--factory_name', dest='factory_name', type=str,
+                        help='factory name')
+        parser.add_argument('--result_dir', dest='result_dir', type=str,
+                        help='training model result')
+        parser.add_argument('--fit_params', dest='fit_params', type=json.loads,
+                        help='fit params')
+        
+
+        print("Start DecisionTree training job, params :\n"+  str(sys.argv) +"\n")
+        args = parser.parse_args()
+        job_params = args.job_params
+        print("DecisionTree job parmas:" + str(job_params) + "\n")
+        dataset = args.dataset
+        print("DecisionTree dataSet:" + str(dataset) + "\n")
+        model = args.model
+        print(model)
+        result_dir = args.result_dir
+        print("DecisionTree result dir:" + result_dir + "\n")    
+        factory_name = args.factory_name
+        print("DecisionTree factory name:" + factory_name + "\n")   
+        fit_params = args.fit_params
+        print("DecisionTree fit params:" + str(fit_params) + "\n")  
+
+        if fit_params==None:
+            fit_params={}
+
+         
+        print("Step 1 DecisionTree training:\n")
+        result,ret_code = decision_tree_train(dataset, job_params, model["model_name"], result_dir, fit_params)
+        if ret_code != 0:
+            print("DecisionTree train err, stop job....\n")
+            print("Error Msg:"+reuslt+"\n")
+            sys.exit(-1)
+        print("Training finish, start storage model...\n")
+        
+        
+        print("Step 2 Model Upload to MinIO: \n")
+        result,ret_code = model_upload(result_dir, model["model_name"])
+        if ret_code != 0:
+            print("model storage err, stop job....error msg: " + result + "\n")
+            sys.exit(-1)
+        print("Storage model finish, start model registe...\n")
+        
+        print("Step 3 Model Registe:\n")
+        source = result["source"]
+        headers = header_gen(os.environ.get("USER_ID"))
+        result,ret_code = model_register(model["model_name"], source, model["group_id"], headers)
+        if ret_code != 0:
+            print("model register, stop job....,err msg: "+ result)
+            sys.exit(-1)
+        print("Registe model finish, start model push...")
+    
+        print("Step 4 Model Push, start push model to FPS and send RMB msg\n")
+        model_id = result["result"]["model_id"]
+        model_version_id = result["result"]["model_version_id"]
+        result,ret_code = model_push(model_id, model_version_id, factory_name)
+        if ret_code != 0:
+            print("model push error, stop job....err msg: "+ result+"\n")
+        print("Model push finish, job complete...\n")
+        print("Job End..\n")
+        sys.exit()
+        
+
+
+        
+    
+  random_forest.py: |
+
+    # -*- coding: utf-8 -*-
+    """
+    Created on Tue Aug  3 00:15:05 2021
+    
+    @author: alexwu
+    """
+    
+    import pickle
+    from sklearn.ensemble import RandomForestClassifier
+    import requests
+    import joblib
+    import sys
+    import argparse
+    import json
+    from minio import Minio
+    import uuid
+    import os 
+    
+    
+    
+    MINIO_URL = "{{.Values.minio.server}}"
+    
+    MODEL_FACTORY_URL = "{{.Values.gateway.address}}:{{.Values.gateway.port}}"
+    MODEL_ADD_URL = "/mf/v1/model"
+    MODEL_PUSH_URL = "/mf/v1/modelVersion/push"
+    
+    
+    MLSS_APP_TIMESTAMP_KEY = "MLSS-AppTimestamp"
+    MLSS_AUTH_TYPE_KEY = "MLSS-Auth-Type"
+    MLSS_AUTH_TYPE_VAL = "SYSTEM"
+    MLSS_APP_ID_KEY = "MLSS-APPID"
+    MLSS_APP_ID_VAL = "MLFLOW"
+    MLSS_APP_SIGNATURE_KEY = "MLSS-APPSignature"
+    MLSS_APP_SIGNATURE_VAL = "MLFLOW"
+    MLSS_USER_ID_KEY = "MLSS-UserID"
+    
+    
+    
+    def random_forest_train(dataset,job_params, model_name,result_dir, fit_params):
+        
+        training_data_path = "/workspace/" + dataset["training_data_path"]
+        training_label_path = "/workspace/" + dataset["training_label_path"]
+        
+        training_data = open(training_data_path,"rb")
+        train = pickle.load(training_data)
+        training_data.close()
+        training_label = open(training_label_path,"rb")
+        train_label = pickle.load(training_label)
+        training_label.close()
+        
+        if "sample_weight" in fit_params:
+            sample_weight_path = "/workspace/" + fit_params["sample_weight"]
+            sample_weight_data = open(sample_weight_path,"rb")
+            sample_weight = pickle.load(sample_weight_data)
+            sample_weight_data.close()
+            fit_params["sample_weight"]=sample_weight
+
+        clf = RandomForestClassifier(**job_params)
+        fit_params["X"]=train
+        fit_params["y"]=train_label
+        clf.fit(**fit_params)
+        print("fit completed, clf:"+str(clf)+"\n")
+        score = clf.score(train,train_label)
+        print("training set score:"+str(score)+"\n")
+        
+        if "testing_data_path" in dataset:
+            testing_data_path = "/workspace/" + dataset["testing_data_path"]
+            testing_label_path = "/workspace/" + dataset["testing_label_path"]
+            
+            testing_data = open(testing_data_path,"rb")
+            test_X = pickle.load(testing_data)
+            testing_data.close()
+            testing_label = open(testing_label_path,"rb")
+            testing_Y = pickle.load(testing_label)
+            testing_label.close()     
+            test_score = clf.score(test_X,testing_Y)
+            print("testing set score:"+str(test_score)+"\n")
+            
+        model_file = open(result_dir+"/"+model_name+".pickle", "wb")
+        pickle.dump(clf, model_file)
+        model_file.close()
+        guid = int(os.environ.get("UID"))
+        os.chown(result_dir+"/"+model_name+".pickle",guid,guid)
+        
+        return None, 0
+
+    
+    def model_upload(result_dir,model_name):    
+        minioClient = Minio(MINIO_URL,
+                      access_key='AKIAIOSFODNN7EXAMPLE',
+                      secret_key='wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
+                      secure=False)
+        try:
+            obj_name = str(uuid.uuid1()) 
+            upload_path = obj_name + "/" + model_name + ".pickle"
+            source = "s3://mlss-mf/" + obj_name
+            res = minioClient.fput_object('mlss-mf', upload_path, result_dir+"/"+model_name+".pickle")
+            result = {"source":source}        
+            return result, 0
+        except Exception as err:
+            print(err)
+            return None, -1
+        
+    def model_register(model_name, source, group_id, headers):    
+        params = {
+              "model_name": model_name,
+              "model_type": "MLPipeline",
+              "file_name": model_name+".pickle",
+              "s3_path": source,
+              "group_id": int(float(group_id)),
+              "training_id": model_name,
+              "training_flag": 1,
+            }
+        
+        r = requests.post(MODEL_FACTORY_URL+MODEL_ADD_URL,data=json.dumps(params),headers=headers)
+        res_data = r.content.decode()
+        status_code = r.status_code
+        if status_code == 200:
+            return json.loads(res_data), 0
+        else:
+            return res_data, -1
+    
+    def model_push(model_id, model_version_id, factory_name):
+        if factory_name == "None":
+            return "Factory Name is none, Skip Model Push.", 0        
+      
+        params = {
+            "factory_name": factory_name,
+            "model_type": "Random_Forest",
+            "model_usage": "Classification"
+        }
+        r = requests.post(MODEL_FACTORY_URL+MODEL_PUSH_URL+"/"+str(model_version_id),data=json.dumps(params),headers=headers)
+        res_data = r.content.decode()
+        status_code = r.status_code
+        if status_code == 200:
+            return json.loads(res_data), 0
+        else:
+            return res_data, -1
+        
+        
+    def param_user():
+        pass
+    
+    
+    def header_gen(user_id):
+        headers = {
+            MLSS_APP_TIMESTAMP_KEY:"20210803",
+            MLSS_AUTH_TYPE_KEY:MLSS_AUTH_TYPE_VAL,
+            MLSS_APP_ID_KEY:MLSS_APP_ID_VAL,
+            MLSS_APP_SIGNATURE_KEY:MLSS_APP_SIGNATURE_VAL,
+            MLSS_USER_ID_KEY:user_id
+            }
+        return headers
+    
+    if __name__ == "__main__":
+        parser = argparse.ArgumentParser(description='MLPipeline RandomForest Train.')  
+        parser.add_argument('--job_params', dest='job_params', type=json.loads,
+                        help='RandomForest Job Params, set all params in dict, example:')
+        parser.add_argument('--dataset', dest='dataset', type=json.loads,
+                        help='RandomForest DataSet, set as a dict, example:')
+        parser.add_argument('--model', dest='model', type=json.loads,
+                        help='mlflow training model msg')
+        parser.add_argument('--factory_name', dest='factory_name', type=str,
+                        help='factory name')
+        parser.add_argument('--result_dir', dest='result_dir', type=str,
+                        help='training model result')
+        parser.add_argument('--fit_params', dest='fit_params', type=json.loads,
+                        help='fit params')
+        
+        print("Start RandomForest training job, params :\n"+  str(sys.argv) +"\n")
+        args = parser.parse_args()
+        job_params = args.job_params
+        print("RandomForest job parmas:" + str(job_params) + "\n")
+        dataset = args.dataset
+        print("RandomForest dataSet:" + str(dataset) + "\n")
+        model = args.model
+        print(model)
+        result_dir = args.result_dir
+        print("RandomForest result dir:" + result_dir + "\n")    
+        factory_name = args.factory_name
+        print("RandomForest factory name:" + factory_name + "\n")    
+        fit_params = args.fit_params
+        print("RandomForest fit params:" + str(fit_params) + "\n")  
+        
+        if fit_params==None:
+            fit_params={}
+         
+        print("Step 1 RandomForest training:\n")
+        result,ret_code = random_forest_train(dataset,job_params,model["model_name"],result_dir,fit_params)
+        if ret_code != 0:
+            print("RandomForest train err, stop job....\n")
+            print("Error Msg:"+reuslt+"\n")
+            sys.exit(-1)
+        print("Training finish, start storage model...\n")
+        
+        
+        print("Step 2 Model Upload to MinIO: \n")
+        result,ret_code = model_upload(result_dir, model["model_name"])
+        if ret_code != 0:
+            print("model storage err, stop job....error msg: " + result + "\n")
+            sys.exit(-1)
+        print("Storage model finish, start model registe...\n")
+        
+        print("Step 3 Model Registe:\n")
+        source = result["source"]
+        headers = header_gen(os.environ.get("USER_ID"))
+        result,ret_code = model_register(model["model_name"], source, model["group_id"], headers)
+        if ret_code != 0:
+            print("model register, stop job....,err msg: "+ result)
+            sys.exit(-1)
+        print("Registe model finish, start model push...")
+    
+        print("Step 4 Model Push, start push model to FPS and send RMB msg\n")
+        model_id = result["result"]["model_id"]
+        model_version_id = result["result"]["model_version_id"]
+        result,ret_code = model_push(model_id, model_version_id, factory_name)
+        if ret_code != 0:
+            print("model push error, stop job....err msg: "+ result+"\n")
+        print("Model push finish, job complete...\n")
+        print("Job End..\n")
+        sys.exit()
+        
+            
+            
+        
+
+  xgb.py: |
+  
+
+    # -*- coding: utf-8 -*-
+    """
+    Created on Tue Aug  3 00:14:04 2021
+    
+    @author: alexwu
+    """
+    
+    import numpy as np
+    import pickle
+    from xgboost import XGBClassifier
+    import xgboost as xgb
+    import requests
+    import joblib
+    import sys
+    import argparse
+    import json
+    from minio import Minio
+    import uuid
+    import os
+    from sklearn.metrics import accuracy_score
+    
+    MINIO_URL = "{{.Values.minio.server}}"
+    
+    MODEL_FACTORY_URL = "{{.Values.gateway.address}}:{{.Values.gateway.port}}"
+    MODEL_ADD_URL = "/mf/v1/model"
+    MODEL_PUSH_URL = "/mf/v1/modelVersion/push"
+    
+    
+    MLSS_APP_TIMESTAMP_KEY = "MLSS-AppTimestamp"
+    MLSS_AUTH_TYPE_KEY = "MLSS-Auth-Type"
+    MLSS_AUTH_TYPE_VAL = "SYSTEM"
+    MLSS_APP_ID_KEY = "MLSS-APPID"
+    MLSS_APP_ID_VAL = "MLFLOW"
+    MLSS_APP_SIGNATURE_KEY = "MLSS-APPSignature"
+    MLSS_APP_SIGNATURE_VAL = "MLFLOW"
+    MLSS_USER_ID_KEY = "MLSS-UserID"
+    
+    
+    
+    def xgb_train(dataset,job_params, model_name, result_dir, fit_params, api_type):
+        training_data_path = "/workspace/" + dataset["training_data_path"]
+        training_label_path = "/workspace/" + dataset["training_label_path"]
+        
+        training_data = open(training_data_path,"rb")
+        train = pickle.load(training_data)
+        training_data.close()
+        training_label = open(training_label_path,"rb")
+        train_label = pickle.load(training_label)
+        training_label.close()
+        dtrain = xgb.DMatrix(train,train_label)
+        
+        train_params = {
+                "dtrain":dtrain,
+                "params":job_params
+        }
+        if job_params != {} and job_params != None:
+            if "objective" in job_params:
+               if job_params["objective"] == "multi:softmax" or job_params["objective"] == "multi:softprob":
+                  job_params["num_class"] = len(np.unique(train_label)) 
+            train_params["params"] = job_params
+
+        if "n_estimators" in job_params:
+            train_params["num_boost_round"] = job_params["n_estimators"]
+            
+        if "early_stopping_rounds" in fit_params:
+            train_params["early_stopping_rounds"] = job_params["early_stopping_rounds"]
+        
+        if "validation_data_path" in dataset:
+            eval_data_path = "/workspace/" + dataset["validation_data_path"]
+            eval_label_path = "/workspace/" + dataset["validation_label_path"]
+            eval_data = open(eval_data_path,"rb")
+            eval_X = pickle.load(eval_data)
+            eval_data.close()
+            eval_label = open(eval_label_path,"rb")
+            eval_y = pickle.load(eval_label)
+            eval_label.close()
+            
+            d_eval = xgb.DMatrix(eval_X,eval_y)
+            train_params["evals"] = [(dtrain,"train"),(d_eval,"vaild")]
+                        
+        if "eval_metric" in fit_params:
+            if "\\" in fit_params["eval_metric"]:
+                eval_metric = fit_params["eval_metric"]
+                train_params["eval_metric"] = eval_metric.replace("\\","")
+                    
+
+
+        bst = xgb.train(**train_params)
+        
+        print(str(train_params))
+        print("fit completed, clf:"+str(bst)+"\n")
+        y_pred = bst.predict(dtrain)
+        
+        if "testing_data_path" in dataset:
+            testing_data_path = "/workspace/" + dataset["testing_data_path"]
+            testing_label_path = "/workspace/" + dataset["testing_label_path"]
+            
+            testing_data = open(testing_data_path,"rb")
+            test_X = pickle.load(testing_data)
+            testing_data.close()
+            testing_label = open(testing_label_path,"rb")
+            testing_Y = pickle.load(testing_label)
+            testing_label.close()     
+            dtest = xgb.DMatrix(test_X,testing_Y)
+            y_pred = bst.predict(dtest)
+        
+        model_file = open(result_dir+"/"+model_name+".pickle", "wb")
+        pickle.dump(bst, model_file)
+        model_file.close()
+        guid = int(os.environ.get("UID"))
+        os.chown(result_dir+"/"+model_name+".pickle",guid,guid)
+        
+        return None, 0
+     
+        
+    def xgb_classifier_train(dataset,job_params, model_name, result_dir, fit_params, api_type):
+        training_data_path = "/workspace/" + dataset["training_data_path"]
+        training_label_path = "/workspace/" + dataset["training_label_path"]
+        
+        training_data = open(training_data_path,"rb")
+        train = pickle.load(training_data)
+        training_data.close()
+        training_label = open(training_label_path,"rb")
+        train_label = pickle.load(training_label)
+        training_label.close()
+        
+        if fit_params==None:
+            fit_params={}
+
+        eval_set = []
+        if "validation_data_path" in dataset:
+            eval_data_path = "/workspace/" + dataset["validation_data_path"]
+            eval_label_path = "/workspace/" + dataset["validation_label_path"]
+            eval_data = open(eval_data_path,"rb")
+            eval_X = pickle.load(eval_data)
+            eval_data.close()
+            eval_label = open(eval_label_path,"rb")
+            eval_y = pickle.load(eval_label)
+            eval_label.close()
+            
+            eval_set = [(eval_X,eval_y)]
+        
+                        
+            if "eval_metric" in fit_params:
+                if "\\" in fit_params["eval_metric"]:
+                    eval_metric = fit_params["eval_metric"]
+                    fit_params["eval_metric"] = eval_metric.replace("\\","")
+                    
+        if "sample_weight" in fit_params:
+            sample_weight_path = "/workspace/" + fit_params["sample_weight"]
+            sample_weight_data = open(sample_weight_path,"rb")
+            sample_weight = pickle.load(sample_weight_data)
+            sample_weight_data.close()
+            fit_params["sample_weight"]=sample_weight
+
+        if bool(eval_set):
+            print("set eval set")
+            fit_params["eval_set"]=eval_set        
+
+        job_params["nthread"] = 1
+        clf = XGBClassifier(**job_params)
+        fit_params["X"]=train
+        fit_params["y"]=train_label
+        print(str(fit_params))
+        clf.fit(**fit_params)
+        print("fit completed, clf:"+str(clf)+"\n")
+        score = clf.score(train,train_label)
+        print("training set score:"+str(score)+"\n")
+        
+        if "testing_data_path" in dataset:
+            testing_data_path = "/workspace/" + dataset["testing_data_path"]
+            testing_label_path = "/workspace/" + dataset["testing_label_path"]
+            
+            testing_data = open(testing_data_path,"rb")
+            test_X = pickle.load(testing_data)
+            testing_data.close()
+            testing_label = open(testing_label_path,"rb")
+            testing_Y = pickle.load(testing_label)
+            testing_label.close()     
+            test_score = clf.score(test_X,testing_Y)
+            print("testing set score:"+str(test_score)+"\n")
+        
+        model_file = open(result_dir+"/"+model_name+".pickle", "wb")
+        pickle.dump(clf, model_file)
+        model_file.close()
+        guid = int(os.environ.get("UID"))
+        os.chown(result_dir+"/"+model_name+".pickle",guid,guid)
+        
+        return None, 0
+
+    def model_upload(result_dir,model_name):    
+        minioClient = Minio(MINIO_URL,
+                      access_key='AKIAIOSFODNN7EXAMPLE',
+                      secret_key='wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
+                      secure=False)
+        try:
+            obj_name = str(uuid.uuid1()) 
+            upload_path = obj_name + "/" + model_name + ".pickle"
+            source = "s3://mlss-mf/" + obj_name
+            res = minioClient.fput_object('mlss-mf', upload_path, result_dir+"/"+model_name+".pickle")
+            result = {"source":source}        
+            return result, 0
+        except Exception as err:
+            print(err)
+            return None, -1
+        
+    def model_register(model_name, source, group_id, headers):    
+        params = {
+              "model_name": model_name,
+              "model_type": "MLPipeline",
+              "file_name": model_name+".pickle",
+              "s3_path": source,
+              "group_id": int(float(group_id)),
+              "training_id": model_name,
+              "training_flag": 1,
+            }
+        
+        r = requests.post(MODEL_FACTORY_URL+MODEL_ADD_URL,data=json.dumps(params),headers=headers)
+        res_data = r.content.decode()
+        status_code = r.status_code
+        if status_code == 200:
+            return json.loads(res_data), 0
+        else:
+            return res_data, -1
+    
+    def model_push(model_id, model_version_id, factory_name):
+        if factory_name == "None":
+            return "Factory Name is none, Skip Model Push.", 0        
+      
+        params = {
+            "factory_name": factory_name,
+            "model_type": "XGBoost",
+            "model_usage": "Classification"
+        }
+        r = requests.post(MODEL_FACTORY_URL+MODEL_PUSH_URL+"/"+str(model_version_id),data=json.dumps(params),headers=headers)
+        res_data = r.content.decode()
+        status_code = r.status_code
+        if status_code == 200:
+            return json.loads(res_data), 0
+        else:
+            return res_data, -1
+        
+        
+    def param_user():
+        pass
+    
+    
+    def header_gen(user_id):
+        headers = {
+            MLSS_APP_TIMESTAMP_KEY:"20210803",
+            MLSS_AUTH_TYPE_KEY:MLSS_AUTH_TYPE_VAL,
+            MLSS_APP_ID_KEY:MLSS_APP_ID_VAL,
+            MLSS_APP_SIGNATURE_KEY:MLSS_APP_SIGNATURE_VAL,
+            MLSS_USER_ID_KEY:user_id
+            }
+        return headers
+    
+    
+    
+    if __name__ == "__main__":
+        parser = argparse.ArgumentParser(description='MLPipeline XGBoost Train.')  
+        parser.add_argument('--job_params', dest='job_params', type=json.loads,
+                        help='XGBoost Job Params, set all params in dict, example:')
+        parser.add_argument('--dataset', dest='dataset', type=json.loads,
+                        help='XGBoost DataSet, set as a dict, example:')
+        parser.add_argument('--model', dest='model', type=json.loads,
+                        help='mlflow training model msg')
+        parser.add_argument('--factory_name', dest='factory_name', type=str,
+                        help='factory name')
+        parser.add_argument('--result_dir', dest='result_dir', type=str,
+                        help='training model result')
+        parser.add_argument('--fit_params', dest='fit_params', type=json.loads,
+                        help='fit params')
+        parser.add_argument('--API_type', dest='api_type', type=str,
+                        help='API Type')
+        
+        
+        print("Start XGBoost training job, params :\n"+ str(sys.argv) +"\n")
+        args = parser.parse_args()
+        job_params = args.job_params
+        print("XGBoost job parmas:" + str(job_params) + "\n")
+        dataset = args.dataset
+        print("XGBoost dataSet:" + str(dataset) + "\n")
+        model = args.model
+        print(model)
+        result_dir = args.result_dir
+        print("XGBoost result dir:" + result_dir + "\n")    
+        factory_name = args.factory_name
+        print("XGBoost factory name:" + factory_name + "\n")   
+        fit_params = args.fit_params
+        if fit_params == None:
+            fit_params = {}
+        print("XGBoost fit params:" + str(fit_params) + "\n")   
+        api_type = args.api_type
+        print("XGBoost API type:" + str(api_type) + "\n")   
+         
+        print("Step 1 XGBoost training:\n")
+        result = -1
+        ret_code = ""
+        if api_type == "Train":
+            result,ret_code = xgb_train(dataset, job_params, model["model_name"], result_dir, fit_params, api_type)
+        else:
+            result,ret_code = xgb_classifier_train(dataset, job_params, model["model_name"], result_dir, fit_params, api_type)
+        if ret_code != 0:
+            print("XGBoost train err, stop job....\n")
+            print("Error Msg:"+reuslt+"\n")
+            sys.exit(-1)
+        print("Training finish, start storage model...\n")
+        
+        
+        print("Step 2 Model Upload to MinIO: \n")
+        result,ret_code = model_upload(result_dir, model["model_name"])
+        if ret_code != 0:
+            print("model storage err, stop job....error msg: " + result + "\n")
+            sys.exit(-1)
+        print("Storage model finish, start model registe...\n")
+        
+        print("Step 3 Model Registe:\n")
+        source = result["source"]
+        headers = header_gen(os.environ.get("USER_ID"))
+        result,ret_code = model_register(model["model_name"], source, model["group_id"], headers)
+        if ret_code != 0:
+            print("model register, stop job....,err msg: "+ result)
+            sys.exit(-1)
+        print("Registe model finish, start model push...")
+    
+        print("Step 4 Model Push, start push model to FPS and send RMB msg\n")
+        model_id = result["result"]["model_id"]
+        model_version_id = result["result"]["model_version_id"]
+        result,ret_code = model_push(model_id, model_version_id, factory_name)
+        if ret_code != 0:
+            print("model push error, stop job....err msg: "+ result+"\n")
+        print("Model push finish, job complete...\n")
+        print("Job End..\n")
+        sys.exit()
+        
+        
+
+        
+
+
+
+
+
+
+  lgb.py: |
+ 
+
+    # -*- coding: utf-8 -*-
+    """
+    Created on Mon Aug  2 14:06:30 2021
+    
+    @author: alexwu
+    """
+    
+    import pickle
+    import lightgbm as lgb
+    import requests
+    import joblib
+    import sys
+    import argparse
+    import json
+    from minio import Minio
+    import uuid
+    import os
+    from sklearn.metrics import accuracy_score
+
+    MINIO_URL = "{{.Values.minio.server}}"
+    
+    MODEL_FACTORY_URL = "{{.Values.gateway.address}}:{{.Values.gateway.port}}"
+    MODEL_ADD_URL = "/mf/v1/model"
+    MODEL_PUSH_URL = "/mf/v1/modelVersion/push"
+    
+    
+    MLSS_APP_TIMESTAMP_KEY = "MLSS-AppTimestamp"
+    MLSS_AUTH_TYPE_KEY = "MLSS-Auth-Type"
+    MLSS_AUTH_TYPE_VAL = "SYSTEM"
+    MLSS_APP_ID_KEY = "MLSS-APPID"
+    MLSS_APP_ID_VAL = "MLFLOW"
+    MLSS_APP_SIGNATURE_KEY = "MLSS-APPSignature"
+    MLSS_APP_SIGNATURE_VAL = "MLFLOW"
+    MLSS_USER_ID_KEY = "MLSS-UserID"
+    
+
+    def lgb_train(dataset,job_params, model_name,result_dir,fit_params, api_type):
+        print("Start LGB Train.")
+        training_data_path = "/workspace/" + dataset["training_data_path"]
+        training_label_path = "/workspace/" + dataset["training_label_path"]
+        
+        training_data = open(training_data_path,"rb")
+        train = pickle.load(training_data)
+        training_data.close()
+        train_set = train        
+        if type(train) != lgb.Dataset:
+            training_label = open(training_label_path,"rb")
+            train_label = pickle.load(training_label)
+            training_label.close()
+            train_set = lgb.Dataset(train,train_label)
+        
+        #TODO Chekc valid_names params
+        params = {}
+        train_params = {
+                "train_set":train_set,
+                "params":params
+        }
+        if job_params != {} and job_params != None:
+            if "objective" in job_params:
+               if job_params["objective"] == "multiclass":
+                  job_params["num_class"] = len(np.unique(train_label))
+            train_params["params"] = job_params
+
+
+        if "n_estimators" in job_params:
+            train_params["num_boost_round"] = job_params["n_estimators"]
+        
+        if "learning_rates" in job_params:
+            train_params["learning_rates"] = job_params["learning_rates"]
+        
+        if "early_stopping_rounds" in fit_params:
+            train_params["early_stopping_rounds"] = job_params["early_stopping_rounds"]
+        
+        if "validation_data_path" in dataset:
+            eval_data_path = "/workspace/" + dataset["validation_data_path"]
+            eval_data_file = open(eval_data_path,"rb")
+            eval_data = pickle.load(eval_data_file)
+            eval_data_file.close()
+            valid_sets = eval_data        
+            if type(eval_data) != lgb.Dataset:
+                eval_label_path = "/workspace/" + dataset["validation_label_path"]
+                eval_label = open(eval_label_path,"rb")
+                eval_y = pickle.load(eval_label)
+                eval_label.close()
+                training_label.close()
+                valid_sets = lgb.Dataset(eval_data, eval_y, reference=train_set)
+            train_params["valid_sets"] = valid_sets
+                        
+        if "eval_metric" in fit_params:
+            if "\\" in fit_params["eval_metric"]:
+                eval_metric = fit_params["eval_metric"]
+                train_params["metric"] = eval_metric.replace("\\","")
+                    
+
+
+        gbm = lgb.train(**train_params)
+        
+        print(str(train_params))
+        print("fit completed, clf:"+str(gbm)+"\n")
+        
+        if "testing_data_path" in dataset:
+            testing_data_path = "/workspace/" + dataset["testing_data_path"]
+            testing_label_path = "/workspace/" + dataset["testing_label_path"]
+            
+            testing_data = open(testing_data_path,"rb")
+            test_X = pickle.load(testing_data)
+            testing_data.close()
+            testing_label = open(testing_label_path,"rb")
+            testing_Y = pickle.load(testing_label)
+            testing_label.close()     
+            test_set = lgb.Dataset(test_X,testing_Y)
+            #y_pred = gbm.predict(test_set)
+            #accuracy = accuracy_score(testing_Y,y_pred)
+            #print("testing set score:"+str(accuracy)+"\n")
+        
+        model_file = open(result_dir+"/"+model_name+".pickle", "wb")
+        pickle.dump(gbm, model_file)
+        model_file.close()
+        guid = int(os.environ.get("UID"))
+        os.chown(result_dir+"/"+model_name+".pickle",guid,guid)
+        
+        return None, 0
+    
+    def lgb_classifier_train(dataset,job_params, model_name,result_dir,fit_params, api_type):
+        print("Start LGB Classifier Train")
+        training_data_path = "/workspace/" + dataset["training_data_path"]
+        training_label_path = "/workspace/" + dataset["training_label_path"]
+        
+        training_data = open(training_data_path,"rb")
+        train = pickle.load(training_data)
+        training_data.close()
+        training_label = open(training_label_path,"rb")
+        train_label = pickle.load(training_label)
+        training_label.close()
+        
+        if fit_params==None:
+            fit_params={}
+            
+        if "sample_weight" in fit_params:
+            sample_weight_path = "/workspace/" + fit_params["sample_weight"]
+            sample_weight_data = open(sample_weight_path,"rb")
+            sample_weight = pickle.load(sample_weight_data)
+            sample_weight_data.close()
+            fit_params["sample_weight"]=sample_weight
+        
+        eval_set = []
+        if "validation_data_path" in dataset:
+            eval_data_path = "/workspace/" + dataset["validation_data_path"]
+            eval_label_path = "/workspace/" + dataset["validation_label_path"]
+            eval_data = open(eval_data_path,"rb")
+            eval_X = pickle.load(eval_data)
+            eval_data.close()
+            eval_label = open(eval_label_path,"rb")
+            eval_y = pickle.load(eval_label)
+            eval_label.close()
+            
+            eval_set = [(eval_X,eval_y)]
+            
+            if "eval_metric" in fit_params:
+                if "\\" in fit_params["eval_metric"]:
+                    eval_metric = fit_params["eval_metric"]
+                    fit_params["eval_metric"] = eval_metric.replace("\\","")
+        
+        if bool(eval_set):
+            fit_params["eval_set"]=eval_set            
+        clf = lgb.LGBMClassifier(**job_params)
+        fit_params["X"]=train
+        fit_params["y"]=train_label
+        clf.fit(**fit_params)
+        print("fit completed, clf:"+str(clf)+"\n")
+        score = clf.score(train,train_label)
+        print("training set score:"+str(score)+"\n")
+        
+        if "testing_data_path" in dataset:
+            testing_data_path = "/workspace/" + dataset["testing_data_path"]
+            testing_label_path = "/workspace/" + dataset["testing_label_path"]
+            
+            testing_data = open(testing_data_path,"rb")
+            test_X = pickle.load(testing_data)
+            testing_data.close()
+            testing_label = open(testing_label_path,"rb")
+            testing_Y = pickle.load(testing_label)
+            testing_label.close()     
+            test_score = clf.score(test_X,testing_Y)
+            print("testing set score:"+str(test_score)+"\n")
+            
+        model_file = open(result_dir+"/"+model_name+".pickle", "wb")
+        pickle.dump(clf, model_file)
+        model_file.close()
+        guid = int(os.environ.get("UID"))
+        os.chown(result_dir+"/"+model_name+".pickle",guid,guid)
+        
+        return None, 0
+    
+    def model_upload(result_dir,model_name):    
+        minioClient = Minio(MINIO_URL,
+                      access_key='AKIAIOSFODNN7EXAMPLE',
+                      secret_key='wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
+                      secure=False)
+        try:
+            obj_name = str(uuid.uuid1()) 
+            upload_path = obj_name + "/" + model_name + ".pickle"
+            source = "s3://mlss-mf/" + obj_name
+            res = minioClient.fput_object('mlss-mf', upload_path, result_dir+"/"+model_name+".pickle")
+            result = {"source":source}        
+            return result, 0
+        except Exception as err:
+            print(err)
+            return None, -1
+        
+    def model_register(model_name, source, group_id, headers):    
+        params = {
+              "model_name": model_name,
+              "model_type": "MLPipeline",
+              "file_name": model_name+".pickle",
+              "s3_path": source,
+              "group_id": int(float(group_id)),
+              "training_id": model_name,
+              "training_flag": 1,
+            }
+        
+        r = requests.post(MODEL_FACTORY_URL+MODEL_ADD_URL,data=json.dumps(params),headers=headers)
+        res_data = r.content.decode()
+        status_code = r.status_code
+        if status_code == 200:
+            return json.loads(res_data), 0
+        else:
+            return res_data, -1
+    
+    def model_push(model_id, model_version_id, factory_name):
+        if factory_name == "None":
+            return "Factory Name is none, Skip Model Push.", 0        
+        
+        params = {
+            "factory_name": factory_name,
+            "model_type": "LightGBM",
+            "model_usage": "Classification"
+        }
+        r = requests.post(MODEL_FACTORY_URL+MODEL_PUSH_URL+"/"+str(model_version_id),data=json.dumps(params),headers=headers)
+        res_data = r.content.decode()
+        status_code = r.status_code
+        if status_code == 200:
+            return json.loads(res_data), 0
+        else:
+            return res_data, -1
+        
+    
+    def header_gen(user_id):
+        headers = {
+            MLSS_APP_TIMESTAMP_KEY:"20210803",
+            MLSS_AUTH_TYPE_KEY:MLSS_AUTH_TYPE_VAL,
+            MLSS_APP_ID_KEY:MLSS_APP_ID_VAL,
+            MLSS_APP_SIGNATURE_KEY:MLSS_APP_SIGNATURE_VAL,
+            MLSS_USER_ID_KEY:user_id
+            }
+        return headers
+    
+        
+    if __name__ == "__main__":
+        parser = argparse.ArgumentParser(description='MLPipeline LightGBM Train.')  
+        parser.add_argument('--job_params', dest='job_params', type=json.loads,
+                        help='LightGBM Job Params, set all params in dict, example:')
+        parser.add_argument('--dataset', dest='dataset', type=json.loads,
+                        help='LightGBM DataSet, set as a dict, example:')
+        parser.add_argument('--model', dest='model', type=json.loads,
+                        help='mlflow training model msg')
+        parser.add_argument('--factory_name', dest='factory_name', type=str,
+                        help='factory name')
+        parser.add_argument('--result_dir', dest='result_dir', type=str,
+                        help='training model result')
+        parser.add_argument('--fit_params', dest='fit_params', type=json.loads,
+                        help='fit params')
+        parser.add_argument('--API_type', dest='api_type', type=str,
+                help='API Type')
+        
+        print("Start LightGBM training job, params :\n"+ str(sys.argv) +"\n")
+        args = parser.parse_args()
+        job_params = args.job_params
+        print("LightGBM job parmas:" + str(job_params) + "\n")
+        dataset = args.dataset
+        print("LightGBM dataSet:" + str(dataset) + "\n")
+        model = args.model
+        print(model)
+        result_dir = args.result_dir
+        print("LightGBM result dir:" + result_dir + "\n")    
+        factory_name = args.factory_name
+        print("LightGBM factory name:" + factory_name + "\n")    
+        fit_params = args.fit_params
+        if fit_params == None:
+            fit_params = {}
+        print("LightGBM fit params:" + str(fit_params) + "\n")   
+        api_type = args.api_type
+        print("LightGBM API type:" + str(api_type) + "\n")   
+        
+        print("Step 1 LightGBM training:\n")
+        
+
+        result = -1
+        ret_code = ""
+        if api_type == "Train":
+            result, ret_code = lgb_train(dataset, job_params, model["model_name"], result_dir, fit_params, api_type)
+        else:
+            result, ret_code = lgb_classifier_train(dataset, job_params, model["model_name"], result_dir, fit_params, api_type)
+        if ret_code != 0:
+            print("LightGBM train err, stop job....\n")
+            print("Error Msg:"+reuslt+"\n")
+            sys.exit(-1)
+        print("Training finish, start storage model...\n")
+        
+        
+        print("Step 2 Model Upload to MinIO: \n")
+        result,ret_code = model_upload(result_dir, model["model_name"])
+        if ret_code != 0:
+            print("model storage err, stop job....error msg: " + result + "\n")
+            sys.exit(-1)
+        print("Storage model finish, start model registe...\n")
+        
+        print("Step 3 Model Registe:\n")
+        source = result["source"]
+        headers = header_gen(os.environ.get("USER_ID"))
+        result,ret_code = model_register(model["model_name"], source, model["group_id"], headers)
+        if ret_code != 0:
+            print("model register, stop job....,err msg: "+ result)
+            sys.exit(-1)
+        print("Registe model finish, start model push...")
+    
+        print("Step 4 Model Push, start push model to FPS and send RMB msg\n")
+        model_id = result["result"]["model_id"]
+        model_version_id = result["result"]["model_version_id"]
+        result,ret_code = model_push(model_id, model_version_id, factory_name)
+        if ret_code != 0:
+            print("model push error, stop job....err msg: "+ result+"\n")
+        print("Model push finish, job complete...\n")
+        print("Job End..\n")
+        sys.exit()
+        
+        
+
+
+
+
+
+
+        
+        
+
+        
+
+
+
+        
+

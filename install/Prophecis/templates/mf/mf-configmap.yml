@@ -1,18 +1,34 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: aide-config
+  name: mf-config
   namespace: {{.Values.namespace}}
 data:
-  config.yml: |
-    mlssVersion: v1.3.0
-    #ccAddress: http://controlcenter-go.{{.Values.namespace}}.svc.cluster.local:6666
-    #ccAddress: http://controlcenter-gateway.{{.Values.namespace}}.svc.cluster.local:8081
-    ccAddress: https://controlcenter-go
-    platformNamespace: {{.Values.namespace}}
-    mlssGroupId: 6002
-    caCertPath: /etc/mlss/server.crt
-    maxSparkSessionNum: {{.Values.aide.maxSparkSessionNum}}
+  config.yml: | 
+    DBConfig:
+      server: {{.Values.db.server}}
+      database: {{.Values.db.name}}
+      username: {{.Values.db.user}}
+      password: {{.Values.db.pwd}}
+      port: {{.Values.db.port}}
+    ServerConfig:
+      CaCertPath: /etc/mlss/server.crt
+      CCAddress: {{.Values.mf.CCAddress}}
+      namespace: {{.Values.namespace}}
+      port: {{.Values.mf.service.targetPort}}
+    ResourceConfig:  
+      containerEngineCpu: {{.Values.mf.containerEngineCpu}}
+      containerEngineMemory: {{.Values.mf.containerEngineMemory}}
+      containerEngineGpu: {{.Values.mf.containerEngineGpu}}
+      istioSideCarCpu: {{.Values.mf.istioSideCarCpu}}
+      istioSideCarMemory: {{.Values.mf.istioSideCarMemory}}
+      istioSideCarGpu: {{.Values.mf.istioSideCarGpu}}
+    StorerConfig:
+      platformNamespace: {{.Values.storage.platformNamespace}}
+      storerTls: {{.Values.storage.storageTls}}
+      storerServerEnvName: {{.Values.storage.storerEnvServerName}}
+      storerServerName: {{.Values.storage.storerServerName}}
+      storerCA: {{.Values.storage.storerCA}}
   server.crt: |
     -----BEGIN CERTIFICATE-----
     MIICzDCCAbQCCQCVrtRO5rcr1DANBgkqhkiG9w0BAQUFADAoMQswCQYDVQQGEwJD
@@ -60,3 +76,19 @@ data:
     CB8vT/N7IEL9IjjmYo2JMNYiqMHmS9rTId8e9tdTgi8AAkYupkDGIqMkUeewgnxx
     k+1+nsLxQD6MWoNiquRPPAL+bt/KV3FWMB4FsOK1cW3XrD/UrF1Dlg==
     -----END RSA PRIVATE KEY-----
+
+  
+  Dockerfile: |
+    FROM uat.sf.dockerhub.stgwebank/webank/mlss-mf:MLSS-MF_1.14.0_Docker-Base
+    COPY ./model/ /app
+    WORKDIR /app
+    #RUN pip install -i http://127.0.0.1:13141/root/pypi/+simple/ -r requirements.txt  --trusted-host=127.0.0.1
+    EXPOSE 5000
+    
+    # Define environment variable
+    ARG MODEL_NAME=${MODEL_NAME}
+    ENV MODEL_NAME ${MODEL_NAME}
+    ENV SERVICE_TYPE MODEL
+    ENV PERSISTENCE 0
+    
+    CMD exec seldon-core-microservice $MODEL_NAME --service-type $SERVICE_TYPE --persistence $PERSISTENCE

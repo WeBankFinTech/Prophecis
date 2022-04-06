@@ -79,59 +79,58 @@ data:
         done
 
         # Source BDP ENV & Host & Set Yarn Resouces
-        if [ "{{.Values.aide.hadoop.enable}}" == "true" ]
+        if [ -d /appcom ]
         then
-            if [ "{{.Values.aide.hadoop.hostFilePath}}" != "" ]
-            then
-               echo "sh host file."
-               sh {{.Values.aide.hadoop.hostFilePath}}
-            fi
-
-            if [ "{{.Values.aide.hadoop.sourceConfigPath}}" != "" ]
-            then
-               echo "source env config."
-               sh {{.Values.aide.hadoop.sourceConfigPath}}
-            fi
- 
+            sh /appcom/config/MLSS-config/MLSS_AIDE-config/HOST_ENV.sh
+            source /appcom/config/MLSS-config/MLSS_AIDE-config/Notebook_ENV.sh
             if [ ! -d /workspace/tmp ]
             then
                mkdir -p /workspace/tmp
                chown $NB_USER:users /workspace/tmp
             fi
             if [ ! -d /workspace/logs ]
-            then
+            then 
                mkdir -p /workspace/logs
                chown $NB_USER:users /workspace/logs
             fi
             ln -s /workspace/tmp /appcom
             ln -s /workspace/logs /appcom
-        fi
 
-        if [ "{{.Values.aide.hadoop.hostFilePath}}" != "" ]
-        then
-           echo "{{.Values.aide.hadoop.hostFilePath}}"
+            if  [ -d /home/$NB_USER/.sparkmagic ]
+            then
+               rm -rf  /home/$NB_USER/.sparkmagic
+            fi
+            
+            mkdir -p /home/$NB_USER/.sparkmagic            
+            chown -R $NB_USER:users /home/$NB_USER/.sparkmagic
+            chmod -R 755 /home/$NB_USER/.sparkmagic
+            ln -s /etc/sparkmagic/config.json /home/$NB_USER/.sparkmagic/config.json            
+            readonly HADOOP_USER_NAME=$NB_USER
         fi
-
-        if  [ -d /home/$NB_USER/.sparkmagic ]
-        then
-            rm -rf  /home/$NB_USER/.sparkmagic
-        fi
-
-        mkdir -p /home/$NB_USER/.sparkmagic
-        chown -R $NB_USER:users /home/$NB_USER/.sparkmagic
-        chmod -R 755 /home/$NB_USER/.sparkmagic
-        ln -s /etc/sparkmagic/config.json /home/$NB_USER/.sparkmagic/config.json
 
         if [ ! -d /workspace/.mlss_var ]
-        then 
+        then
            mkdir /workspace/.mlss_var
            chown $NB_USER:users /workspace/.mlss_var
-        fi 
+        fi
+        
+        if [ -e /opt/conda/bin/pipeline ]
+        then
+          echo "init fate pipeline"
+          pipeline init --port 9380 --ip 127.0.0.1 --system-user guest
+        fi
 
+
+        echo "Execute the command: $*"
+        if [ ! -e /bin/gosu ]
+        then
+           echo "Execute su"
+           exec su $NB_USER -c "env PATH=$PATH $*"
+        fi
 
         # Exec the command as NB_USER
-        echo "Execute the command: $*"
-        exec su $NB_USER -c "env PATH=$PATH $*"
+        echo "Execute gosu"
+        exec gosu $NB_USER /bin/sh -c "env PATH=$PATH $*"
 
     else
       if [[ ! -z "$NB_UID" && "$NB_UID" != "$(id -u)" ]]; then
