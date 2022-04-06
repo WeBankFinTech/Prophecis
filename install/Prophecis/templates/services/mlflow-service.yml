@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mlflow-server
+  namespace: {{.Values.namespace}}
+  labels:
+    service: mlflow-server
+    environment: {{.Values.envir}}
+spec:
+  type: NodePort
+  ports:
+  - name: mlflow-server
+    port: 5000
+    targetPort: 5000
+    nodePort: {{.Values.mlflow.port}}
+  selector:
+    service: mlflow-server

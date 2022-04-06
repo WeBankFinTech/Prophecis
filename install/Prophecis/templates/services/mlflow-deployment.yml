@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mlflow-server
+  namespace: {{.Values.namespace}}
+  labels:
+    service: mlflow-server
+    environment: {{.Values.envir}}
+spec:
+  selector:
+    matchLabels:
+       service: mlflow-server
+       environment: {{.Values.envir}}
+  replicas: {{.Values.restapi.replicas}}
+  template:
+    metadata:
+      labels:
+        service: mlflow-server
+        environment: {{.Values.envir}}
+        version: {{.Values.restapi.version}}
+    spec:
+      volumes:
+      - name: timezone-volume
+        hostPath:
+          path: /usr/share/zoneinfo/Asia/Shanghai
+          type: File
+      containers:
+      - name: mlflow-server-container
+        image: {{.Values.image.registry}}:MLSS-DI_1.19.0_mlflow1132 
+        imagePullPolicy: {{.Values.image.pullPolicy}}
+        ports:
+        - containerPort: 5000
+        volumeMounts:
+        - name: timezone-volume
+          mountPath: /etc/localtime
+        env:
+        - name: DLAAS_ENV
+          value: {{.Values.envir}}
+        - name: MONGO_ADDRESS
+          value: {{.Values.mongo.address}}
+        - name: MONGO_ADDRESS
+          value: {{.Values.mongo.address}}
+        - name: MONGO_USERNAME
+          value: {{.Values.mongo.username}}
+        - name: MONGO_PASSWORD
+          value: {{.Values.mongo.password}}
+        - name: MONGO_DATABASE
+          value: {{.Values.mongo.database}}
+        - name: MLFLOW_S3_ENDPOINT_URL
+          value: {{.Values.minio.url}}
+        - name: AWS_ACCESS_KEY_ID
+          value: {{.Values.minio.keyid}}
+        - name: AWS_SECRET_ACCESS_KEY
+          value: {{.Values.minio.accesskey}}
+        command: ["/bin/sh", "-c"]
+        args: ["mlflow server --backend-store-uri sqlite:///mydb.sqlite  --default-artifact-root  s3://mlflow   --host 0.0.0.0"]
+        resources:
+          limits:
+            cpu: 1
+            memory: {{.Values.restapi.memory}}
+      imagePullSecrets:
+      - name: hubsecret
+      nodeSelector:
+        {{range $key,$val := .Values.platformNodeSelectors}}
+          {{$key}}: {{$val}}
+        {{end}}
