@@ -40,11 +40,17 @@ func NewJupyterServerAPI(spec *loads.Document) *JupyterServerAPI {
 		PatchNamespacedNotebookHandler: PatchNamespacedNotebookHandlerFunc(func(params PatchNamespacedNotebookParams) middleware.Responder {
 			return middleware.NotImplemented("operation PatchNamespacedNotebook has not yet been implemented")
 		}),
-		DeleteNamespacedNotebookHandler: DeleteNamespacedNotebookHandlerFunc(func(params DeleteNamespacedNotebookParams) middleware.Responder {
-			return middleware.NotImplemented("operation DeleteNamespacedNotebook has not yet been implemented")
+		DeleteNotebookByIDHandler: DeleteNotebookByIDHandlerFunc(func(params DeleteNotebookByIDParams) middleware.Responder {
+			return middleware.NotImplemented("operation DeleteNotebookByID has not yet been implemented")
 		}),
 		GetDashboardsHandler: GetDashboardsHandlerFunc(func(params GetDashboardsParams) middleware.Responder {
 			return middleware.NotImplemented("operation GetDashboards has not yet been implemented")
+		}),
+		GetNamespacedNotebookLogHandler: GetNamespacedNotebookLogHandlerFunc(func(params GetNamespacedNotebookLogParams) middleware.Responder {
+			return middleware.NotImplemented("operation GetNamespacedNotebookLog has not yet been implemented")
+		}),
+		GetNamespacedNotebookStatusHandler: GetNamespacedNotebookStatusHandlerFunc(func(params GetNamespacedNotebookStatusParams) middleware.Responder {
+			return middleware.NotImplemented("operation GetNamespacedNotebookStatus has not yet been implemented")
 		}),
 		GetNamespacedNotebooksHandler: GetNamespacedNotebooksHandlerFunc(func(params GetNamespacedNotebooksParams) middleware.Responder {
 			return middleware.NotImplemented("operation GetNamespacedNotebooks has not yet been implemented")
@@ -52,11 +58,20 @@ func NewJupyterServerAPI(spec *loads.Document) *JupyterServerAPI {
 		GetNamespacedUserNotebooksHandler: GetNamespacedUserNotebooksHandlerFunc(func(params GetNamespacedUserNotebooksParams) middleware.Responder {
 			return middleware.NotImplemented("operation GetNamespacedUserNotebooks has not yet been implemented")
 		}),
+		GetNotebookUserHandler: GetNotebookUserHandlerFunc(func(params GetNotebookUserParams) middleware.Responder {
+			return middleware.NotImplemented("operation GetNotebookUser has not yet been implemented")
+		}),
 		GetUserNotebooksHandler: GetUserNotebooksHandlerFunc(func(params GetUserNotebooksParams) middleware.Responder {
 			return middleware.NotImplemented("operation GetUserNotebooks has not yet been implemented")
 		}),
 		PostNamespacedNotebookHandler: PostNamespacedNotebookHandlerFunc(func(params PostNamespacedNotebookParams) middleware.Responder {
 			return middleware.NotImplemented("operation PostNamespacedNotebook has not yet been implemented")
+		}),
+		StartNotebookByIDHandler: StartNotebookByIDHandlerFunc(func(params StartNotebookByIDParams) middleware.Responder {
+			return middleware.NotImplemented("operation StartNotebookByID has not yet been implemented")
+		}),
+		StopNotebookByIDHandler: StopNotebookByIDHandlerFunc(func(params StopNotebookByIDParams) middleware.Responder {
+			return middleware.NotImplemented("operation StopNotebookByID has not yet been implemented")
 		}),
 	}
 }
@@ -91,18 +106,28 @@ type JupyterServerAPI struct {
 
 	// PatchNamespacedNotebookHandler sets the operation handler for the patch namespaced notebook operation
 	PatchNamespacedNotebookHandler PatchNamespacedNotebookHandler
-	// DeleteNamespacedNotebookHandler sets the operation handler for the delete namespaced notebook operation
-	DeleteNamespacedNotebookHandler DeleteNamespacedNotebookHandler
+	// DeleteNotebookByIDHandler sets the operation handler for the delete notebook by Id operation
+	DeleteNotebookByIDHandler DeleteNotebookByIDHandler
 	// GetDashboardsHandler sets the operation handler for the get dashboards operation
 	GetDashboardsHandler GetDashboardsHandler
+	// GetNamespacedNotebookLogHandler sets the operation handler for the get namespaced notebook log operation
+	GetNamespacedNotebookLogHandler GetNamespacedNotebookLogHandler
+	// GetNamespacedNotebookStatusHandler sets the operation handler for the get namespaced notebook status operation
+	GetNamespacedNotebookStatusHandler GetNamespacedNotebookStatusHandler
 	// GetNamespacedNotebooksHandler sets the operation handler for the get namespaced notebooks operation
 	GetNamespacedNotebooksHandler GetNamespacedNotebooksHandler
 	// GetNamespacedUserNotebooksHandler sets the operation handler for the get namespaced user notebooks operation
 	GetNamespacedUserNotebooksHandler GetNamespacedUserNotebooksHandler
+	// GetNotebookUserHandler sets the operation handler for the get notebook user operation
+	GetNotebookUserHandler GetNotebookUserHandler
 	// GetUserNotebooksHandler sets the operation handler for the get user notebooks operation
 	GetUserNotebooksHandler GetUserNotebooksHandler
 	// PostNamespacedNotebookHandler sets the operation handler for the post namespaced notebook operation
 	PostNamespacedNotebookHandler PostNamespacedNotebookHandler
+	// StartNotebookByIDHandler sets the operation handler for the start notebook by Id operation
+	StartNotebookByIDHandler StartNotebookByIDHandler
+	// StopNotebookByIDHandler sets the operation handler for the stop notebook by Id operation
+	StopNotebookByIDHandler StopNotebookByIDHandler
 
 	// ServeError is called when an error is received, there is a default handler
 	// but you can set your own with this
@@ -170,12 +195,20 @@ func (o *JupyterServerAPI) Validate() error {
 		unregistered = append(unregistered, "PatchNamespacedNotebookHandler")
 	}
 
-	if o.DeleteNamespacedNotebookHandler == nil {
-		unregistered = append(unregistered, "DeleteNamespacedNotebookHandler")
+	if o.DeleteNotebookByIDHandler == nil {
+		unregistered = append(unregistered, "DeleteNotebookByIDHandler")
 	}
 
 	if o.GetDashboardsHandler == nil {
 		unregistered = append(unregistered, "GetDashboardsHandler")
+	}
+
+	if o.GetNamespacedNotebookLogHandler == nil {
+		unregistered = append(unregistered, "GetNamespacedNotebookLogHandler")
+	}
+
+	if o.GetNamespacedNotebookStatusHandler == nil {
+		unregistered = append(unregistered, "GetNamespacedNotebookStatusHandler")
 	}
 
 	if o.GetNamespacedNotebooksHandler == nil {
@@ -186,12 +219,24 @@ func (o *JupyterServerAPI) Validate() error {
 		unregistered = append(unregistered, "GetNamespacedUserNotebooksHandler")
 	}
 
+	if o.GetNotebookUserHandler == nil {
+		unregistered = append(unregistered, "GetNotebookUserHandler")
+	}
+
 	if o.GetUserNotebooksHandler == nil {
 		unregistered = append(unregistered, "GetUserNotebooksHandler")
 	}
 
 	if o.PostNamespacedNotebookHandler == nil {
 		unregistered = append(unregistered, "PostNamespacedNotebookHandler")
+	}
+
+	if o.StartNotebookByIDHandler == nil {
+		unregistered = append(unregistered, "StartNotebookByIDHandler")
+	}
+
+	if o.StopNotebookByIDHandler == nil {
+		unregistered = append(unregistered, "StopNotebookByIDHandler")
 	}
 
 	if len(unregistered) > 0 {
@@ -295,17 +340,27 @@ func (o *JupyterServerAPI) initHandlerCache() {
 	if o.handlers["PATCH"] == nil {
 		o.handlers["PATCH"] = make(map[string]http.Handler)
 	}
-	o.handlers["PATCH"]["/aide/v1/namespaces/{namespace}/notebooks"] = NewPatchNamespacedNotebook(o.context, o.PatchNamespacedNotebookHandler)
+	o.handlers["PATCH"]["/aide/v1/notebooks/{id}"] = NewPatchNamespacedNotebook(o.context, o.PatchNamespacedNotebookHandler)
 
 	if o.handlers["DELETE"] == nil {
 		o.handlers["DELETE"] = make(map[string]http.Handler)
 	}
-	o.handlers["DELETE"]["/aide/v1/namespaces/{namespace}/notebooks/{notebook}"] = NewDeleteNamespacedNotebook(o.context, o.DeleteNamespacedNotebookHandler)
+	o.handlers["DELETE"]["/aide/v1/notebooks/{id}"] = NewDeleteNotebookByID(o.context, o.DeleteNotebookByIDHandler)
 
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
 	o.handlers["GET"]["/aide/v1/dashboards"] = NewGetDashboards(o.context, o.GetDashboardsHandler)
+
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
+	o.handlers["GET"]["/aide/v1/namespaces/{namespace}/notebooks/{notebook_name}/log"] = NewGetNamespacedNotebookLog(o.context, o.GetNamespacedNotebookLogHandler)
+
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
+	o.handlers["GET"]["/aide/v1/notebooks/{id}/status"] = NewGetNamespacedNotebookStatus(o.context, o.GetNamespacedNotebookStatusHandler)
 
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
@@ -320,12 +375,27 @@ func (o *JupyterServerAPI) initHandlerCache() {
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
+	o.handlers["GET"]["/aide/v1/notebook/user/{Namespace}/{Name}"] = NewGetNotebookUser(o.context, o.GetNotebookUserHandler)
+
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
 	o.handlers["GET"]["/aide/v1/user/{user}/notebooks"] = NewGetUserNotebooks(o.context, o.GetUserNotebooksHandler)
 
 	if o.handlers["POST"] == nil {
 		o.handlers["POST"] = make(map[string]http.Handler)
 	}
 	o.handlers["POST"]["/aide/v1/namespaces/{namespace}/notebooks"] = NewPostNamespacedNotebook(o.context, o.PostNamespacedNotebookHandler)
+
+	if o.handlers["POST"] == nil {
+		o.handlers["POST"] = make(map[string]http.Handler)
+	}
+	o.handlers["POST"]["/aide/v1/notebooks/{id}/start"] = NewStartNotebookByID(o.context, o.StartNotebookByIDHandler)
+
+	if o.handlers["DELETE"] == nil {
+		o.handlers["DELETE"] = make(map[string]http.Handler)
+	}
+	o.handlers["DELETE"]["/aide/v1/notebooks/{id}/stop"] = NewStopNotebookByID(o.context, o.StopNotebookByIDHandler)
 
 }
 

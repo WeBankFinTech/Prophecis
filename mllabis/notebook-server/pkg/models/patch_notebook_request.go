@@ -8,14 +8,15 @@ package models
 import (
 	strfmt "github.com/go-openapi/strfmt"
 
-	"github.com/go-openapi/errors"
 	"github.com/go-openapi/swag"
-	"github.com/go-openapi/validate"
 )
 
 // PatchNotebookRequest patch notebook request
 // swagger:model PatchNotebookRequest
 type PatchNotebookRequest struct {
+
+	// cpu
+	CPU float64 `json:"cpu,omitempty"`
 
 	// User driver memory in BDAP Yarn Cluster
 	DriverMemory string `json:"driverMemory,omitempty"`
@@ -29,51 +30,30 @@ type PatchNotebookRequest struct {
 	// User excutors setting in BDAP Yarn Cluster
 	Executors string `json:"executors,omitempty"`
 
-	// Notebook name
-	// Required: true
-	Name *string `json:"name"`
+	// extra resources
+	ExtraResources string `json:"extraResources,omitempty"`
 
-	// Namesapce where notebook has been created
-	// Required: true
-	Namespace *string `json:"namespace"`
+	// image name
+	ImageName string `json:"imageName,omitempty"`
+
+	// image type
+	ImageType string `json:"imageType,omitempty"`
+
+	// memory amount
+	MemoryAmount float64 `json:"memoryAmount,omitempty"`
+
+	// memory unit
+	MemoryUnit *string `json:"memoryUnit,omitempty"`
 
 	// BDAP Yarn Queue Setting
 	Queue string `json:"queue,omitempty"`
+
+	// The number of spark session
+	SparkSessionNum int64 `json:"sparkSessionNum,omitempty"`
 }
 
 // Validate validates this patch notebook request
 func (m *PatchNotebookRequest) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.validateName(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateNamespace(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-func (m *PatchNotebookRequest) validateName(formats strfmt.Registry) error {
-
-	if err := validate.Required("name", "body", m.Name); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *PatchNotebookRequest) validateNamespace(formats strfmt.Registry) error {
-
-	if err := validate.Required("namespace", "body", m.Namespace); err != nil {
-		return err
-	}
-
 	return nil
 }
 
