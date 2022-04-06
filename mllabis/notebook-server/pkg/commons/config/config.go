@@ -48,6 +48,7 @@ const (
 	SourceConfigPath = "sourceConfigPath"
 	HostFilePath     = "hostFilePath"
 	LinkisToken      = "linkisToken"
+	MaxSparkSessionNum = "maxSparkSessionNum"
 )
 
 var viperInitOnce sync.Once
@@ -71,8 +72,7 @@ func InitViper() {
 		viper.SetDefault(PortKey, 8080)
 
 		// config file is optional. we usually configure via ENV_VARS
-		log.Infof("EnvKey is %s\n", viper.GetString(EnvKey))
-		configFile := fmt.Sprintf("config-%s", viper.Get(EnvKey))
+		configFile := fmt.Sprintf("config")
 		viper.SetConfigName(configFile) // name of config file (without extension)
 		viper.AddConfigPath("/etc/mlss/")
 		viper.AddConfigPath(".")

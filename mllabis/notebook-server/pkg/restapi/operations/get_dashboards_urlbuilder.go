@@ -49,12 +49,12 @@ func (o *GetDashboardsURL) Build() (*url.URL, error) {
 
 	qs := make(url.Values)
 
-	var clusterName string
+	var clusterNameQ string
 	if o.ClusterName != nil {
-		clusterName = *o.ClusterName
+		clusterNameQ = *o.ClusterName
 	}
-	if clusterName != "" {
-		qs.Set("clusterName", clusterName)
+	if clusterNameQ != "" {
+		qs.Set("clusterName", clusterNameQ)
 	}
 
 	_result.RawQuery = qs.Encode()
