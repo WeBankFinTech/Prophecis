@@ -13,7 +13,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	"webank/DI/restapi/api_v1/restmodels"
+	restmodels "webank/DI/restapi/api_v1/restmodels"
 )
 
 // PatchModelReader is a Reader for the PatchModel structure.
@@ -24,28 +24,24 @@ type PatchModelReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PatchModelReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 202:
 		result := NewPatchModelAccepted()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPatchModelBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 401:
 		result := NewPatchModelUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 404:
 		result := NewPatchModelNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -72,7 +68,11 @@ type PatchModelAccepted struct {
 }
 
 func (o *PatchModelAccepted) Error() string {
-	return fmt.Sprintf("[PATCH /v1/models/{model_id}][%d] patchModelAccepted  %+v", 202, o.Payload)
+	return fmt.Sprintf("[PATCH /di/v1/models/{model_id}][%d] patchModelAccepted  %+v", 202, o.Payload)
+}
+
+func (o *PatchModelAccepted) GetPayload() *restmodels.BasicModel {
+	return o.Payload
 }
 
 func (o *PatchModelAccepted) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -101,7 +101,11 @@ type PatchModelBadRequest struct {
 }
 
 func (o *PatchModelBadRequest) Error() string {
-	return fmt.Sprintf("[PATCH /v1/models/{model_id}][%d] patchModelBadRequest  %+v", 400, o.Payload)
+	return fmt.Sprintf("[PATCH /di/v1/models/{model_id}][%d] patchModelBadRequest  %+v", 400, o.Payload)
+}
+
+func (o *PatchModelBadRequest) GetPayload() *restmodels.Error {
+	return o.Payload
 }
 
 func (o *PatchModelBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -130,7 +134,11 @@ type PatchModelUnauthorized struct {
 }
 
 func (o *PatchModelUnauthorized) Error() string {
-	return fmt.Sprintf("[PATCH /v1/models/{model_id}][%d] patchModelUnauthorized  %+v", 401, o.Payload)
+	return fmt.Sprintf("[PATCH /di/v1/models/{model_id}][%d] patchModelUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PatchModelUnauthorized) GetPayload() *restmodels.Error {
+	return o.Payload
 }
 
 func (o *PatchModelUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -159,7 +167,11 @@ type PatchModelNotFound struct {
 }
 
 func (o *PatchModelNotFound) Error() string {
-	return fmt.Sprintf("[PATCH /v1/models/{model_id}][%d] patchModelNotFound  %+v", 404, o.Payload)
+	return fmt.Sprintf("[PATCH /di/v1/models/{model_id}][%d] patchModelNotFound  %+v", 404, o.Payload)
+}
+
+func (o *PatchModelNotFound) GetPayload() *restmodels.Error {
+	return o.Payload
 }
 
 func (o *PatchModelNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

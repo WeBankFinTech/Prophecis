@@ -28,8 +28,14 @@ type Model struct {
 	// TFosRequest
 	TFosRequest *TFosRequest `json:"TFosRequest,omitempty"`
 
+	// api type of xgboost or lightgbm
+	APIType string `json:"api_type,omitempty"`
+
 	// completed timestamp of the job
 	CompletedTimestamp string `json:"completed_timestamp,omitempty"`
+
+	// data set
+	DataSet *DataSet `json:"data_set,omitempty"`
 
 	// data stores
 	DataStores []*Datastore `json:"data_stores"`
@@ -55,8 +61,14 @@ type Model struct {
 	// job's namespace.
 	JobNamespace string `json:"job_namespace,omitempty"`
 
+	// algorithm of training job
+	JobParams string `json:"job_params,omitempty"`
+
 	// The name of the deep learning model.
 	Name string `json:"name,omitempty"`
+
+	// proxy user of job
+	ProxyUser string `json:"proxy_user,omitempty"`
 
 	// Count of Param Server
 	PsCPU string `json:"ps_cpu,omitempty"`
@@ -97,7 +109,11 @@ func (m *Model) UnmarshalJSON(raw []byte) error {
 
 		TFosRequest *TFosRequest `json:"TFosRequest,omitempty"`
 
+		APIType string `json:"api_type,omitempty"`
+
 		CompletedTimestamp string `json:"completed_timestamp,omitempty"`
+
+		DataSet *DataSet `json:"data_set,omitempty"`
 
 		DataStores []*Datastore `json:"data_stores"`
 
@@ -115,7 +131,11 @@ func (m *Model) UnmarshalJSON(raw []byte) error {
 
 		JobNamespace string `json:"job_namespace,omitempty"`
 
+		JobParams string `json:"job_params,omitempty"`
+
 		Name string `json:"name,omitempty"`
+
+		ProxyUser string `json:"proxy_user,omitempty"`
 
 		PsCPU string `json:"ps_cpu,omitempty"`
 
@@ -141,7 +161,11 @@ func (m *Model) UnmarshalJSON(raw []byte) error {
 
 	m.TFosRequest = dataAO1.TFosRequest
 
+	m.APIType = dataAO1.APIType
+
 	m.CompletedTimestamp = dataAO1.CompletedTimestamp
+
+	m.DataSet = dataAO1.DataSet
 
 	m.DataStores = dataAO1.DataStores
 
@@ -159,7 +183,11 @@ func (m *Model) UnmarshalJSON(raw []byte) error {
 
 	m.JobNamespace = dataAO1.JobNamespace
 
+	m.JobParams = dataAO1.JobParams
+
 	m.Name = dataAO1.Name
+
+	m.ProxyUser = dataAO1.ProxyUser
 
 	m.PsCPU = dataAO1.PsCPU
 
@@ -195,7 +223,11 @@ func (m Model) MarshalJSON() ([]byte, error) {
 
 		TFosRequest *TFosRequest `json:"TFosRequest,omitempty"`
 
+		APIType string `json:"api_type,omitempty"`
+
 		CompletedTimestamp string `json:"completed_timestamp,omitempty"`
+
+		DataSet *DataSet `json:"data_set,omitempty"`
 
 		DataStores []*Datastore `json:"data_stores"`
 
@@ -213,7 +245,11 @@ func (m Model) MarshalJSON() ([]byte, error) {
 
 		JobNamespace string `json:"job_namespace,omitempty"`
 
+		JobParams string `json:"job_params,omitempty"`
+
 		Name string `json:"name,omitempty"`
+
+		ProxyUser string `json:"proxy_user,omitempty"`
 
 		PsCPU string `json:"ps_cpu,omitempty"`
 
@@ -236,7 +272,11 @@ func (m Model) MarshalJSON() ([]byte, error) {
 
 	dataAO1.TFosRequest = m.TFosRequest
 
+	dataAO1.APIType = m.APIType
+
 	dataAO1.CompletedTimestamp = m.CompletedTimestamp
+
+	dataAO1.DataSet = m.DataSet
 
 	dataAO1.DataStores = m.DataStores
 
@@ -254,7 +294,11 @@ func (m Model) MarshalJSON() ([]byte, error) {
 
 	dataAO1.JobNamespace = m.JobNamespace
 
+	dataAO1.JobParams = m.JobParams
+
 	dataAO1.Name = m.Name
+
+	dataAO1.ProxyUser = m.ProxyUser
 
 	dataAO1.PsCPU = m.PsCPU
 
@@ -292,6 +336,10 @@ func (m *Model) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
+	if err := m.validateDataSet(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateDataStores(formats); err != nil {
 		res = append(res, err)
 	}
@@ -320,6 +368,24 @@ func (m *Model) validateTFosRequest(formats strfmt.Registry) error {
 		if err := m.TFosRequest.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("TFosRequest")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *Model) validateDataSet(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.DataSet) { // not required
+		return nil
+	}
+
+	if m.DataSet != nil {
+		if err := m.DataSet.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("data_set")
 			}
 			return err
 		}

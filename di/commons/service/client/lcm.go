@@ -76,7 +76,7 @@ func NewLcm(lcm service.LifecycleManagerClient) (LcmClient, error) {
 		if conn == nil{
 			log.Error("conn is nil")
 		}
-		log.Error("conn is not nil")
+		log.Debugf("conn is not nil")
 		return &lcmClient{
 			conn:   conn,
 			client: service.NewLifecycleManagerClient(conn),

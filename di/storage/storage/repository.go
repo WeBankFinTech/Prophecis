@@ -18,12 +18,11 @@ package storage
 
 import (
 	"errors"
+	"github.com/modern-go/reflect2"
+	log "github.com/sirupsen/logrus"
 	"strconv"
 	"webank/DI/commons/logger"
 	"webank/DI/storage/storage/grpc_storage"
-
-	"github.com/modern-go/reflect2"
-	log "github.com/sirupsen/logrus"
 
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -65,7 +64,31 @@ type TrainingRecord struct {
 	ExpName      string `bson:"exp_name,omitempty" json:"exp_name"`
 	FileName     string `bson:"file_name,omitempty" json:"file_name"`
 	FilePath     string `bson:"file_path,omitempty" json:"file_path"`
+	ProxyUser    string `bson:"proxy_user,omitempty" json:"proxy_user"`
+	DataSet    *grpc_storage.DataSet `bson:"data_set,omitempty" json:"data_set"`
+	MFModel    *grpc_storage.MFModel `bson:"mf_model,omitempty" json:"mf_model"`
+	Algorithm    string `bson:"algorithm,omitempty" json:"algorithm"`
+	JobParams   string  `bson:"job_params,omitempty" json:"job_params"`
+	FactoryName   string  `bson:"factory_name,omitempty" json:"factory_name"`
+	FitParams   string  `bson:"fit_params,omitempty" json:"fit_params"`
+	APIType   string  `bson:"API_type,omitempty" json:"API_type"`
 }
+//
+//type DataSet struct {
+//	TrainingDataPath    string `bson:"training_data_path,omitempty" json:"training_data_path"`
+//	TrainingLabelPath   string `bson:"training_label_path,omitempty" json:"training_label_path"`
+//	TestingDataPath     string `bson:"testing_data_path,omitempty" json:"testing_data_path"`
+//	TestingLabelPath    string `bson:"testing_label_path,omitempty" json:"testing_label_path"`
+//	ValidationDataPath  string `bson:"validation_data_path,omitempty" json:"validation_data_path"`
+//	ValidationLabelPath string `bson:"validation_label_path,omitempty" json:"validation_label_path"`
+//}
+//
+//type MFModel struct {
+//	GroupId    string `bson:"group_id,omitempty" json:"group_id"`
+//	ModelName   string `bson:"model_name,omitempty" json:"model_name"`
+//	Version     string `bson:"version,omitempty" json:"version"`
+//}
+
 
 // FIXME MLSS Change: get models with page info
 type TrainingRecordPaged struct {
@@ -131,11 +154,12 @@ type flowJsonRepository interface {
 // newTrainingsRepository creates a new training repo for storing training data. The mongo URI can contain all the necessary
 // connection information. See here: http://docs.mongodb.org/manual/reference/connection-string/
 // However, we also support not putting the username/password in the connection URL and provide is separately.
-func newTrainingsRepository(mongoURI string, database string, username string, password string, cert string, collection string) (Repository, error) {
+func newTrainingsRepository(mongoURI string, database string, username string, password string,
+	authenticationDatabase string, cert string, collection string) (Repository, error) {
 	log := logger.LocLogger(log.StandardLogger().WithField("module", "trainingRepository"))
 	log.Debugf("Creating mongo training Repository for %s, collection %s:", mongoURI, collection)
 
-	session, err := ConnectMongo(mongoURI, database, username, password, cert)
+	session, err := ConnectMongo(mongoURI, database, username, password, authenticationDatabase,cert)
 	if err != nil {
 		return nil, err
 	}
@@ -159,11 +183,12 @@ func newTrainingsRepository(mongoURI string, database string, username string, p
 	return repo, nil
 }
 
-func NewTrainingsRepository(mongoURI string, database string, username string, password string, cert string, collection string) (Repository, error) {
+func NewTrainingsRepository(mongoURI string, database string, username string, password string,
+	authenticationDatabase string ,cert string, collection string) (Repository, error) {
 	log := logger.LocLogger(log.StandardLogger().WithField("module", "trainingRepository"))
 	log.Debugf("Creating mongo training Repository for %s, collection %s:", mongoURI, collection)
 
-	session, err := ConnectMongo(mongoURI, database, username, password, cert)
+	session, err := ConnectMongo(mongoURI, database, username, password, authenticationDatabase, cert)
 	if err != nil {
 		return nil, err
 	}
@@ -183,11 +208,11 @@ func NewTrainingsRepository(mongoURI string, database string, username string, p
 
 // newJobHistoryRepository creates a new repo for storing job status history entries.
 func newJobHistoryRepository(mongoURI string, database string, username string, password string,
-	cert string, collection string) (jobHistoryRepository, error) {
+	authenticationDatabase string, cert string, collection string) (jobHistoryRepository, error) {
 	log := logger.LocLogger(log.StandardLogger().WithField("module", "jobHistoryRepository"))
 	log.Debugf("Creating mongo Repository for %s, collection %s:", mongoURI, collection)
 
-	session, err := ConnectMongo(mongoURI, database, username, password, cert)
+	session, err := ConnectMongo(mongoURI, database, username, password,authenticationDatabase, cert)
 	if err != nil {
 		return nil, err
 	}
@@ -201,12 +226,12 @@ func newJobHistoryRepository(mongoURI string, database string, username string, 
 	return repo, err
 }
 
-func NewFlowRepository(mongoURI string, database string, username string, password string,
+func NewFlowRepository(mongoURI string, database string, username string, password string, authenticationDatabase string,
 	cert string, collection string) (flowJsonRepository, error) {
 	log := logger.LocLogger(log.StandardLogger().WithField("module", "jobHistoryRepository"))
 	log.Debugf("Creating mongo Repository for %s, collection %s:", mongoURI, collection)
 
-	session, err := ConnectMongo(mongoURI, database, username, password, cert)
+	session, err := ConnectMongo(mongoURI, database, username, password, authenticationDatabase,cert)
 	if err != nil {
 		return nil, err
 	}

@@ -13,21 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package rest_impl
 
 import (
-	"webank/DI/commons/logger"
+	logr "github.com/sirupsen/logrus"
 	"webank/DI/restapi/api_v1/server/operations"
+	"webank/DI/commons/logger"
 	"webank/DI/restapi/api_v1/server/operations/models"
 	"webank/DI/restapi/api_v1/server/operations/training_data"
-
-	logr "github.com/sirupsen/logrus"
 )
 
 func logWithPostModelParams(params models.PostModelParams) *logr.Entry {
 	data := logger.NewDlaaSLogData(logger.LogkeyRestAPIService)
 
 	data[logger.LogkeyUserID] = getUserID(params.HTTPRequest)
+	//data[logger.LogkeyModelFilename] = params.Manifest.Header.Filename
+	//data[logger.LogkeyModelFilename] = params.Manifest.Header.Filename
+
 	return &logr.Entry{Logger: logr.StandardLogger(), Data: data}
 }
 
@@ -66,6 +69,15 @@ func logWithDownloadTrainedModelParams(params models.DownloadTrainedModelParams)
 
 	return &logr.Entry{Logger: logr.StandardLogger(), Data: data}
 }
+//
+//func logWithEMetricsParams(params training_data.GetEMetricsParams) *logr.Entry {
+//	data := logger.NewDlaaSLogData(logger.LogkeyRestAPIService)
+//
+//	data[logger.LogkeyUserID] = getUserID(params.HTTPRequest)
+//	data[logger.LogkeyTrainingID] = params.ModelID
+//
+//	return &logr.Entry{Logger: logr.StandardLogger(), Data: data}
+//}
 
 func logWithLoglinesParams(params training_data.GetLoglinesParams) *logr.Entry {
 	data := logger.NewDlaaSLogData(logger.LogkeyRestAPIService)
@@ -91,6 +103,14 @@ func logWithGetListModelsParams(params models.ListModelsParams) *logr.Entry {
 	return &logr.Entry{Logger: logr.StandardLogger(), Data: data}
 }
 
+func logWithGetMetricsParams(params models.GetMetricsParams) *logr.Entry {
+	data := logger.NewDlaaSLogData(logger.LogkeyRestAPIService)
+	data[logger.LogkeyTrainingID] = params.ModelID
+	data[logger.LogkeyUserID] = getUserID(params.HTTPRequest)
+
+	return &logr.Entry{Logger: logr.StandardLogger(), Data: data}
+}
+
 func logWithUpdateStatusParams(params models.PatchModelParams) *logr.Entry {
 	data := logger.NewDlaaSLogData(logger.LogkeyRestAPIService)
 	data[logger.LogkeyTrainingID] = params.ModelID
@@ -104,3 +124,4 @@ func logWithGetDashboards(params operations.GetDashboardsParams) *logr.Entry {
 	data[logger.LogkeyUserID] = getUserID(params.HTTPRequest)
 	return &logr.Entry{Logger: logr.StandardLogger(), Data: data}
 }
+
