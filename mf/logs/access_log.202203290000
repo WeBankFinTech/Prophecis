@@ -1,0 +1,4 @@
+{"level":"info","msg":"test:%v","time":"2022-03-29T14:51:05+08:00"}
+{"level":"info","msg":"Loading MF App Config...","time":"2022-03-29T14:51:05+08:00"}
+{"level":"error","msg":"YamlFile Get Error: %vopen /etc/mlss/config.yml: The system cannot find the path specified.","time":"2022-03-29T14:51:05+08:00"}
+{"level":"info","msg":"config:{{     false} {   0} {    } {0  0 0  0} { } { 0    0}}","time":"2022-03-29T14:51:05+08:00"}
