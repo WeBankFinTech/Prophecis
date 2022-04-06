@@ -38,7 +38,7 @@ type PatchNamespacedNotebookParams struct {
 	  Required: true
 	  In: path
 	*/
-	Namespace string
+	ID string
 	/*The Patch Notebook Request
 	  Required: true
 	  In: body
@@ -55,8 +55,8 @@ func (o *PatchNamespacedNotebookParams) BindRequest(r *http.Request, route *midd
 
 	o.HTTPRequest = r
 
-	rNamespace, rhkNamespace, _ := route.Params.GetOK("namespace")
-	if err := o.bindNamespace(rNamespace, rhkNamespace, route.Formats); err != nil {
+	rID, rhkID, _ := route.Params.GetOK("id")
+	if err := o.bindID(rID, rhkID, route.Formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -88,8 +88,8 @@ func (o *PatchNamespacedNotebookParams) BindRequest(r *http.Request, route *midd
 	return nil
 }
 
-// bindNamespace binds and validates parameter Namespace from path.
-func (o *PatchNamespacedNotebookParams) bindNamespace(rawData []string, hasKey bool, formats strfmt.Registry) error {
+// bindID binds and validates parameter ID from path.
+func (o *PatchNamespacedNotebookParams) bindID(rawData []string, hasKey bool, formats strfmt.Registry) error {
 	var raw string
 	if len(rawData) > 0 {
 		raw = rawData[len(rawData)-1]
@@ -98,7 +98,7 @@ func (o *PatchNamespacedNotebookParams) bindNamespace(rawData []string, hasKey b
 	// Required: true
 	// Parameter is provided by construction from the route
 
-	o.Namespace = raw
+	o.ID = raw
 
 	return nil
 }

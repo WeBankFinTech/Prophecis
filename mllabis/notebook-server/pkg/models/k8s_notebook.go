@@ -25,12 +25,13 @@ import (
 )
 
 type K8sNotebook struct {
-	ApiVersion string              `json:"apiVersion,omitempty"`
-	Kind       string              `json:"kind,omitempty"`
-	Metadata   client.V1ObjectMeta `json:"metadata,omitempty"`
-	Spec       NBSpec              `json:"spec,omitempty"`
-	Status     NBStatus            `json:"status,omitempty"`
-	Service    client.V1Service
+	ApiVersion          string              `json:"apiVersion,omitempty"`
+	Kind                string              `json:"kind,omitempty"`
+	Metadata            client.V1ObjectMeta `json:"metadata,omitempty"`
+	Spec                NBSpec              `json:"spec,omitempty"`
+	Status              NBStatus            `json:"status,omitempty"`
+	Service             client.V1Service
+	SparkSessionService client.V1Service
 }
 type NBSpec struct {
 	Template NBTemplate `json:"template,omitempty"`
@@ -39,10 +40,10 @@ type NBTemplate struct {
 	Spec NBDetailedSpec `json:"spec,omitempty"`
 }
 type NBDetailedSpec struct {
-	ServiceAccountName      string               `json:"serviceAccountName,omitempty"`
-	Containers              []client.V1Container `json:"containers,omitempty"`
-	TtlSecondsAfterFinished int                  `json:"ttlSecondsAfterFinished,omitempty"`
-	Volumes                 []client.V1Volume    `json:"volumes,omitempty"`
+	ServiceAccountName      string                   `json:"serviceAccountName,omitempty"`
+	Containers              []client.V1Container     `json:"containers,omitempty"`
+	TtlSecondsAfterFinished int                      `json:"ttlSecondsAfterFinished,omitempty"`
+	Volumes                 []client.V1Volume        `json:"volumes,omitempty"`
 	SecurityContext         client.V1SecurityContext `json:"securityContext,omitempty"`
 }
 

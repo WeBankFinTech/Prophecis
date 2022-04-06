@@ -167,53 +167,13 @@ func init() {
             }
           }
         }
-      },
-      "patch": {
-        "description": "Post Notebooks.",
-        "summary": "Patch a Notebook in the given Namesapce, Update Yarn Resource Setting",
-        "operationId": "PatchNamespacedNotebook",
-        "parameters": [
-          {
-            "type": "string",
-            "format": "string",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "description": "The Patch Notebook Request",
-            "name": "notebook",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/PatchNotebookRequest"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "401": {
-            "description": "Unauthorized",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "404": {
-            "description": "Notebook create failed",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
       }
     },
-    "/aide/v1/namespaces/{namespace}/notebooks/{notebook}": {
-      "delete": {
-        "description": "Delete Notebook.",
-        "summary": "Delete a Notebook in the given Namespace",
-        "operationId": "deleteNamespacedNotebook",
+    "/aide/v1/namespaces/{namespace}/notebooks/{notebook_name}/log": {
+      "get": {
+        "description": "Get notebook log.",
+        "summary": "Get log of notebook in the given namespace",
+        "operationId": "getNamespacedNotebookLog",
         "parameters": [
           {
             "type": "string",
@@ -225,14 +185,36 @@ func init() {
           {
             "type": "string",
             "format": "string",
-            "name": "notebook",
+            "name": "notebook_name",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "integer",
+            "default": 1,
+            "name": "currentPage",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "default": 10,
+            "name": "pageSize",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "default": false,
+            "description": "whether sort by time  in asc, default false (desc).",
+            "name": "asc",
+            "in": "query"
           }
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/GetNotebookLogResponse"
+            }
           },
           "401": {
             "description": "Unauthorized",
@@ -320,6 +302,222 @@ func init() {
         }
       }
     },
+    "/aide/v1/notebook/user/{Namespace}/{Name}": {
+      "get": {
+        "description": "Get user of notebook.",
+        "summary": "Get user of notebook.",
+        "operationId": "getNotebookUser",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "Namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/GetNotebookUserResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "The dashboard cannot be found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/aide/v1/notebooks/{id}": {
+      "delete": {
+        "description": "Delete Notebook.",
+        "summary": "Delete a Notebook in the given id",
+        "operationId": "deleteNotebookById",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "string",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "The Notebook cannot be found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "patch": {
+        "description": "Post Notebooks.",
+        "summary": "Patch a Notebook in the given Namesapce, Update Yarn Resource Setting",
+        "operationId": "PatchNamespacedNotebook",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "string",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "The Patch Notebook Request",
+            "name": "notebook",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/PatchNotebookRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Notebook create failed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/aide/v1/notebooks/{id}/start": {
+      "post": {
+        "description": "Post Notebooks.",
+        "summary": "start a Notebook, request information from mongo",
+        "operationId": "startNotebookById",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "string",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Notebook create failed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/aide/v1/notebooks/{id}/status": {
+      "get": {
+        "description": "Get Notebook status.",
+        "summary": "Get the status of Notebooks in the given Namespace",
+        "operationId": "getNamespacedNotebookStatus",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "string",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/GetNotebookStatusResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "The Notebook cannot be found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/aide/v1/notebooks/{id}/stop": {
+      "delete": {
+        "description": "stop Notebooks.",
+        "summary": "stop a Notebook, request information from mongo",
+        "operationId": "stopNotebookById",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "string",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Notebook create failed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/aide/v1/user/{user}/notebooks": {
       "get": {
         "description": "Get Notebooks.",
@@ -379,6 +577,48 @@ func init() {
     }
   },
   "definitions": {
+    "ContainerStatusInfo": {
+      "type": "object",
+      "properties": {
+        "containerId": {
+          "description": "container id",
+          "type": "string"
+        },
+        "containerStatusType": {
+          "description": "this container status type",
+          "type": "string"
+        },
+        "container_name": {
+          "description": "container name",
+          "type": "string"
+        },
+        "fineshedTime": {
+          "type": "string"
+        },
+        "lastContainerStateType": {
+          "type": "string"
+        },
+        "lastFinishedTime": {
+          "type": "string"
+        },
+        "lastMessage": {
+          "type": "string"
+        },
+        "lastStartedTime": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "namespace": {
+          "description": "container namespace",
+          "type": "string"
+        },
+        "startedTime": {
+          "type": "string"
+        }
+      }
+    },
     "Error": {
       "type": "object",
       "properties": {
@@ -407,6 +647,84 @@ func init() {
         },
         "totalInstances": {
           "description": "total number of instances.",
+          "type": "string"
+        }
+      }
+    },
+    "GetNotebookLogResponse": {
+      "type": "object",
+      "required": [
+        "total"
+      ],
+      "properties": {
+        "log_list": {
+          "description": "Notebook log info list.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/NotebookLog"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "GetNotebookStatusResponse": {
+      "type": "object",
+      "properties": {
+        "containers_status_info": {
+          "description": "The information of notebook containers status",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ContainerStatusInfo"
+          }
+        },
+        "create_time": {
+          "description": "Notebook create time",
+          "type": "string"
+        },
+        "image": {
+          "description": "Docker Image used",
+          "type": "string"
+        },
+        "name": {
+          "description": "Notebook name",
+          "type": "string"
+        },
+        "namespace": {
+          "description": "Namesapce where notebook has been created",
+          "type": "string"
+        },
+        "notebook_status": {
+          "description": "Notebook status",
+          "type": "string"
+        },
+        "notebook_status_info": {
+          "description": "The information that trigger notebook status, consist of Container State",
+          "type": "string"
+        },
+        "resource_limit": {
+          "description": "Rsource that Notebook limted",
+          "type": "object",
+          "$ref": "#/definitions/Resource"
+        },
+        "resource_req": {
+          "description": "Notebook request resource",
+          "type": "object",
+          "$ref": "#/definitions/Resource"
+        }
+      }
+    },
+    "GetNotebookUserResponse": {
+      "type": "object",
+      "properties": {
+        "ProxyUser": {
+          "description": "Proxy User of Notebook.",
+          "type": "string"
+        },
+        "User": {
+          "description": "Create User of Notebook.",
           "type": "string"
         }
       }
@@ -579,9 +897,19 @@ func init() {
           "description": "Kubernetes Namespace where notebook will be created",
           "type": "string"
         },
+        "proxyUser": {
+          "description": "Proxy User of Notebook.",
+          "type": "string"
+        },
         "queue": {
           "description": "BDAP Yarn Queue Setting\n",
           "type": "string"
+        },
+        "sparkSessionNum": {
+          "description": "The number of spark session",
+          "type": "number",
+          "format": "int",
+          "default": 0
         },
         "workspaceVolume": {
           "$ref": "#/definitions/MountInfo"
@@ -622,6 +950,9 @@ func init() {
           "description": "GPU used",
           "type": "string"
         },
+        "id": {
+          "type": "string"
+        },
         "image": {
           "description": "Docker Image used",
           "type": "string"
@@ -642,6 +973,10 @@ func init() {
           "description": "Notebook pods",
           "type": "string"
         },
+        "proxyUser": {
+          "description": "Proxy User of Notebook.",
+          "type": "string"
+        },
         "queue": {
           "description": "BDAP Yarn Queue Setting",
           "type": "string"
@@ -649,6 +984,12 @@ func init() {
         "service": {
           "description": "Notebook services",
           "type": "string"
+        },
+        "sparkSessionNum": {
+          "description": "The number of spark session",
+          "type": "number",
+          "format": "int",
+          "default": 0
         },
         "srtImage": {
           "description": "Image short name",
@@ -677,13 +1018,22 @@ func init() {
         }
       }
     },
+    "NotebookLog": {
+      "type": "object",
+      "properties": {
+        "log": {
+          "type": "string"
+        }
+      }
+    },
     "PatchNotebookRequest": {
       "type": "object",
-      "required": [
-        "namespace",
-        "name"
-      ],
       "properties": {
+        "cpu": {
+          "type": "number",
+          "format": "float64",
+          "default": 0
+        },
         "driverMemory": {
           "description": "User driver memory in BDAP Yarn Cluster",
           "type": "string"
@@ -700,16 +1050,49 @@ func init() {
           "description": "User excutors setting in BDAP Yarn Cluster",
           "type": "string"
         },
-        "name": {
-          "description": "Notebook name",
+        "extraResources": {
           "type": "string"
         },
-        "namespace": {
-          "description": "Namesapce where notebook has been created",
+        "imageName": {
           "type": "string"
+        },
+        "imageType": {
+          "type": "string"
+        },
+        "memoryAmount": {
+          "type": "number",
+          "format": "float64",
+          "default": 0
+        },
+        "memoryUnit": {
+          "type": "string",
+          "default": "Mi"
         },
         "queue": {
           "description": "BDAP Yarn Queue Setting",
+          "type": "string"
+        },
+        "sparkSessionNum": {
+          "description": "The number of spark session",
+          "type": "number",
+          "format": "int",
+          "default": 0
+        }
+      }
+    },
+    "Resource": {
+      "type": "object",
+      "properties": {
+        "cpu": {
+          "description": "CPU",
+          "type": "string"
+        },
+        "gpu": {
+          "description": "GPU",
+          "type": "string"
+        },
+        "memory": {
+          "description": "Memory",
           "type": "string"
         }
       }
@@ -872,53 +1255,13 @@ func init() {
             }
           }
         }
-      },
-      "patch": {
-        "description": "Post Notebooks.",
-        "summary": "Patch a Notebook in the given Namesapce, Update Yarn Resource Setting",
-        "operationId": "PatchNamespacedNotebook",
-        "parameters": [
-          {
-            "type": "string",
-            "format": "string",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "description": "The Patch Notebook Request",
-            "name": "notebook",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/PatchNotebookRequest"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "401": {
-            "description": "Unauthorized",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "404": {
-            "description": "Notebook create failed",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
       }
     },
-    "/aide/v1/namespaces/{namespace}/notebooks/{notebook}": {
-      "delete": {
-        "description": "Delete Notebook.",
-        "summary": "Delete a Notebook in the given Namespace",
-        "operationId": "deleteNamespacedNotebook",
+    "/aide/v1/namespaces/{namespace}/notebooks/{notebook_name}/log": {
+      "get": {
+        "description": "Get notebook log.",
+        "summary": "Get log of notebook in the given namespace",
+        "operationId": "getNamespacedNotebookLog",
         "parameters": [
           {
             "type": "string",
@@ -930,14 +1273,36 @@ func init() {
           {
             "type": "string",
             "format": "string",
-            "name": "notebook",
+            "name": "notebook_name",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "integer",
+            "default": 1,
+            "name": "currentPage",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "default": 10,
+            "name": "pageSize",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "default": false,
+            "description": "whether sort by time  in asc, default false (desc).",
+            "name": "asc",
+            "in": "query"
           }
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/GetNotebookLogResponse"
+            }
           },
           "401": {
             "description": "Unauthorized",
@@ -1025,6 +1390,222 @@ func init() {
         }
       }
     },
+    "/aide/v1/notebook/user/{Namespace}/{Name}": {
+      "get": {
+        "description": "Get user of notebook.",
+        "summary": "Get user of notebook.",
+        "operationId": "getNotebookUser",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "Namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/GetNotebookUserResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "The dashboard cannot be found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/aide/v1/notebooks/{id}": {
+      "delete": {
+        "description": "Delete Notebook.",
+        "summary": "Delete a Notebook in the given id",
+        "operationId": "deleteNotebookById",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "string",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "The Notebook cannot be found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "patch": {
+        "description": "Post Notebooks.",
+        "summary": "Patch a Notebook in the given Namesapce, Update Yarn Resource Setting",
+        "operationId": "PatchNamespacedNotebook",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "string",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "The Patch Notebook Request",
+            "name": "notebook",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/PatchNotebookRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Notebook create failed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/aide/v1/notebooks/{id}/start": {
+      "post": {
+        "description": "Post Notebooks.",
+        "summary": "start a Notebook, request information from mongo",
+        "operationId": "startNotebookById",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "string",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Notebook create failed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/aide/v1/notebooks/{id}/status": {
+      "get": {
+        "description": "Get Notebook status.",
+        "summary": "Get the status of Notebooks in the given Namespace",
+        "operationId": "getNamespacedNotebookStatus",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "string",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/GetNotebookStatusResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "The Notebook cannot be found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/aide/v1/notebooks/{id}/stop": {
+      "delete": {
+        "description": "stop Notebooks.",
+        "summary": "stop a Notebook, request information from mongo",
+        "operationId": "stopNotebookById",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "string",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Notebook create failed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/aide/v1/user/{user}/notebooks": {
       "get": {
         "description": "Get Notebooks.",
@@ -1084,6 +1665,48 @@ func init() {
     }
   },
   "definitions": {
+    "ContainerStatusInfo": {
+      "type": "object",
+      "properties": {
+        "containerId": {
+          "description": "container id",
+          "type": "string"
+        },
+        "containerStatusType": {
+          "description": "this container status type",
+          "type": "string"
+        },
+        "container_name": {
+          "description": "container name",
+          "type": "string"
+        },
+        "fineshedTime": {
+          "type": "string"
+        },
+        "lastContainerStateType": {
+          "type": "string"
+        },
+        "lastFinishedTime": {
+          "type": "string"
+        },
+        "lastMessage": {
+          "type": "string"
+        },
+        "lastStartedTime": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "namespace": {
+          "description": "container namespace",
+          "type": "string"
+        },
+        "startedTime": {
+          "type": "string"
+        }
+      }
+    },
     "Error": {
       "type": "object",
       "properties": {
@@ -1112,6 +1735,84 @@ func init() {
         },
         "totalInstances": {
           "description": "total number of instances.",
+          "type": "string"
+        }
+      }
+    },
+    "GetNotebookLogResponse": {
+      "type": "object",
+      "required": [
+        "total"
+      ],
+      "properties": {
+        "log_list": {
+          "description": "Notebook log info list.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/NotebookLog"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "GetNotebookStatusResponse": {
+      "type": "object",
+      "properties": {
+        "containers_status_info": {
+          "description": "The information of notebook containers status",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ContainerStatusInfo"
+          }
+        },
+        "create_time": {
+          "description": "Notebook create time",
+          "type": "string"
+        },
+        "image": {
+          "description": "Docker Image used",
+          "type": "string"
+        },
+        "name": {
+          "description": "Notebook name",
+          "type": "string"
+        },
+        "namespace": {
+          "description": "Namesapce where notebook has been created",
+          "type": "string"
+        },
+        "notebook_status": {
+          "description": "Notebook status",
+          "type": "string"
+        },
+        "notebook_status_info": {
+          "description": "The information that trigger notebook status, consist of Container State",
+          "type": "string"
+        },
+        "resource_limit": {
+          "description": "Rsource that Notebook limted",
+          "type": "object",
+          "$ref": "#/definitions/Resource"
+        },
+        "resource_req": {
+          "description": "Notebook request resource",
+          "type": "object",
+          "$ref": "#/definitions/Resource"
+        }
+      }
+    },
+    "GetNotebookUserResponse": {
+      "type": "object",
+      "properties": {
+        "ProxyUser": {
+          "description": "Proxy User of Notebook.",
+          "type": "string"
+        },
+        "User": {
+          "description": "Create User of Notebook.",
           "type": "string"
         }
       }
@@ -1284,9 +1985,19 @@ func init() {
           "description": "Kubernetes Namespace where notebook will be created",
           "type": "string"
         },
+        "proxyUser": {
+          "description": "Proxy User of Notebook.",
+          "type": "string"
+        },
         "queue": {
           "description": "BDAP Yarn Queue Setting\n",
           "type": "string"
+        },
+        "sparkSessionNum": {
+          "description": "The number of spark session",
+          "type": "number",
+          "format": "int",
+          "default": 0
         },
         "workspaceVolume": {
           "$ref": "#/definitions/MountInfo"
@@ -1327,6 +2038,9 @@ func init() {
           "description": "GPU used",
           "type": "string"
         },
+        "id": {
+          "type": "string"
+        },
         "image": {
           "description": "Docker Image used",
           "type": "string"
@@ -1347,6 +2061,10 @@ func init() {
           "description": "Notebook pods",
           "type": "string"
         },
+        "proxyUser": {
+          "description": "Proxy User of Notebook.",
+          "type": "string"
+        },
         "queue": {
           "description": "BDAP Yarn Queue Setting",
           "type": "string"
@@ -1354,6 +2072,12 @@ func init() {
         "service": {
           "description": "Notebook services",
           "type": "string"
+        },
+        "sparkSessionNum": {
+          "description": "The number of spark session",
+          "type": "number",
+          "format": "int",
+          "default": 0
         },
         "srtImage": {
           "description": "Image short name",
@@ -1382,13 +2106,22 @@ func init() {
         }
       }
     },
+    "NotebookLog": {
+      "type": "object",
+      "properties": {
+        "log": {
+          "type": "string"
+        }
+      }
+    },
     "PatchNotebookRequest": {
       "type": "object",
-      "required": [
-        "namespace",
-        "name"
-      ],
       "properties": {
+        "cpu": {
+          "type": "number",
+          "format": "float64",
+          "default": 0
+        },
         "driverMemory": {
           "description": "User driver memory in BDAP Yarn Cluster",
           "type": "string"
@@ -1405,16 +2138,49 @@ func init() {
           "description": "User excutors setting in BDAP Yarn Cluster",
           "type": "string"
         },
-        "name": {
-          "description": "Notebook name",
+        "extraResources": {
           "type": "string"
         },
-        "namespace": {
-          "description": "Namesapce where notebook has been created",
+        "imageName": {
           "type": "string"
+        },
+        "imageType": {
+          "type": "string"
+        },
+        "memoryAmount": {
+          "type": "number",
+          "format": "float64",
+          "default": 0
+        },
+        "memoryUnit": {
+          "type": "string",
+          "default": "Mi"
         },
         "queue": {
           "description": "BDAP Yarn Queue Setting",
+          "type": "string"
+        },
+        "sparkSessionNum": {
+          "description": "The number of spark session",
+          "type": "number",
+          "format": "int",
+          "default": 0
+        }
+      }
+    },
+    "Resource": {
+      "type": "object",
+      "properties": {
+        "cpu": {
+          "description": "CPU",
+          "type": "string"
+        },
+        "gpu": {
+          "description": "GPU",
+          "type": "string"
+        },
+        "memory": {
+          "description": "Memory",
           "type": "string"
         }
       }
