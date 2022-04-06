@@ -257,6 +257,18 @@ rules:
   - create
   - delete
 - apiGroups:
+  - machinelearning.seldon.io
+  resources:
+  - seldondeployments
+  verbs:
+  - create
+  - delete
+  - deletecollection
+  - patch
+  - update
+  - list
+  - get
+- apiGroups:
   - rbac.authorization.k8s.io
   resources:
   - clusterrolebindings

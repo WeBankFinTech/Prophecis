@@ -1,0 +1,109 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mf
+  namespace: {{.Values.namespace}}
+  labels:
+    environment: {{.Values.envir}}
+    app: mf
+spec:
+  selector:
+    matchLabels:
+      app: mf
+      environment: {{.Values.envir}}
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: mf
+        environment: {{.Values.envir}}
+#        version: {{.Values.mf.version}}
+    spec:
+      serviceAccountName: mf-sa
+      volumes:
+      - name: mf-config
+        configMap:
+          name: mf-config
+      - name: timezone-volume
+        hostPath:
+          path: /usr/share/zoneinfo/Asia/Shanghai
+          type: File
+      - name: oss-storage
+        hostPath:
+          path: {{.Values.storage.share_storage_dir}}
+          type: Directory
+      - name: storage-path
+        hostPath:
+          path: /data/bdap-ss/mlss-data/
+          type: Directory
+      - hostPath:
+          path: /var/run/docker.sock
+          type: File
+        name: dockersock
+      - name: jdk
+        hostPath:
+          path: /nemo/jdk1.8.0_141
+          type: Directory
+      - hostPath:
+          path: /bin/docker
+          type: File
+        name: dockerclient
+      - hostPath:
+          path: /root/.docker/config.json
+          type: File
+        name: dockerconfig
+      containers:
+      - name: mf-server
+        image: {{.Values.image.registry}}:{{.Values.mf.image.tag}}
+{{ if .Values.image.pullPolicy }}
+        imagePullPolicy: {{.Values.image.pullPolicy}}
+{{ end }}
+        ports:
+        - containerPort: 8080
+        volumeMounts:
+        - name: mf-config
+          mountPath: /etc/mlss
+        - name: timezone-volume
+          mountPath: /etc/localtime
+        - name: oss-storage
+          mountPath: /data/oss-storage/
+        - name: storage-path
+          mountPath: /data/bdap-ss/mlss-data/
+        - mountPath: /var/run/docker.sock
+          name: dockersock
+        - mountPath: /bin/docker
+          name: dockerclient
+        - mountPath: /root/.docker/config.json
+          name: dockerconfig
+        - mountPath: /nemo/jdk1.8.0_141
+          name: jdk
+        env:
+        - name: FLUENT_ELASTICSEARCH_HOST
+          value: "elasticsearch.prophecis.svc.cluster.local"
+        - name: FLUENT_ELASTICSEARCH_PORT
+          value: "9200"
+        - name: JAVA_HOME
+          value: "/nemo/jdk1.8.0_141"
+        - name: LANG
+          value: C.UTF-8 
+        command:
+        - /bin/bash
+        - -c
+        - "/mf-server --host=0.0.0.0 --scheme=http --port=8080"
+#        - "dlv --listen=:40012 --headless=true --api-version=2 exec /mf-server --  --host=0.0.0.0 --scheme=http --port=8080"
+#        - --listen=:40000
+#        - --headless=true
+#        - --api-version=2
+#        - exec 
+#        - "/mf-server  --host=0.0.0.0 --scheme=http --port=8080"
+        resources:
+          limits:
+            cpu: {{.Values.mf.cpus}}
+            memory: {{.Values.mf.memory}}
+      imagePullSecrets:
+      - name: hubsecret
+      nodeSelector:
+       {{range $key,$val := .Values.platformNodeSelectors}}
+         {{$key}}: {{$val}}
+       {{end}}
+

@@ -1,0 +1,188 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ffdl-lcm
+  namespace: {{.Values.namespace}}
+  labels:
+    service: ffdl-lcm
+    environment: {{.Values.envir}}
+spec:
+  selector:
+    matchLabels:
+      service: ffdl-lcm
+      environment: {{.Values.envir}}
+  replicas: {{.Values.lcm.replicas}}
+  template:
+    metadata:
+      labels:
+        service: ffdl-lcm
+        environment: {{.Values.envir}}
+        version:  {{.Values.lcm.version}}
+    spec:
+      volumes:
+        - name: di-config
+          configMap:
+            name: di-config
+        - name: ffdl-certs
+          configMap:
+            name: ffdl-certs
+        - name: timezone-volume
+          hostPath:
+            path: /usr/share/zoneinfo/Asia/Shanghai
+            type: File
+      serviceAccount: {{.Values.image.image_prefix}}lcm
+      serviceAccountName: {{.Values.image.image_prefix}}lcm
+      containers:
+      - name: ffdl-lcm-container
+        image: {{.Values.image.registry}}:{{.Values.lcm.version}}
+{{ if .Values.image.pullPolicy }}
+        imagePullPolicy: {{.Values.image.pullPolicy}}
+{{ end }}
+        ports:
+        - containerPort: 8443
+        volumeMounts:
+####### 1.3.0 ############
+        - mountPath: /etc/mlss/
+          name: di-config
+##########################
+####### 1.4.0 ############
+        - mountPath: /etc/ssl/dlaas/
+          name: ffdl-certs
+        - name: timezone-volume
+          mountPath: /etc/localtime
+##########################
+        env:
+        - name: DLAAS_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: DLAAS_POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: DLAAS_LEARNER_KUBE_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: DLAAS_SHARED_VOLUME_STORAGE_CLASS
+          value: {{.Values.lcm.shared_volume_storage_class}}
+        - name: DLAAS_LOAD_TRAINING_DATA_MEM_IN_MB
+          value: "{{.Values.lcm.load_training_data_mem_in_mb}}"
+        - name: DLAAS_MILLI_CPU
+          value: "{{.Values.lcm.milli_cpu}}"
+        - name: DLAAS_MEM_IN_MB
+          value: "{{.Values.lcm.mem_in_mb}}"
+        - name: DLAAS_DEVICE_PLUGIN
+          value: "{{.Values.lcm.device_plugin}}"
+        - name: DLAAS_IMAGE_TAG
+          value: {{.Values.restapi.version}}
+        - name: DLAAS_IMAGE_PULL_POLICY
+          value: {{.Values.image.pullPolicy}}
+        - name: DLAAS_ENV
+          value: {{.Values.envir}}
+        - name: DLAAS_LOGLEVEL
+          value: {{.Values.log.level}}
+        - name: DLAAS_IMAGE_PREFIX
+          value: {{.Values.image.image_prefix}}
+        - name: LINKIS_ADDRESS
+          value: {{.Values.linkis.address}}
+        - name: LINKIS_TOKEN_CODE
+          value: {{.Values.linkis.tokenCode}}
+        - name: ENVIR
+          value: {{.Values.envir}}
+        - name: FLUENT_BIT_LOG_PATH
+          value: {{.Values.lcm.fluent_bit_log_path}}
+        - name: DI_END_NODEPORT
+          value: {{.Values.lcm.nodeport.end |quote}}
+        - name: DI_START_NODEPORT
+          value: {{.Values.lcm.nodeport.start | quote}}
+        - name: DLAAS_ETCD_ADDRESS
+          valueFrom:
+            secretKeyRef:
+              name: lcm-secrets
+              key: DLAAS_ETCD_ADDRESS
+        - name: DLAAS_ETCD_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: lcm-secrets
+              key: DLAAS_ETCD_USERNAME
+        - name: DLAAS_ETCD_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: lcm-secrets
+              key: DLAAS_ETCD_PASSWORD
+        - name: DLAAS_ETCD_PREFIX
+          valueFrom:
+            secretKeyRef:
+              name: lcm-secrets
+              key: DLAAS_ETCD_PREFIX
+        - name: DLAAS_PUSH_METRICS_ENABLED
+#          value: "false"
+          value: "true"
+        - name: MONGO_ADDRESS
+          value: {{.Values.mongo.address}}
+        - name: MONGO_USERNAME
+          value: {{.Values.mongo.username}}
+        - name: MONGO_PASSWORD
+          value: {{.Values.mongo.password}}
+        - name: MONGO_DATABASE
+          value: {{.Values.mongo.database}}
+        - name: MONGO_Authentication_Database
+          value: {{.Values.mongo.authenticationDatabase}}
+        - name: DLAAS_OBJECTSTORE_TYPE
+          valueFrom:
+            secretKeyRef:
+              name: lcm-secrets
+              key: DLAAS_OBJECTSTORE_TYPE
+        - name: DLAAS_OBJECTSTORE_AUTH_URL
+          valueFrom:
+            secretKeyRef:
+              name: lcm-secrets
+              key: DLAAS_OBJECTSTORE_AUTH_URL
+        - name: DLAAS_OBJECTSTORE_USER_NAME
+          valueFrom:
+            secretKeyRef:
+              name: lcm-secrets
+              key: DLAAS_OBJECTSTORE_USER_NAME
+        - name: DLAAS_OBJECTSTORE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: lcm-secrets
+              key: DLAAS_OBJECTSTORE_PASSWORD
+##########
+##1.5.1###
+        - name: FLUENT_ELASTICSEARCH_HOST
+          valueFrom:
+            secretKeyRef:
+              name: lcm-secrets
+              key: FLUENT_ELASTICSEARCH_HOST
+        - name: FLUENT_ELASTICSEARCH_PORT
+          valueFrom:
+            secretKeyRef:
+              name: lcm-secrets
+              key: FLUENT_ELASTICSEARCH_PORT
+        - name: FLUENT_ELASTICSEARCH_USER
+          valueFrom:
+            secretKeyRef:
+              name: lcm-secrets
+              key: FLUENT_ELASTICSEARCH_USER
+        - name: FLUENT_ELASTICSEARCH_PASSWD
+          valueFrom:
+            secretKeyRef:
+              name: lcm-secrets
+              key: FLUENT_ELASTICSEARCH_PASSWD
+##########
+        command: ["/bin/sh", "-c"]
+        args: ["DLAAS_PORT=8080 /main"]
+        #args: ["dlv --listen=:40015 --headless=true --api-version=2 exec  /main -- --DLAAS_PORT=8080"]
+        resources:
+          limits:
+            cpu: {{.Values.lcm.cpus}}
+            memory: {{.Values.lcm.memory}}
+      imagePullSecrets:
+#      - name: regcred
+      - name: hubsecret
+      nodeSelector:
+       {{range $key,$val := .Values.platformNodeSelectors}}
+         {{$key}}: {{$val}}
+       {{end}}

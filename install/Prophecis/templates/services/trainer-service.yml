@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ffdl-trainer
+  namespace: {{.Values.namespace}}
+  labels:
+    service: ffdl-trainer
+    environment: {{.Values.envir}}
+spec:
+  ports:
+  - name: grpc
+    port: 80
+    targetPort: 8443
+  selector:
+    service: ffdl-trainer

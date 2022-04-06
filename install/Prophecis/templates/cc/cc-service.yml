@@ -6,14 +6,14 @@ metadata:
 spec:
   selector:
     app: controlcenter-go
-  type: NodePort
+  type: {{.Values.cc.service.type}}
   ports:
   - protocol: TCP
-    port: 6666
-    targetPort: 6666
-    nodePort: 30801
+    port: {{.Values.cc.service.port}}
+    targetPort: {{.Values.cc.service.targetPort}}
     name: http
   - protocol: TCP
-    port: 443
-    targetPort: 443
+    port: {{.Values.cc.service.portHttps}}
+    targetPort: {{.Values.cc.service.targetPortHttps}}
     name: https
+#  externalTrafficPolicy: Local

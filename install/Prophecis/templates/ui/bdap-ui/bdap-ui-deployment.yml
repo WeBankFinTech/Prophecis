@@ -5,8 +5,8 @@ metadata:
   namespace: {{.Values.namespace}}
 spec:
   replicas: 1
-  selector:
-    matchLabels:
+  selector: 
+    matchLabels: 
       app: bdap-ui
   template:
     metadata:
@@ -15,8 +15,8 @@ spec:
     spec:
       containers:
       - name: ui
-        image: {{.Values.server_repository}}:{{.Values.ui.image.tag}}
-        imagePullPolicy: Always
+        image: {{.Values.image.registry}}:{{.Values.ui.image.tag}}
+        imagePullPolicy: {{.Values.image.pullPolicy}}
         ports:
         - containerPort: 80
         volumeMounts:
@@ -25,6 +25,8 @@ spec:
           subPath: nginx.conf
         - name: ui-config-volume
           mountPath: /etc/nginx/conf.d
+        - name: ui-ssl-volume
+          mountPath: /etc/nginx/ssl-config
         - name: ui-env-config-volume
           mountPath: /var/www/html/static/env-config.js
           subPath: env-config.js
@@ -48,6 +50,14 @@ spec:
           items: 
           - key: ui-conf
             path: ui.conf
+      - name: ui-ssl-volume
+        configMap:
+          name: bdap-ui-config
+          items:
+            - key: server.pem
+              path: server.pem
+            - key: server.key
+              path: server.key
       - name: ui-env-config-volume
         configMap:
           name: bdap-ui-config
@@ -56,9 +66,10 @@ spec:
             path: env-config.js
       - name: log-volume
         hostPath:
-          path: /appcom/log/ui-bdap/{{.Values.namespace}}
+          path: {{.Values.ui.spec.volumes.hostPath.bdapPath}}/{{.Values.namespace}}
       - name: timezone-volume
         hostPath:
+#          path: /usr/share/zoneinfo/Asia/Shanghai
           path: /etc/localtime
           type: File
       nodeSelector:

@@ -6,15 +6,15 @@ metadata:
 spec:
   serviceName: mongo
   replicas: 1
-  selector:
-    matchLabels:
+  selector: 
+    matchLabels: 
       app: mongo
   template:
     metadata:
       labels:
+        app: mongo
         service: mongo
         environment: local
-        app: mongo
     spec:
       terminationGracePeriodSeconds: 10
       volumes:
@@ -36,9 +36,10 @@ spec:
               path: init-auth.js
       containers:
         - name: mongo
-#          image: mongo:3.0
-          image: {{.Values.server_repository}}:mongo-3.0
-          imagePullPolicy: Always
+          image: {{.Values.image.registry}}:mongo-3.0
+{{ if .Values.image.pullPolicy }}
+          imagePullPolicy: {{.Values.image.pullPolicy}}
+{{ end }}
           command:
             - bash
             - ./init-mongo/init-auth.sh
@@ -46,12 +47,11 @@ spec:
             - containerPort: 27017
           resources:
             limits:
-              cpu: 200m
-              memory: 128Mi
+              cpu: 1000m
+              memory: 1024Mi
           volumeMounts:
             - mountPath: "/data/db"
               name: mongo-pv-volume
-              #subPath: {{.Values.persistent.mongo.nfsEnv}}/mongo
             - name: timezone-volume
               mountPath: /etc/localtime
             - name: config-volume

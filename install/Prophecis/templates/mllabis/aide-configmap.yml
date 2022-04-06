@@ -4,19 +4,15 @@ metadata:
   name: aide-config
   namespace: {{.Values.namespace}}
 data:
-  config-{{.Values.env}}.yml: |
+  config.yml: |
     mlssVersion: v1.3.0
+    #ccAddress: http://controlcenter-go.{{.Values.namespace}}.svc.cluster.local:6666
+    #ccAddress: http://controlcenter-gateway.{{.Values.namespace}}.svc.cluster.local:8081
     ccAddress: https://controlcenter-go
     platformNamespace: {{.Values.namespace}}
     mlssGroupId: 6002
     caCertPath: /etc/mlss/server.crt
-    enableHadoop: {{.Values.aide.hadoop.enable}}
-    installPath: {{.Values.aide.hadoop.installPath}}
-    commonlibPath: {{.Values.aide.hadoop.commonlibPath}} 
-    configPath: {{.Values.aide.hadoop.configPath}}
-    javaPath: {{.Values.aide.hadoop.javaPath}}
-    sourceConfigPath: {{.Values.aide.hadoop.sourceConfigPath}}
-    hostFilePath: "/appcom/config/MLSS-config/MLSS_AIDE-config/HOST_ENV.sh"
+    maxSparkSessionNum: {{.Values.aide.maxSparkSessionNum}}
   server.crt: |
     -----BEGIN CERTIFICATE-----
     MIICzDCCAbQCCQCVrtRO5rcr1DANBgkqhkiG9w0BAQUFADAoMQswCQYDVQQGEwJD

@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mf
+  namespace: {{.Values.namespace}}
+spec:
+  selector:
+    app: mf
+  type: {{.Values.mf.service.type}}
+  ports:
+  - protocol: TCP
+    port: {{.Values.mf.service.port}}
+    targetPort: {{.Values.mf.service.targetPort}}
+    name: http
+  - protocol: TCP
+    port: {{.Values.mf.service.portHttps}}
+    targetPort: {{.Values.mf.service.targetPortHttps}}
+    name: https

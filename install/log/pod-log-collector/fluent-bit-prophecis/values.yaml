@@ -1,0 +1,362 @@
+# Default values for fluent-bit.
+
+# kind -- DaemonSet or Deployment
+kind: DaemonSet
+
+# replicaCount -- Only applicable if kind=Deployment
+replicaCount: 1
+
+# set namespace 
+namespace: logging
+
+image:
+  # repository: fluent/fluent-bit
+  repository:  uat.sf.dockerhub.stgwebank/webank/mlss-di
+  pullPolicy: IfNotPresent
+  tag: fluent-bit-1.7.5-debug
+
+testFramework:
+  image:
+    repository: busybox
+    pullPolicy: IfNotPresent
+    tag: latest
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name:
+
+rbac:
+  create: true
+
+podSecurityPolicy:
+  create: false
+  annotations: {}
+
+podSecurityContext:
+  {}
+  # fsGroup: 2000
+dnsConfig: {}
+  # nameservers:
+  #   - 1.2.3.4
+  # searches:
+  #   - ns1.svc.cluster-domain.example
+  #   - my.dns.search.suffix
+  # options:
+  #   - name: ndots
+#     value: "2"
+#   - name: edns0
+
+hostAliases: []
+  # - ip: "1.2.3.4"
+  #   hostnames:
+  #   - "foo.local"
+  #   - "bar.local"
+
+securityContext:
+  {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 2020
+  labels:
+    {}
+  annotations:
+    {}
+    # prometheus.io/path: "/api/v1/metrics/prometheus"
+    # prometheus.io/port: "2020"
+    # prometheus.io/scrape: "true"
+
+serviceMonitor:
+  enabled: false
+  # namespace: monitoring
+  # interval: 10s
+  # scrapeTimeout: 10s
+  # selector:
+  #  prometheus: my-prometheus
+
+prometheusRule:
+  enabled: false
+  # namespace: ""
+  # additionnalLabels: {}
+  # rules:
+  # - alert: NoOutputBytesProcessed
+  #   expr: rate(fluentbit_output_proc_bytes_total[5m]) == 0
+  #   annotations:
+  #     message: |
+  #       Fluent Bit instance {{ $labels.instance }}'s output plugin {{ $labels.name }} has not processed any
+  #       bytes for at least 15 minutes.
+  #     summary: No Output Bytes Processed
+  #   for: 15m
+  #   labels:
+  #     severity: critical
+
+dashboards:
+  enabled: false
+  labelKey: grafana_dashboard
+  annotations: {}
+
+
+livenessProbe: {}
+  # httpGet:
+  #   path: /
+  #   port: http
+
+readinessProbe:
+  # httpGet:
+  #   path: /
+  #   port: http
+
+resources:
+  # {}
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# nodeSelector: {}
+nodeSelector:
+   node-role.kubernetes.io/node: node
+
+tolerations: []
+
+affinity: {}
+
+podAnnotations: {}
+
+podLabels: {}
+
+priorityClassName: ""
+
+# env: []
+env:
+  - name: FLUENT_ELASTICSEARCH_HOST
+    value: elasticsearch.prophecis.svc.cluster.local
+  - name: FLUENT_ELASTICSEARCH_PORT
+    value: "9200"
+  - name: FLUENT_ELASTICSEARCH_USER
+    value: test
+  - name: FLUENT_ELASTICSEARCH_PASSWD
+    value: test
+
+
+envFrom: []
+
+extraContainers: []
+  # - name: do-something
+  #   image: busybox
+  #   command: ['do', 'something']
+
+extraPorts: []
+#   - port: 5170
+#     containerPort: 5170
+#     protocol: TCP
+#     name: tcp
+
+# extraVolumes: []
+extraVolumes:
+  # - name: varlog
+  #   hostPath:
+  #     path: /var/log
+  - name: varlogcontainers
+    hostPath:
+      path: /var/log/containers
+  - name: datadockercontainers
+    hostPath:
+      path: /data/docker/containers
+  # - name: fluent-bit-config
+  #   configMap:
+  #     name: fluent-bit-config
+  # - name: varlibdockercontainers
+  #   hostPath:
+  #     path: /var/lib/docker/containers
+
+extraVolumeMounts:
+  # - name: varlog
+  #   mountPath: /var/log
+  - name: varlogcontainers
+    mountPath: /var/log/containers
+  # - name: fluent-bit-config
+  #   mountPath: /fluent-bit/etc/
+  # - name: varlibdockercontainers
+  #   mountPath: /var/lib/docker/containers
+  - name: datadockercontainers
+    mountPath: /data/docker/containers
+
+
+updateStrategy: {}
+  # type: RollingUpdate
+  # rollingUpdate:
+  #   maxUnavailable: 1
+
+# Make use of a pre-defined configmap instead of the one templated here
+existingConfigMap: ""
+
+networkPolicy:
+  enabled: false
+  # ingress:
+  #   from: []
+
+# luaScripts: {}
+luaScripts: 
+   kubeLogContainer.lua: |
+    function split( str,reps )
+        local resultStrList = {}
+        string.gsub(str,'[^'..reps..']+',function ( w )
+            table.insert(resultStrList,w)
+        end)
+        return resultStrList
+    end
+    function cb_print(tag, timestamp, record)
+        tagList = split(tag, '_')
+        ns = tagList[2]
+        nsPrefix = "ns-ns-"
+        if (string.sub(ns, 1, string.len(nsPrefix)) ~= "ns-ns-")
+        then
+          return -1, 0, 0
+        end
+
+        _, endIdx = string.find(tagList[1], "kube.var.log.containers.",1)
+        podName = string.sub(tagList[1], endIdx+1)
+
+        startIdx,endIdx = string.find(tagList[3], ".log")
+        containerName = string.sub(tagList[3], 1, startIdx-1)
+
+        newRecord = {}
+        newRecord["ns"] = ns
+        newRecord["pod_name"] = podName
+        newRecord["container_name"] = containerName
+
+        for key, val in pairs(record) do
+          newRecord[key] = val
+        end
+
+        return 1, timestamp, newRecord
+    end
+
+
+## https://docs.fluentbit.io/manual/administration/configuring-fluent-bit/configuration-file
+config:
+  service: |
+    [SERVICE]
+        Flush 1
+        Daemon Off
+        Log_Level info
+        Parsers_File parsers.conf
+        Parsers_File custom_parsers.conf
+        HTTP_Server On
+        HTTP_Listen 0.0.0.0
+        HTTP_Port {{ .Values.service.port }}
+
+
+  ## https://docs.fluentbit.io/manual/pipeline/inputs
+  inputs: |
+    [INPUT]
+        Name              tail
+        Tag               kube.*
+        Path              /var/log/containers/*.log
+        Parser            docker
+        DB                /var/log/flb_kube.db
+        Mem_Buf_Limit     5MB
+        #Skip_Long_Lines   On
+        Refresh_Interval  10
+        Read_from_Head    True
+
+
+  ## https://docs.fluentbit.io/manual/pipeline/filters
+  filters: |
+    # [FILTER]
+    #     Name    lua
+    #     Match   kube.*
+    #     script  kubeLogContainer.lua
+    #     call    cb_print
+    #     Type_int_key rindex time
+    [FILTER]
+        Name   lua
+        Match  kube.*
+        script /fluent-bit/scripts/kubeLogContainer.lua
+        call   cb_print
+        Type_int_key rindex time
+
+  ## https://docs.fluentbit.io/manual/pipeline/outputs
+  outputs: |
+    [OUTPUT]
+        Name  stdout
+        Match *
+    [OUTPUT]
+        Name            es
+        Match           kube.*
+        Host            ${FLUENT_ELASTICSEARCH_HOST}
+        Port            ${FLUENT_ELASTICSEARCH_PORT}
+        HTTP_User       ${FLUENT_ELASTICSEARCH_USER}
+        HTTP_Passwd     ${FLUENT_ELASTICSEARCH_PASSWD}
+        Logstash_Format Off
+        Replace_Dots    On
+        Retry_Limit     False
+        Index           kube_log_container_es_index
+        Type            kube_log_container_es_type
+        Trace_Error     On
+        Buffer_Size     1MB
+        Generate_ID     On
+
+
+  ## https://docs.fluentbit.io/manual/pipeline/parsers
+  customParsers: |
+    [PARSER]
+        Name docker_no_time
+        Format json
+        Time_Keep Off
+        Time_Key time
+        Time_Format %Y-%m-%dT%H:%M:%S.%L
+
+# The config volume is mounted by default, either to the existingConfigMap value, or the default of "fluent-bit.fullname"
+volumeMounts:
+  - name: config
+    mountPath: /fluent-bit/etc/fluent-bit.conf
+    subPath: fluent-bit.conf
+  - name: config
+    mountPath: /fluent-bit/etc/custom_parsers.conf
+    subPath: custom_parsers.conf
+
+daemonSetVolumes:
+  - name: varlog
+    hostPath:
+      path: /var/log
+  - name: varlibdockercontainers
+    hostPath:
+      path: /var/lib/docker/containers
+  - name: etcmachineid
+    hostPath:
+      path: /etc/machine-id
+      type: File
+
+daemonSetVolumeMounts:
+  - name: varlog
+    mountPath: /var/log
+  - name: varlibdockercontainers
+    mountPath: /var/lib/docker/containers
+    readOnly: true
+  - name: etcmachineid
+    mountPath: /etc/machine-id
+    readOnly: true
+
+args: []
+
+command: []
+
+initContainers: []
+  # - name: do-something
+  #   image: busybox
+  #   command: ['do', 'something']
