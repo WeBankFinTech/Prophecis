@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package lcm
+package utils
 
 import (
 	"fmt"
@@ -146,7 +146,7 @@ func learnerNodeEtcdBasePath(trainingID string, learnerID int) string {
 
 // calcMemory is a utility to convert the memory from DLaaS resource requirements
 // to the default MB notation
-func calcMemory(r *service.ResourceRequirements) float64 {
+func CalcMemory(r *service.ResourceRequirements) float64 {
 	return calcSize(r.Memory, r.MemoryUnit)
 }
 
@@ -222,7 +222,7 @@ func setServiceTypeLabel(spec *metav1.ObjectMeta, value string) {
 	spec.Labels["service"] = value
 }
 
-func k8sInteractionBackoff() *backoff.ExponentialBackOff {
+func K8sInteractionBackoff() *backoff.ExponentialBackOff {
 	back := backoff.NewExponentialBackOff()
 	back.MaxElapsedTime = 3 * time.Minute
 	back.MaxInterval = 1 * time.Minute
