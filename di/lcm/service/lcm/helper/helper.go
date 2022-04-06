@@ -21,9 +21,12 @@ import (
 	"webank/DI/commons/constants"
 
 	"github.com/spf13/viper"
+	v1beta1 "k8s.io/api/apps/v1beta1"
 	v1core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+const FLUENTBIT = "fluent-bit"
 
 //CreatePodSpec ...
 // FIXME MLSS Change: add nodeSelectors to deployment/sts pods
@@ -35,6 +38,12 @@ func CreatePodSpec(containers []v1core.Container, volumes []v1core.Volume, label
 
 	// FIXME MLSS Change: define timezone volume
 	volumes = append(volumes, constants.TimezoneVolume)
+
+	// FIXME MLSS Temporary Change: use fluent-bit
+	logCollectorImageShortName := labels["log_collector_image_short_name"]
+	if logCollectorImageShortName == FLUENTBIT {
+		volumes = append(volumes, constants.FluentbitConfigVolume)
+	}
 
 	return v1core.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
@@ -51,6 +60,24 @@ func CreatePodSpec(containers []v1core.Container, volumes []v1core.Volume, label
 			AutomountServiceAccountToken: &automountSeviceToken,
 			// FIXME MLSS Change: add nodeSelectors
 			NodeSelector: nodeSelectorMap,
+		},
+	}
+}
+
+//CreateDeploymentForHelper ...
+func CreateDeploymentForHelper(name string, podTemplateSpec v1core.PodTemplateSpec) *v1beta1.Deployment {
+
+	revisionHistoryLimit := int32(0) //https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#clean-up-policy
+
+	//TODO consider this as well https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#progress-deadline-seconds
+	//but not sure if we can nicely revert back
+	return &v1beta1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+		Spec: v1beta1.DeploymentSpec{
+			Template:             podTemplateSpec,
+			RevisionHistoryLimit: &revisionHistoryLimit, //we never rollback these
 		},
 	}
 }

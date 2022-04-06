@@ -1,22 +1,26 @@
 package lcm
 
 import (
-	"github.com/spf13/viper"
 	"webank/DI/commons/service"
 
+	"github.com/spf13/viper"
+
 	"fmt"
-	v1core "k8s.io/api/core/v1"
 	"os"
 
+	v1core "k8s.io/api/core/v1"
+
 	//"github.com/sirupsen/logrus"
+	"webank/DI/commons/logger"
+
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
-	"webank/DI/commons/logger"
 )
 
 const learnerEntrypointFilesVolume = "learner-entrypoint-files"
 const learnerEntrypointFilesPath = "/entrypoint-files"
 const hostDataMountVolume = "mounted-host-data"
+const learnerLogFilesVolume = "log-dir"
 
 //const hostDataMountPath = "/host-data"
 const hostDataMountPath = "/cosdata"
@@ -66,6 +70,12 @@ func extendLearnerContainer(learner *v1core.Container, req *service.JobDeploymen
 	}
 	learner.VolumeMounts = append(learner.VolumeMounts, extMount)
 
+	//LogMount
+	//logMount := v1core.VolumeMount{
+	//	Name:  learnerLogFilesVolume,
+	//	MountPath: "job-logs"}
+	//learner.VolumeMounts = append(learner.VolumeMounts, logMount)
+
 	if doMountHostData() {
 		hostMount := v1core.VolumeMount{
 			Name:      hostDataMountVolume,
@@ -97,17 +107,17 @@ func extendLearnerVolumes(volumeSpecs []v1core.Volume, logr *logger.LocLoggingEn
 	logr.Debugf("extendLearnerVolumes entry")
 
 	// learner entrypoint files volume
-	learnerEntrypointFilesVolume := v1core.Volume{
-		Name: learnerEntrypointFilesVolume,
-		VolumeSource: v1core.VolumeSource{
-			ConfigMap: &v1core.ConfigMapVolumeSource{
-				LocalObjectReference: v1core.LocalObjectReference{
-					Name: learnerEntrypointFilesVolume,
-				},
-			},
-		},
-	}
-	volumeSpecs = append(volumeSpecs, learnerEntrypointFilesVolume)
+	//learnerEntrypointFilesVolume := v1core.Volume{
+	//	Name: learnerEntrypointFilesVolume,
+	//	VolumeSource: v1core.VolumeSource{
+	//		ConfigMap: &v1core.ConfigMapVolumeSource{
+	//			LocalObjectReference: v1core.LocalObjectReference{
+	//				Name: learnerEntrypointFilesVolume,
+	//			},
+	//		},
+	//	},
+	//}
+	//volumeSpecs = append(volumeSpecs, learnerEntrypointFilesVolume)
 
 	shouldMountHostData := doMountHostData()
 
@@ -125,26 +135,10 @@ func extendLearnerVolumes(volumeSpecs []v1core.Volume, logr *logger.LocLoggingEn
 		logrus.Debugf("created host mount volume spec: %v+", hostDataVolume)
 		volumeSpecs = append(volumeSpecs, hostDataVolume)
 
-		yamlbytes, err := yaml.Marshal(volumeSpecs)
-		if err != nil {
-			logr.WithError(err).Errorf("Could not marshal volumeSpecs for diagnosis")
-		}
-		fmt.Printf("-------------------------\n")
-		fmt.Printf("volumeSpecs: %s", string(yamlbytes))
+
 	}
 	logr.Debugf("extendLearnerVolumes exit")
 	return volumeSpecs
-}
-
-func dataBrokerImageNameExtended(dockerRegistry string, dataBrokerType string, dataBrokerTag string) string {
-	imagePrefix := getImagePrefix()
-	//	return fmt.Sprintf("%s/%sdatabroker_%s:%s", dockerRegistry, imagePrefix, dataBrokerType, dataBrokerTag)
-	// FIXME MLSS Temporary Change: use fixed lhelper image
-	if len(imagePrefix) > 0 {
-		return fmt.Sprintf("%s/%sdatabroker_%s:%s", dockerRegistry, imagePrefix, dataBrokerType, dataBrokerTag)
-	} else {
-		return fmt.Sprintf("%s:databroker_%s-%s", dockerRegistry, dataBrokerType, dataBrokerTag)
-	}
 }
 
 func controllerImageNameExtended(dockerRegistry string, servicesTag string) string {

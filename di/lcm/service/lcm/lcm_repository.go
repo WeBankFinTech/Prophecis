@@ -18,65 +18,25 @@ package lcm
 
 import (
 	"errors"
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"strconv"
 	"webank/DI/commons/constants"
 	"webank/DI/commons/logger"
 	"webank/DI/trainer/trainer/grpc_trainer_v2"
 
-	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
+
 	"strings"
 	"webank/DI/trainer/trainer"
+
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
 const (
 	TRAINING_JOB_QUEUE_NS = "TRAINING_JOB_QUEUE_NS"
 	TRAINING_JOB_QUEUE_   = "TRAINING_JOB_QUEUE_"
 )
-
-// TrainingRecord is the data structure we store in the Mongo collection "training_jobs"
-//type TrainingRecord struct {
-//	ID                    bson.ObjectId                    `bson:"_id,omitempty" json:"id"`
-//	TrainingID            string                           `bson:"training_id" json:"training_id"`
-//	UserID                string                           `bson:"user_id" json:"user_id"`
-//	JobId                 string                           `bson:"job_id" json:"job_id"`
-//	ModelDefinition       *grpc_trainer_v2.ModelDefinition `bson:"model_definition,omitempty" json:"model_definition"`
-//	Training              *grpc_trainer_v2.Training        `bson:"training,omitempty" json:"training"`
-//	Datastores            []*grpc_trainer_v2.Datastore     `bson:"data_stores,omitempty" json:"data_stores"`
-//	TrainingStatus        *grpc_trainer_v2.TrainingStatus  `bson:"training_status,omitempty" json:"training_status"`
-//	Metrics               *grpc_trainer_v2.Metrics         `bson:"metrics,omitempty" json:"metrics"`
-//	Deleted               bool                             `bson:"deleted,omitempty" json:"deleted"`
-//	EvaluationMetricsSpec string                           `bson:"evaluation_metrics_spec,omitempty" json:"evaluation_metrics_spec"`
-//	Namespace             string                           `bson:"namespace,omitempty" json:"namespace"`
-//	// FIXME MLSS Change: add GID & UID
-//	GID             string `bson:"gid" json:"gid"`
-//	UID             string `bson:"uid" json:"uid"`
-//	EventChecker    string `bson:"event_checker,omitempty" json:"event_checker"`
-//	DeadlineChecker string `bson:"deadline_checker,omitempty" json:"deadline_checker"`
-//	OvertimeChecker string `bson:"overtime_checker,omitempty" json:"overtime_checker"`
-//	AlertLevel      string `bson:"alert_level,omitempty" json:"alert_level"`
-//	Receiver        string `bson:"receiver,omitempty" json:"receiver"`
-//	Interval        string `bson:"interval,omitempty" json:"interval"`
-//}
-
-// FIXME MLSS Change: get models with page info
-//type TrainingRecordPaged struct {
-//	TrainingRecords []*TrainingRecord `bson:"training_records" json:"training_records"`
-//	Pages           int               `bson:"pages" json:"pages"`
-//	Total           int               `bson:"total" json:"total"`
-//}
-
-// JobHistoryEntry stores training job status history in the Mongo collection "job_history"
-//type JobHistoryEntry struct {
-//	ID            bson.ObjectId          `bson:"_id,omitempty" json:"id"`
-//	TrainingID    string                 `bson:"training_id" json:"training_id"`
-//	Timestamp     string                 `bson:"timestamp,omitempty" json:"timestamp,omitempty"`
-//	Status        grpc_trainer_v2.Status `bson:"status,omitempty" json:"status,omitempty"`
-//	StatusMessage string                 `bson:"status_message,omitempty" json:"status_message,omitempty"`
-//	ErrorCode     string                 `bson:"error_code,omitempty" json:"error_code,omitempty"`
-//}
 
 type trainingsRepository struct {
 	session    *mgo.Session
@@ -108,11 +68,12 @@ type jobHistoryRepository interface {
 // newTrainingsRepository creates a new training repo for storing training data. The mongo URI can contain all the necessary
 // connection information. See here: http://docs.mongodb.org/manual/reference/connection-string/
 // However, we also support not putting the username/password in the connection URL and provide is separately.
-func newTrainingsRepository(mongoURI string, database string, username string, password string, cert string, collection string) (repository, error) {
+func newTrainingsRepository(mongoURI string, database string, username string, password string, authenticationDatabase string,
+	cert string, collection string) (repository, error) {
 	log := logger.LocLogger(log.StandardLogger().WithField("module", "trainingRepository"))
 	log.Debugf("Creating mongo training repository for %s, collection %s:", mongoURI, collection)
 
-	session, err := trainer.ConnectMongo(mongoURI, database, username, password, cert)
+	session, err := trainer.ConnectMongo(mongoURI, database, username, password, authenticationDatabase, cert)
 	if err != nil {
 		return nil, err
 	}
@@ -130,11 +91,12 @@ func newTrainingsRepository(mongoURI string, database string, username string, p
 	return repo, nil
 }
 
-func NewTrainingsRepository(mongoURI string, database string, username string, password string, cert string, collection string) (repository, error) {
+func NewTrainingsRepository(mongoURI string, database string, username string, password string, authenticationDatabase string,
+	cert string, collection string) (repository, error) {
 	log := logger.LocLogger(log.StandardLogger().WithField("module", "trainingRepository"))
 	log.Debugf("Creating mongo training repository for %s, collection %s:", mongoURI, collection)
 
-	session, err := trainer.ConnectMongo(mongoURI, database, username, password, cert)
+	session, err := trainer.ConnectMongo(mongoURI, database, username, password, authenticationDatabase, cert)
 	if err != nil {
 		return nil, err
 	}
@@ -153,11 +115,12 @@ func NewTrainingsRepository(mongoURI string, database string, username string, p
 }
 
 // FIXME MLSS Change: v_1.4.1 add func to get queues from mongoDB
-func getQueuesFromDB(mongoURI string, database string, username string, password string, cert string) (q map[string]*queueHandler, err error) {
+func getQueuesFromDB(mongoURI string, database string, username string, password string, authenticationDatabase string,
+	cert string) (q map[string]*queueHandler, err error) {
 	log := logger.LocLogger(log.StandardLogger().WithField("module", "trainingRepository"))
 	log.Debugf("get queues from mongo")
 
-	session, err := trainer.ConnectMongo(mongoURI, database, username, password, cert)
+	session, err := trainer.ConnectMongo(mongoURI, database, username, password, authenticationDatabase, cert)
 	if err != nil {
 		return nil, err
 	}
@@ -167,9 +130,11 @@ func getQueuesFromDB(mongoURI string, database string, username string, password
 	for _, collectionName := range collectionNames {
 		if strings.HasPrefix(collectionName, TRAINING_JOB_QUEUE_NS) {
 			namespaceName := strings.Replace(collectionName, TRAINING_JOB_QUEUE_, "", 1)
-			queue, err := trainer.GetNewTrainingJobQueue(mongoURI, database, username, password, cert, trainer.QueueName(namespaceName), trainer.LockName(namespaceName))
+			queue, err := trainer.GetNewTrainingJobQueue(mongoURI, database, username, password, authenticationDatabase,
+				cert, trainer.QueueName(namespaceName), trainer.LockName(namespaceName))
 			if err != nil {
-				log.WithError(err).Fatalf("Cannot create queue with %s %s %s", viper.GetString(mongoAddressKey), viper.GetString(mongoDatabaseKey), viper.GetString(mongoUsernameKey))
+				log.WithError(err).Fatalf("Cannot create queue with %s %s %s", viper.GetString(MongoAddressKey),
+					viper.GetString(MongoDatabaseKey), viper.GetString(MongoUsernameKey))
 				return nil, err
 			}
 			queues[collectionName] = &queueHandler{make(chan struct{}), queue, constants.Fault}
@@ -179,12 +144,12 @@ func getQueuesFromDB(mongoURI string, database string, username string, password
 }
 
 // newJobHistoryRepository creates a new repo for storing job status history entries.
-func newJobHistoryRepository(mongoURI string, database string, username string, password string,
+func newJobHistoryRepository(mongoURI string, database string, username string, password string, authenticationDatabase string,
 	cert string, collection string) (jobHistoryRepository, error) {
 	log := logger.LocLogger(log.StandardLogger().WithField("module", "jobHistoryRepository"))
 	log.Debugf("Creating mongo repository for %s, collection %s:", mongoURI, collection)
 
-	session, err := trainer.ConnectMongo(mongoURI, database, username, password, cert)
+	session, err := trainer.ConnectMongo(mongoURI, database, username, password, authenticationDatabase,cert)
 	if err != nil {
 		return nil, err
 	}
@@ -204,10 +169,10 @@ func (r *trainingsRepository) Store(t *trainer.TrainingRecord) error {
 
 	var err error
 	if t.ID == "" {
-		logger.GetLogger().Info("insert training record：",t)
+		logger.GetLogger().Info("insert training record：", t)
 		err = sess.DB(r.database).C(r.collection).Insert(t)
 	} else {
-		logger.GetLogger().Info("update training record：",t)
+		logger.GetLogger().Info("update training record：", t)
 		err = sess.DB(r.database).C(r.collection).Update(bson.M{"_id": t.ID}, t)
 	}
 	if err != nil {
