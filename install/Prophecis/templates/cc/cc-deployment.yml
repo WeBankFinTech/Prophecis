@@ -13,6 +13,10 @@ spec:
   minReadySeconds: 5
   strategy:
     type: Recreate
+#    type: RollingUpdate
+#    rollingUpdate:
+#      maxSurge: 1
+#      maxUnavailable: 1
   template:
     metadata:
       labels:
@@ -21,21 +25,17 @@ spec:
       serviceAccountName: cc-go-sa
       containers:
       - name: cc
-        image: {{.Values.server_repository}}:{{.Values.cc.image.tag}}
-        imagePullPolicy: Always
+        image: {{.Values.image.registry}}:{{.Values.cc.image.tag}}
+        imagePullPolicy: {{.Values.image.pullPolicy}}
         ports:
-        
-        - containerPort: 6666
-        - containerPort: 443
+        - containerPort: {{.Values.cc.containerPort.portHttp}}
+        - containerPort: {{.Values.cc.containerPort.portHttps}}
         command:
         - /bin/bash
         - -c
-        - "./mlss-controlcenter-go --host=0.0.0.0 --scheme=http --port=6666 --scheme=https --tls-port=443 --tls-certificate=/etc/config/server.crt --tls-key=/etc/config/server.key"
-        env:
-        - name: UM_SA_PWD
-          value: sa
-        - name: UM_OTHER_PWD
-          value: other
+        args:
+        #- /go/bin/dlv  --listen=:40006 --headless=true --api-version=2 exec   ./mlss-controlcenter-go -- --host 0.0.0.0  --scheme http  --port {{.Values.cc.containerPort.portHttp}}  --scheme https  --tls-port {{.Values.cc.containerPort.portHttps}} --tls-certificate /etc/config/server.crt  --tls-key /etc/config/server.key
+        -  ./mlss-controlcenter-go --host 0.0.0.0  --scheme http  --port {{.Values.cc.containerPort.portHttp}}  --scheme https  --tls-port {{.Values.cc.containerPort.portHttps}} --tls-certificate /etc/config/server.crt  --tls-key /etc/config/server.key
         volumeMounts:
         - name: config-volume
           mountPath: /etc/config
@@ -43,6 +43,8 @@ spec:
           mountPath: /var/log/controlcenter
         - name: timezone-volume
           mountPath: /etc/localtime
+        - name: mlss-data
+          mountPath: /data/bdap-ss/mlss-data
       imagePullSecrets:
       - name: hubsecret-go
       volumes:
@@ -60,11 +62,16 @@ spec:
             path: server.key
       - name: log-volume
         hostPath:
-          path: /appcom/log/controlcenter/{{.Values.namespace}}
+          path: {{.Values.cc.spec.volumes.hostPath.path}}/{{.Values.namespace}}
       - name: timezone-volume
         hostPath:
           path: /usr/share/zoneinfo/Asia/Shanghai
           type: File
+      - name: mlss-data
+        hostPath:
+          path: {{.Values.cc.spec.volumes.hostPath.mlssData}} 
+      # other nodes may not connect to UM/DB/IMS
+#      nodeName: {{.Values.cc.deployNode}}
       nodeSelector:
         {{range $key,$val := .Values.platformNodeSelectors}}
           {{$key}}: {{$val}}

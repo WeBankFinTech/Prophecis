@@ -9,19 +9,19 @@ data:
           "kernel_python_credentials" : {
             "username": "",
             "password": "",
-            "url": "{{.Values.livy.address}}",
+            "url": "http://127.0.0.1:8998",
             "auth": "None"
           },
           "kernel_scala_credentials" : {
             "username": "",
             "password": "",
-            "url": "{{.Values.livy.address}}",
+            "url": "http://127.0.0.1:8998",
             "auth": "None"
           },
           "kernel_r_credentials": {
             "username": "",
             "password": "",
-            "url": "{{.Values.livy.address}}"
+            "url": "http://127.0.0.1:8998"
           },
           "logging_config": {
             "version": 1,
@@ -57,7 +57,10 @@ data:
             "conf": {
                 "spark.executor.cores": "",
                 "spark.executor.memory": "",
-                "spark.executor.instances": ""
+                "spark.executor.instances": "",
+                "spark.jars.packages": "com.microsoft.ml.spark:mmlspark_2.11:1.0.0-rc1",
+                "spark.jars.repositories": "https://mmlspark.azureedge.net/maven",
+                "spark.jars.excludes": "org.scala-lang:scala-reflect,org.apache.spark:spark-tags_2.11,org.scalactic:scalactic_2.11,org.scalatest:scalatest_2.11"
             }
           },
           "use_auto_viz": true,
@@ -76,16 +79,16 @@ data:
 
   linkismagic.json: |
         {
-          "base_url":"127.0.0.1:8088",
+          "base_url":"http://http://127.0.0.1:9001",
           "headers": {
-                "Token-User":"hadoop",
-                "Token-Code": "MLSS",
+                "Token-User":"hduser05",
                 "Content-Type":"application/json"
           },
           "session_configs": {
-                "wds.linkis.yarnqueue":"root.default",
+                "wds.linkis.yarnqueue":"root.dws",
                 "spark.driver.memory":"4g",
                 "spark.executor.instances":"1",
-                "spark.executor.memory":"4g"
+                "spark.executor.memory":"4g",
+                "wds.linkis.instance": 3
           }
         }

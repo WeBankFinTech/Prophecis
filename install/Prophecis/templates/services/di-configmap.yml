@@ -1,0 +1,80 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: di-config
+  namespace: {{.Values.namespace}}
+data:
+  config-{{.Values.envir}}.yml: |
+    mlssVersion: v1.3.0
+    #ccAddress: http://controlcenter.{{.Values.namespace}}.svc.cluster.local:7777
+    #ccAddress: http://controlcenter-go.{{.Values.namespace}}.svc.cluster.local:6666
+    ccAddress: https://controlcenter-go
+    platformNamespace: {{.Values.namespace}}
+    queuePollInterval: 10
+    queueSize: 200
+    mlssGroupId: 6002
+    caCertPath: /etc/mlss/server.crt
+    linkisLogCollector:
+      replicas: 2
+    linkis:
+      address: {{.Values.linkis.address}}
+      tokenCode: {{.Values.linkis.tokenCode}}
+    mlflow:
+      address: {{.Values.mlflow.address}}
+    linkispro:
+      address: {{.Values.linkispro.address}}
+      tokenCode: {{.Values.linkispro.tokenCode}}
+    datasource:
+      userName: {{.Values.db.user}}
+      userPwd: {{.Values.db.pwd}}
+      url: {{.Values.db.server}}
+      port: {{.Values.db.port}}
+      db: {{.Values.db.name}}
+    encodeFlag: {{.Values.encodeFlag}}
+  server.crt: |
+    -----BEGIN CERTIFICATE-----
+    MIICzDCCAbQCCQCVrtRO5rcr1DANBgkqhkiG9w0BAQUFADAoMQswCQYDVQQGEwJD
+    TjEZMBcGA1UEAwwQY29udHJvbGNlbnRlci1nbzAeFw0yMDA1MDcxMDUyMzlaFw0z
+    MDA1MDUxMDUyMzlaMCgxCzAJBgNVBAYTAkNOMRkwFwYDVQQDDBBjb250cm9sY2Vu
+    dGVyLWdvMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAy7p22tSPDmN7
+    a7tRndX7NiEDYv+6mhFwSw/liUCe4rECF6v457eqNlmd+qo1JHYxBMelakFZtSt/
+    TpcAuz8vRQFmK61qwPruEqg5/S5VtQQNzrGkuOEthOD6+Joepfo1aSiBHl8ec6Fr
+    vYJkRijaoL3g2w/91Vt1LncrfsaPZBCKZ2epgsCnLYVQogxu/0gKBng9ilsMcBVA
+    GeAeAPmxW/4I+mO1a342L53A8xZU2RaDXbZsBLucH1ONIhLb7Zja1fUCJi7HRmIL
+    LfUzgJ62v4tsvZtLRoaA2QA4mEZesIPHeJpgQRmgpD5BmLxX9SHekoLTWqDCAA3z
+    XnxjHjgkawIDAQABMA0GCSqGSIb3DQEBBQUAA4IBAQAa3Q0ui/Jqy1h+2DG+yyDf
+    wtyemM0C9AjZFHiX10bG6EzdRlxX8lk1SJf1oQTnBhMR30FoI3ZyN+N9/uNvLHy+
+    9zarQT8GiaBJCV4otIZ6V27AeeKaWOFju3ZJUTZ3VlxPRn0qzeIQkNk2Z2HwEPXG
+    /ppDXqqSpChC7jWRr34ZClwdCiWVN3RL18c02giCJn/FBdLmxyia72Wjhox/zN+N
+    lnGyr00Jcoj26dwN8bxDmgrmkbJKeVgqUXgys9Hc2Vl1c9jv0NGbrI7YcAxCwHxj
+    NW/H5Z/FuR0A0ifTo5UgziamPGj0sB/OmZE/TPOSTFsaiM2IudAjwE8S32ihgJzo
+    -----END CERTIFICATE-----
+
+  server.key: |
+    -----BEGIN RSA PRIVATE KEY-----
+    MIIEpAIBAAKCAQEAy7p22tSPDmN7a7tRndX7NiEDYv+6mhFwSw/liUCe4rECF6v4
+    57eqNlmd+qo1JHYxBMelakFZtSt/TpcAuz8vRQFmK61qwPruEqg5/S5VtQQNzrGk
+    uOEthOD6+Joepfo1aSiBHl8ec6FrvYJkRijaoL3g2w/91Vt1LncrfsaPZBCKZ2ep
+    gsCnLYVQogxu/0gKBng9ilsMcBVAGeAeAPmxW/4I+mO1a342L53A8xZU2RaDXbZs
+    BLucH1ONIhLb7Zja1fUCJi7HRmILLfUzgJ62v4tsvZtLRoaA2QA4mEZesIPHeJpg
+    QRmgpD5BmLxX9SHekoLTWqDCAA3zXnxjHjgkawIDAQABAoIBAQC+f4gdzT5LZQiG
+    TyzdGraBAdOp4Zg58m5/MckfUzZ+oKdlPSBMg/f8REYtmrSAeKgTYR+ywJLCjn7H
+    HPnJHSb1Ln67/rdg5gJxna5DqOzpi3XhvUhau+wVYU4r4ekgqFsDDqXVoXnXA6y8
+    Es3ysMbmIUa9cDGZLKDhJvub2s0/8XA/bvb2HZUdQUBZMmx/Yw7R3mMDHFL813xr
+    gs3x/HwWDsqJC8AhOZNaAHHIynnSFSqQ1mjgYA0TVYZWGNASU9fncqKUcFYBFJq2
+    /O32drjTlTZQse3Mv2EQaVtVuxLrgGV4XTx3q1dsgG7+6IhVg046ffRtSX9o+jqY
+    fs1oJHzJAoGBAOtrxjjZoNe9tvNlImSU7jeZRJn0X+l2S9AQeKLqV2hjEB5LFscv
+    kDrR3stsUTuxKZe3ZfI8YUsbR5keCE6wuSdqtxuYtIhjxJq2zNcYrImI+xs7e3Sm
+    /WUgl5Wenxq0FKxRBMOp5o+sR7V1y2lxW3uxQpj8kc1bL0LTeyrc0fK3AoGBAN2J
+    edpHi2IxNIBCkkxYXVBAo8NUFHOkYnyeixzf6DySRLOMAx0kog/r0H89fM3xO+a/
+    3Sls8hptVmbBhtw2YNJQd1HllLQ1Ov1T2NBKs2eVcUSDNrMbjTYbLePK5sotQT7v
+    i3cdZ+pIGagzCOWZjbt9PLTrys0l7i1kaVxJVBftAoGATs4q8ojXMKDPBzbJhoXc
+    IDxsHGUTXiE9S47X8yEi1Uyj7qAQJekkDKyIOewuXR7231SDCc1wfCXLl9PX0A+U
+    Sz+Lv+8kL6vF+kxK0Y3u47M462rD7s6fcCSy2WDZvaSebvhH8f+DsIBpGLMvvkI1
+    73fs5S1W2Tk23tXQGw8EMI0CgYBbVHPBw0D5KCPmxIsfokZF8YAR5LXRvvFDQvFC
+    5CQP5JUiGBSojROq0KLR8f1jwZHaXTrF+z4MGwtFrX71hg2AZt/qCWW2rUM2cLyv
+    kjxH9doOTrHcQP2EUswmXt2qd+GwGn06jArtEPBS4UdHsHg31TeTtqmSzZJVcFHn
+    U+uxOQKBgQDBDilP5xsQeeeG8rdE8zudWhCf/6EDvYoDa+DzDfuDqxHCAmlufSYm
+    CB8vT/N7IEL9IjjmYo2JMNYiqMHmS9rTId8e9tdTgi8AAkYupkDGIqMkUeewgnxx
+    k+1+nsLxQD6MWoNiquRPPAL+bt/KV3FWMB4FsOK1cW3XrD/UrF1Dlg==
+    -----END RSA PRIVATE KEY-----

@@ -28,8 +28,10 @@ rules:
   - get
   - list
   - create
+  - update
   - delete
   - watch
+  - patch
 - apiGroups:
   - ""
   resources:

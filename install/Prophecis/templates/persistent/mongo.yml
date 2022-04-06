@@ -11,9 +11,6 @@ spec:
     storage: 100Gi
   accessModes:
     - ReadWriteMany
-  #nfs:
-    #server: 10.107.105.207
-    #path: {{.Values.persistent.mongo.nfsPath}} 
   hostPath:
     path: {{.Values.persistent.mongo.path}}
 ---

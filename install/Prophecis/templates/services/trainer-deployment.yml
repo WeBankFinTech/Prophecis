@@ -1,0 +1,129 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ffdl-trainer
+  namespace: {{.Values.namespace}}
+  labels:
+    environment: {{.Values.envir}}
+    service: ffdl-trainer
+spec:
+  selector:
+    matchLabels:
+      service: ffdl-trainer
+      environment: {{.Values.envir}}
+  replicas: {{.Values.trainer.replicas}}
+  template:
+    metadata:
+      labels:
+        service: ffdl-trainer
+        environment: {{.Values.envir}}
+        version: {{.Values.trainer.version}}
+    spec:
+      volumes:
+      - name: di-config
+        configMap:
+          name: di-config
+      - name: timezone-volume
+        hostPath:
+          path: /usr/share/zoneinfo/Asia/Shanghai
+          type: File
+      containers:
+      - name: ffdl-trainer-container
+        image: {{.Values.image.registry}}:{{.Values.trainer.version}}
+{{ if .Values.image.pullPolicy }}
+        imagePullPolicy: {{.Values.image.pullPolicy}}
+{{ end }}
+        ports:
+        - containerPort: 8443
+        env:
+        - name: DLAAS_POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: DLAAS_ENV
+          value: {{.Values.envir}}
+        - name: DLAAS_LOGLEVEL
+          value: {{.Values.log.level}}
+        - name: DLAAS_PUSH_METRICS_ENABLED
+#          value: "false"
+          value: "true"
+        - name: LINKIS_ADDRESS
+          value: {{.Values.linkis.address}}
+        - name: LINKIS_TOKEN_CODE
+          value: {{.Values.linkis.tokenCode}}
+{{ if eq .Values.envir "dev" }}
+        - name: MONGO_ADDRESS
+          value: {{.Values.mongo.address}}
+        - name: MONGO_USERNAME
+          value: {{.Values.mongo.username}}
+        - name: MONGO_PASSWORD
+          value: {{.Values.mongo.password}}
+        - name: MONGO_DATABASE
+          value: {{.Values.mongo.database}}
+        - name: MONGO_Authentication_Database
+          value: {{.Values.mongo.authenticationDatabase}}
+{{ else }}
+        - name: DLAAS_MONGO_ADDRESS
+          valueFrom:
+             secretKeyRef:
+               name: trainer-secrets
+               key: DLAAS_MONGO_ADDRESS
+        - name: DLAAS_MONGO_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: trainer-secrets
+              key: DLAAS_MONGO_USERNAME
+        - name: DLAAS_MONGO_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: trainer-secrets
+              key: DLAAS_MONGO_PASSWORD
+{{ end }}
+        - name: DLAAS_OBJECTSTORE_TYPE
+          valueFrom:
+            secretKeyRef:
+              name: trainer-secrets
+              key: DLAAS_OBJECTSTORE_TYPE
+        - name: DLAAS_OBJECTSTORE_AUTH_URL
+          valueFrom:
+            secretKeyRef:
+              name: trainer-secrets
+              key: DLAAS_OBJECTSTORE_AUTH_URL
+        - name: DLAAS_OBJECTSTORE_USER_NAME
+          valueFrom:
+            secretKeyRef:
+              name: trainer-secrets
+              key: DLAAS_OBJECTSTORE_USER_NAME
+        - name: DLAAS_OBJECTSTORE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: trainer-secrets
+              key: DLAAS_OBJECTSTORE_PASSWORD
+        volumeMounts:
+####### 1.3.0 ############
+        - mountPath: /etc/mlss/
+          name: di-config
+        - name: timezone-volume
+          mountPath: /etc/localtime
+##########################
+        command: ["/bin/sh", "-c"]
+        args: ["DLAAS_PORT=8443 /main"]
+        resources:
+          limits:
+            cpu: {{.Values.trainer.cpus}}
+            memory: {{.Values.trainer.memory}}
+        livenessProbe:
+          exec:
+            command:
+              - /bin/sh
+              - -c
+              - "grpc-health-checker --port 8443 --tls"
+          initialDelaySeconds: 15
+          timeoutSeconds: 2
+      imagePullSecrets:
+#      - name: regcred
+      - name: hubsecret
+      nodeSelector:
+       {{range $key,$val := .Values.platformNodeSelectors}}
+         {{$key}}: {{$val}}
+       {{end}}

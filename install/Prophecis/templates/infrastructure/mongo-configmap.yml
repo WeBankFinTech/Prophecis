@@ -20,12 +20,12 @@ data:
     try{
       // var db = connect('test');
       var admindb = connect('admin');
-      if(admindb.system.users.find({'user':'mlss','db':'admin'}).count() == 0){
+      if(admindb.system.users.find({'user':'{{.Values.mongo.username}}','db':'admin'}).count() == 0){
           print('Ready to addUser...');
-          admindb.createUser({user:'mlss',pwd:'mlss',roles:["userAdminAnyDatabase","readWriteAnyDatabase"]});
+          admindb.createUser({user:'{{.Values.mongo.username}}',pwd:'{{.Values.mongo.password}}',roles:["userAdminAnyDatabase","readWriteAnyDatabase"]});
       }else{
         print('Already exist user, updating now.');
-        admindb.updateUser('mlss',{pwd:'mlss', roles:["userAdminAnyDatabase","readWriteAnyDatabase"]});
+        admindb.updateUser('{{.Values.mongo.username}}',{pwd:'{{.Values.mongo.password}}', roles:["userAdminAnyDatabase","readWriteAnyDatabase"]});
       }
     }catch(err){
       print('Error occured:' + err);

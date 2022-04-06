@@ -1,0 +1,102 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  annotations:
+    deployment.kubernetes.io/revision: "1"
+  generation: 1
+  labels:
+    log_collector_image_short_name: fluent-bit
+    service: dlaas-lhelper
+  name: lhelper-f70c7b86-e700-4b6a-5760-0fceec1a93b6
+  namespace: prophecis
+spec:
+  selector: 
+    matchLabels: 
+      app: helper
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        log_collector_image_short_name: fluent-bit
+        service: dlaas-lhelper
+        app: helper
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - env:
+        - name: RESULT_STORE_TYPE
+          value: host_mount
+        - name: SCHED_POLICY
+          value: dense
+        - name: MODEL_STORE_TYPE
+        - name: FLUENT_ELASTICSEARCH_HOST
+          value: elasticsearch.prophecis.svc.cluster.local
+        - name: FLUENT_ELASTICSEARCH_PORT
+          value: "9200"
+        - name: FLUENT_ELASTICSEARCH_USER
+          value: test
+        - name: FLUENT_ELASTICSEARCH_PASSWD
+          value: test
+        - name: JOB_STATE_DIR
+          value: /job
+        - name: TRAINING_DATA_NAMESPACE
+          value: prophecis
+        - name: EM_DESCRIPTION
+          value: |
+            evaluation_metrics:
+              type: fluent-bit
+              imagetag: ""
+              in: ""
+              linelookahead: 0
+              eventtypes: []
+              groups: {}
+              xxx_nounkeyedliteral: {}
+              xxx_unrecognized: []
+              xxx_sizecache: 0
+        image: uat.sf.dockerhub.stgwebank/webank/mlss-di:fluent-bit-1.2.1
+        imagePullPolicy: Always
+        name: log-collector
+        resources:
+          limits:
+            cpu: 60m
+            memory: "314572800"
+          requests:
+            cpu: 60m
+            memory: "314572800"
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /job
+          name: jobdata
+        - mountPath: /etc/localtime
+          name: timezone-volume
+          readOnly: true
+        - mountPath: /fluent-bit/etc/
+          name: fluent-bit-log-collector-config-all
+      dnsPolicy: ClusterFirst
+      imagePullSecrets:
+      - name: hubsecret
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      #- name: etcd-ssl-cert
+      #  secret:
+      #    defaultMode: 420
+      #    items:
+      #    - key: DLAAS_ETCD_CERT
+      #      path: etcd/etcd.cert
+      #    secretName: lcm-secrets
+      - hostPath:
+          path: /mlss/di/jobs/prophecis
+          type: DirectoryOrCreate
+        name: jobdata
+      - hostPath:
+          path: /usr/share/zoneinfo/Asia/Shanghai
+          type: ""
+        name: timezone-volume
+      - configMap:
+          defaultMode: 420
+          name: fluent-bit-log-collector-config-all
+        name: fluent-bit-log-collector-config-all

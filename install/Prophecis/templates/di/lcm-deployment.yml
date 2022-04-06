@@ -62,7 +62,7 @@ spec:
             #path: /root/.helm
         #- name: nfs-chart-volume
           #nfs:
-            #server: 10.107.105.207
+            #server: 127.0.0.1
             #path: /data/nfs/charts
 ################################
 
