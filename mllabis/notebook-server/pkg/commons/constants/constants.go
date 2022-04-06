@@ -16,5 +16,16 @@
 package constants
 
 const (
-	CreateTime = "createTime"
+	CreateTime    = "createTime"
+	TimeLayoutStr = "2006-01-02 15:04:05"
+
+	NoteBookStatusTerminated  = "Terminated"
+	NoteBookStatusCreating    = "Creating"
+	NoteBookStatusStoping     = "Stopping"
+	NoteBookStatusStoped      = "Stopped"
+	NoteBookStatusReady       = "Ready"
+	NoteBookStatusWaiting     = "Waiting"
+	NoteBookStatusNotReady    = "NotReady"
+	NoteBookStatusTerminating = "Terminating"
+	NoteBookStatusError       = "Error"
 )
