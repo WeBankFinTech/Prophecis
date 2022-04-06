@@ -12,8 +12,6 @@ spec:
     protocol: TCP
     targetPort: 4572
     # newly added
-    nodePort: 30797
-
 
 ---
 
@@ -25,7 +23,6 @@ metadata:
   labels:
     component: elasticsearch
 spec:
-  type: NodePort
   selector:
     service: storage
   ports:
@@ -34,8 +31,6 @@ spec:
     targetPort: 4571
     protocol: TCP
     # newly added
-    nodePort: 30880
-
 ---
 
 apiVersion: apps/v1
@@ -46,17 +41,19 @@ metadata:
 spec:
   serviceName: storage
   replicas: 1
-  selector:
-    matchLabels:
-      service: storage
+  selector: 
+    matchLabels: 
+      app: storage
   template:
     metadata:
       labels:
+        app: storage
         service: storage
     spec:
       volumes:
         - name: localstack-pv-volume
           persistentVolumeClaim:
+#            claimName: localstack-pvc-{{.Values.namespace}}
             claimName: localstack-pvc-{{.Values.namespace}}
         - name: timezone-volume
           hostPath:
@@ -64,8 +61,12 @@ spec:
             type: File
       containers:
         - name: storage
-          image: {{.Values.server_repository}}:localstack-latest
-          imagePullPolicy: Always
+#          image: localstack/localstack:0.8.6
+#          image: localstack_new:0.0.1
+          image: {{.Values.image.registry}}:localstack-latest
+{{ if .Values.image.pullPolicy }}
+          imagePullPolicy: {{.Values.image.pullPolicy}}
+{{ end }}
           env:
           - name: SERVICES
             value: s3,elasticsearch
@@ -78,6 +79,10 @@ spec:
             protocol: TCP
           - containerPort: 4571
             protocol: TCP
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 1024Mi
           volumeMounts:
             - mountPath: "/tmp/localstack/data"
               name: localstack-pv-volume

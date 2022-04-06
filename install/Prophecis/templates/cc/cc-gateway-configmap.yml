@@ -13,27 +13,47 @@ data:
       userOrAuthApi: /userOrAuthInterceptor
       ipApi: /ipInterceptor
     noteBook:
-      authUrl: /cc/v1/auth/access/namespaces/*/notebooks/*
-
+      authUrl: /cc/v1/auth/access/namespaces/*/notebooks/*  
+    
   Caddyfile: |
     :8081 {
       root /home
       auth_request {
         check {
           path /cc/v1/*
-          path /di/v1/*
           api /userOrAuthInterceptor
+          except GET /di/v1/dssUserInfo
+          except GET /mf/v1/dashboard?clusterName=bdp
+          except GET /cc/v1/groups/group/storage/bdap
+          except GET /cc/v1/namespaces/myNamespace
           except GET /cc/v1/login /cc/v1/logout /cc/v1/auth/access/namespaces/*/notebooks/*
+          except GET /cc/v1/auth/access/mlflow/uri/*
           except POST /cc/v1/alerts  /cc/v1/alerts/training
           except GET /cc/v1/inter/user
           except POST /cc/v1/LDAPlogin
           except GET /cc/v1/getrsapubkey
+
         }
+
+        check {
+          path /di/v1/*
+          except GET /di/v1/dssUserInfo
+        }
+
+        check {
+          path /mlflow/ajax-api/2.0/*
+          api /userOrAuthInterceptor
+        }
+
+        #check {
+        #  path /mf/v1/*
+        #  except GET /mf/v1/dashboard?clusterName=bdp 
+        #}
 
         #check {
           #path /notebook/*
           #api /ipInterceptor
-        #}
+        #}     
       }
 
       timeouts 5m
@@ -41,6 +61,7 @@ data:
       errors error.log
       log access.log
       gzip
+      #proxy /cc https://controlcenter-go {
       proxy /cc http://controlcenter-go:6666 {
         header_upstream MLSS-Token {MLSS-Token}
         header_upstream MLSS-RealIP {remote}
@@ -76,11 +97,11 @@ data:
         websocket
       }
 
-      proxy /di di-restapi:80 {
+      proxy /di {{.Values.gateway.address}}:30960 {
         header_upstream MLSS-Token {MLSS-Token}
         header_upstream MLSS-RealIP {remote}
         header_upstream X-Real-IP {remote}
-        header_upstream MLSS-UserID {MLSS-UserID}
+        header_upstream MLSS-Userid {MLSS-Userid}
         header_upstream MLSS-Auth-Type {MLSS-Auth-Type}
         header_upstream MLSS-UIURL {MLSS-UIURL}
         header_upstream MLSS-Passwd {MLSS-Passwd}
@@ -128,4 +149,3 @@ data:
     lnGyr00Jcoj26dwN8bxDmgrmkbJKeVgqUXgys9Hc2Vl1c9jv0NGbrI7YcAxCwHxj
     NW/H5Z/FuR0A0ifTo5UgziamPGj0sB/OmZE/TPOSTFsaiM2IudAjwE8S32ihgJzo
     -----END CERTIFICATE-----
- 

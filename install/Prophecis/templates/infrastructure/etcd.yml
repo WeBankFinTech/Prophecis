@@ -21,8 +21,8 @@ metadata:
 spec:
   serviceName: etcd
   replicas: 1
-  selector:
-    matchLabels:
+  selector: 
+    matchLabels: 
       app: etcd
   template:
     metadata:
@@ -64,8 +64,10 @@ spec:
         - new
     #    image: quay.io/coreos/etcd:latest
     #    imagePullPolicy: IfNotPresent
-        image: {{.Values.server_repository}}:etcd-latest
-        imagePullPolicy: Always
+        image: {{.Values.image.registry}}:etcd-latest
+    {{ if .Values.image.pullPolicy }}
+        imagePullPolicy: {{.Values.image.pullPolicy}}
+    {{end}}
         name: etcd0
         ports:
         - containerPort: 2379

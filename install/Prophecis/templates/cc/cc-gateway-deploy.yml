@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: controlcenter-gateway-deployment
   namespace: {{.Values.namespace}}
-  labels:
+  labels: 
     app: controlcenter-gateway-deployment
 spec:
   replicas: 1
@@ -18,16 +18,20 @@ spec:
       labels:
         app: controlcenter-gateway
     spec:
+      #serviceAccountName: cc-go-sa
       containers:
       - name: cc-gateway
-        image: {{.Values.server_repository}}:{{.Values.ccGateway.image.tag}}
-        imagePullPolicy: Always
+        image: {{.Values.image.registry}}:{{.Values.ccGateway.image.tag}}
+        imagePullPolicy: {{.Values.image.pullPolicy}}
         ports:
         - containerPort: 8081
-        command:
-          - /apigateway/mlss-apigateway
-          - -conf
-          - /caddy-config/Caddyfile
+        command: ["/bin/sh", "-c"]
+        args:
+          #- /bin/sh /go/bin/dlv  --listen=:40005 --headless=true --api-version=2 exec  /apigateway/mlss-apigateway -conf /caddy-config/Caddyfile
+          #- /go/bin/dlv  --listen=:40005 --headless=true --api-version=2 exec  /apigateway/mlss-apigateway --  -conf /caddy-config/Caddyfile
+          -  /apigateway/mlss-apigateway  -conf /caddy-config/Caddyfile
+        #args:
+        #  - PATH="$PATH:/apigateway"
         volumeMounts:
         - name: config-volume
           mountPath: /caddy-config
