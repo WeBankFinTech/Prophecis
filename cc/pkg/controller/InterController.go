@@ -19,11 +19,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/go-openapi/runtime"
-	"github.com/go-openapi/runtime/middleware"
-	"github.com/google/uuid"
-	"github.com/patrickmn/go-cache"
-	"gopkg.in/cas.v2"
 	"log"
 	"mlss-controlcenter-go/pkg/authcache"
 	"mlss-controlcenter-go/pkg/common"
@@ -32,20 +27,26 @@ import (
 	"mlss-controlcenter-go/pkg/models"
 	"mlss-controlcenter-go/pkg/restapi/restapi/operations/inters"
 	"mlss-controlcenter-go/pkg/service"
-	"mlss-controlcenter-go/pkg/umclient"
 	"net/http"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
+
+	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/runtime/middleware"
+	"github.com/google/uuid"
+	"github.com/patrickmn/go-cache"
+	"gopkg.in/cas.v2"
 )
 
 func UserInterceptor(params inters.UserInterceptorParams) middleware.Responder {
 	headers := params.HTTPRequest.Header
-
 	token := headers.Get("MLSS-Token")
-	hdserUser := headers.Get("Mlss-Userid")
+	userID := headers.Get(constants.AUTH_HEADER_USERID)
+	if len(token) <= 0 {
+		token = headers.Get("Mlss-Token")
+	}
 	logger.Logger().Debugf("UserInterceptor MLSS-Token header: %v", token)
 	var sessionUser models.SessionUser
 	if "" != token {
@@ -63,14 +64,15 @@ func UserInterceptor(params inters.UserInterceptorParams) middleware.Responder {
 					return ResponderFunc(http.StatusInternalServerError, "failed to auth by UserInterceptor", e.Error())
 				}
 				sessionUser = *session
-				if hdserUser != sessionUser.UserName{
-					return ResponderFunc(http.StatusForbidden, "failed to auth by UserInterceptor", "userid does match cookies")
-				}
-
 				var result = models.Result{
 					Code:    "200",
 					Message: "success",
 					Result:  json.RawMessage([]byte{}),
+				}
+
+				if sessionUser.UserName != userID {
+					logger.Logger().Debugf("UserInterceptor SessionUser : %v, Header User : %v", sessionUser.UserID, userID)
+					return ResponderFunc(http.StatusForbidden, "failed to auth by UserInterceptor", "token presented but invalid")
 				}
 
 				return middleware.ResponderFunc(func(w http.ResponseWriter, _ runtime.Producer) {
@@ -84,7 +86,7 @@ func UserInterceptor(params inters.UserInterceptorParams) middleware.Responder {
 			}
 
 		} else {
-			return ResponderFunc(http.StatusForbidden, "failed to auth by UserInterceptor", "token was not found")
+			return ResponderFunc(http.StatusUnauthorized, "failed to auth by UserInterceptor", "token was not found")
 		}
 	}
 
@@ -93,14 +95,6 @@ func UserInterceptor(params inters.UserInterceptorParams) middleware.Responder {
 	var user *models.SessionUser
 	var cheToken string
 	var err error
-
-	if "SSO" == authType {
-		user, cheToken, err = checkSSOAuth(params.HTTPRequest)
-	}
-
-	if "UM" == authType {
-		user, cheToken, err = checkUMAuth(params.HTTPRequest)
-	}
 
 	if "SYSTEM" == authType {
 		user, cheToken, err = checkSystemAuth(params.HTTPRequest)
@@ -181,7 +175,7 @@ func checkPermissionIP(r *http.Request) (bool, error) {
 				return false, e
 			}
 			logger.Logger().Debugf("checkPermissionIP set user: %v to ip: %v cache", sessionUser, ip)
-
+			//authcache.IPCache.Set(ip, sessionUser, cache.DefaultExpiration)
 			return true, nil
 		} else {
 			return false, errors.New("invalid token")
@@ -221,19 +215,10 @@ func checkPermissionAuth(r *http.Request) (bool, error) {
 	method := headers.Get(constants.AUTH_REAL_METHOD)
 	logger.Logger().Debugf("request for url: %v and method: %v", path, method)
 	log.Printf("request for url: %v and method: %v", path, method)
+
 	var permission *models.Permission
-	permissions, err := service.GetPermissions()
-	if err != nil {
-		return false, err
-	}
-	likePermissions, err := service.GetPermissionsByLike(path)
-	if err != nil {
-		return false, err
-	}
-	errMsg := fmt.Sprintf("user can't access the api: %s", path)
-	isSA := service.HasSA(username)
-	pathSplit := strings.Split(path,"/")
-	//Get url's permission
+
+	permissions, _ := service.GetPermissions()
 	if nil != permissions && len(permissions) > 0 {
 		for _, pm := range permissions {
 			pmMethod := strings.TrimSpace(pm.Method)
@@ -244,188 +229,108 @@ func checkPermissionAuth(r *http.Request) (bool, error) {
 				return false, err
 			}
 			if method == pmMethod && matched {
-				if len(likePermissions) >= 2 && pathSplit[len(pathSplit) - 1] != "*" && !isSA{
-					for _, likePm := range likePermissions {
-						urlSplit := strings.Split(likePm.URL, "/")
-						if urlSplit[len(urlSplit) - 1] == pathSplit[len(pathSplit) - 1] {
-							permission = pm
-							break
-						}
-					}
-				}else{
-					permission = pm
-					break
-				}
-			}
-		}
-	}
-	if permission == nil {
-		return false, errors.New(fmt.Sprintf("user can't access the api: %s", path))
-	}
-	if isSA {
-		userRolePermissions, err := service.GetRolePermissionsByRoleId(1)
-		if err != nil {
-			return false, err
-		}
-		//check permission
-		for _, rolePer := range userRolePermissions {
-			if permission.ID == rolePer.PermissionID {
-				return true, nil
-			}
-		}
-	}else{
-		userRolePermissions, err := service.GetRolePermissionsByRoleId(2)
-		if err != nil {
-			return false, err
-		}
-		//check permission
-		for _, rolePer := range userRolePermissions {
-			if permission.ID == rolePer.PermissionID {
-				return true, nil
+				permission = pm
+				break
 			}
 		}
 	}
 	logger.Logger().Debugf("auth interceptor with permission: %v", permission)
+	if nil == permission || "" == permission.URL {
+		return false, errors.New("the url is not exist in db of you access")
+	}
+
+	if permission.EnableFlag == 0 {
+		return false, errors.New("the url is not access of GA ")
+	}
+
+	roleId := getRoleIdByRequest(r)
+	perSet, _ := service.GetPermissionsByRoleId(roleId)
+	if len(perSet.List()) > 0 && perSet.Has(int(permission.ID)) {
+		return true, nil
+	}
+
+	errMsg := fmt.Sprintf("user can't access the api: %s", path)
+
 	return false, errors.New(errMsg)
 }
 
-func checkSSOAuth(r *http.Request) (*models.SessionUser, string, error) {
-	// 1. 验证头部完整性
-	// 1. check if the header hss anything the verification need
-	ticket := r.Header.Get(constants.AUTH_HEADER_TICKET)
-	uiUrl := r.Header.Get(constants.AUTH_HEADER_UIURL)
+func checkMLFlowPermissionAuth(r *http.Request) (bool, error) {
+	headers := r.Header
+	username := headers.Get(constants.AUTH_HEADER_USERID)
 
-	if "" == ticket || "" == uiUrl {
-		return nil, "", errors.New("ticket and url can't be empty")
+	if "" != headers.Get(constants.AUTH_HEADER_USERID) {
+		username = headers.Get(constants.AUTH_HEADER_USERID)
 	}
 
-	logger.Logger().Debugf("checkSSOAuth sso auth for param url: %v ticket: %v", uiUrl, ticket)
-
-	var scheme, host, path string
-
-	if strings.HasPrefix(uiUrl, "https") {
-		scheme = "https"
-		indexH := strings.Index(uiUrl[8:], "/")
-		indexP := strings.Index(uiUrl[8:], "?")
-		host = uiUrl[8:][0:indexH]
-		path = uiUrl[8:][indexH:indexP]
-	} else {
-		scheme = "http"
-		indexH := strings.Index(uiUrl[7:], "/")
-		indexP := strings.Index(uiUrl[7:], "?")
-		host = uiUrl[7:][0:indexH]
-		path = uiUrl[7:][indexH:indexP]
+	if username == service.GetSAByName(username).Name {
+		return true, nil
 	}
 
-	// 2. 验证ticket，并获取用户信息
-	var url = &url.URL{
-		Scheme:   scheme,
-		Host:     host,
-		Path:     path,
-		RawQuery: ticket,
-		Fragment: "/",
+	path := headers.Get(constants.AUTH_REAL_PATH)
+	method := headers.Get(constants.AUTH_REAL_METHOD)
+	logger.Logger().Debugf("request for url: %v and method: %v", path, method)
+	log.Printf("request for url: %v and method: %v", path, method)
+
+	var permission *models.Permission
+
+	permissions, _ := service.GetPermissions()
+	if nil != permissions && len(permissions) > 0 {
+		for _, pm := range permissions {
+			pmMethod := strings.TrimSpace(pm.Method)
+			pmUrlRegx := strings.ReplaceAll(strings.TrimSpace(pm.URL), "*", "[^/]+")
+			matched, err := regexp.MatchString(pmUrlRegx, path)
+			logger.Logger().Debugf("auth interceptor with pmUrlRegx: %v, pmMethod: %v, matched: %v", pmUrlRegx, pmMethod, matched)
+			if nil != err {
+				return false, err
+			}
+			if method == pmMethod && matched {
+				permission = pm
+				break
+			}
+		}
+	}
+	logger.Logger().Debugf("auth interceptor with permission: %v", permission)
+	if nil == permission || "" == permission.URL {
+		return false, errors.New("the url is not exist in db of you access")
 	}
 
-	sessionUser, authErr := auth(url, ticket)
-
-	if nil != authErr {
-		return nil, "", authErr
+	if permission.EnableFlag == 0 {
+		return false, errors.New("the url is not access of GA ")
 	}
 
-	logger.Logger().Debugf("get sessionUser by ticket: %v", sessionUser)
-
-	// 3. check if user exists in db
-	username := sessionUser.UserName
-	if "" == username {
-		return nil, "", errors.New("username is empty")
+	roleId := getRoleIdByRequest(r)
+	perSet, _ := service.GetPermissionsByRoleId(roleId)
+	if len(perSet.List()) > 0 && perSet.Has(int(permission.ID)) {
+		return true, nil
 	}
 
-	saByName := service.GetSAByName(username)
-	userByName, err := service.GetUserByUserName(username)
-	if err != nil {
-		return nil, "", err
-	}
+	errMsg := fmt.Sprintf("user can't access the api: %s", path)
 
-	logger.Logger().Debugf("get sessionUser to get userByName: %v", userByName)
-
-	if username != saByName.Name && username != userByName.Name {
-		return nil, "", errors.New("user not exists in system")
-	}
-
-	// 3. 放置响应头部及缓存token
-	// 3. put the auth token in the response header
-	token := uuid.New().String()
-	authcache.TokenCache.Set(token, sessionUser, cache.DefaultExpiration)
-
-	return sessionUser, token, nil
+	return false, errors.New(errMsg)
 }
 
-func checkUMAuth(r *http.Request) (*models.SessionUser, string, error) {
-	username := r.Header.Get(constants.AUTH_HEADER_USERID)
-	password := r.Header.Get(constants.AUTH_HEADER_PWD)
-	if "" == username || "" == password {
-		return nil, "", errors.New("username and password can't be empty")
+func getRoleIdByRequest(r *http.Request) int {
+	roleId := 2
+	if isSuperAdmin(r) {
+		roleId = 1
 	}
-
-	loginResult, checkErr := umclient.CheckUserAndPassword(username, password)
-	if nil != checkErr {
-		return nil, "", checkErr
-	}
-	if nil != loginResult && loginResult.Code == 0 {
-		var username string
-		if "" == loginResult.UserName && "" != loginResult.ID {
-			username = loginResult.ID
-		} else if "" != loginResult.UserName && "" == loginResult.ID {
-			username = loginResult.UserName
-		} else if "" != loginResult.UserName && "" != loginResult.ID {
-			username = loginResult.UserName
-		}
-		var sessionUser = &models.SessionUser{
-			OrgCode:      loginResult.Org,
-			DeptCode:     loginResult.Dept,
-			UserName:     username,
-			UserID:       username,
-			IsSuperadmin: service.GetSAByName(username).Name == username,
-		}
-		token := uuid.New().String()
-		authcache.TokenCache.Set(token, sessionUser, cache.DefaultExpiration)
-		return sessionUser, token, nil
-	}
-
-	return nil, "", errors.New("failed to check user and password")
+	return roleId
 }
 
 func checkSystemAuth(r *http.Request) (*models.SessionUser, string, error) {
 	// 1. 检查头部完整
 	// 1. check if the header hss anything the verification need
 	reqApiKey := r.Header.Get(constants.AUTH_HEADER_APIKEY)
-	reqTimestamp := r.Header.Get(constants.AUTH_HEADER_TIMESTAMP)
+	// reqTimestamp := r.Header.Get(constants.AUTH_HEADER_TIMESTAMP)
 	reqSign := r.Header.Get(constants.AUTH_HEADER_SIGNATURE)
 	userId := r.Header.Get(constants.AUTH_HEADER_USERID)
-	if "" == reqApiKey || "" == reqTimestamp || "" == reqSign || "" == userId {
+	if "" == reqApiKey || "" == reqSign || "" == userId {
 		return nil, "", errors.New("missing apiKey or timestamp or signature or userId header")
 	}
 
-	timestamp, parErr := strconv.ParseInt(reqTimestamp, 10, 64)
-	if nil != parErr {
-		return nil, "", parErr
-	}
-
-	// 2. 检查timestamp超时
-	// 2. whether the timestamp is expired
-	//TODO
-	current := time.Now().UnixNano() / 1e6
-	//defaultTimestampTimeout := common.GetAppConfig().Core.Cache.DefaultTimestampTimeout
-	logger.Logger().Debugf("current: %v", current)
-	logger.Logger().Debugf("timestamp: %v", timestamp)
-	logger.Logger().Debugf("current-timestamp: %v", current-timestamp)
-	//if current-timestamp > defaultTimestampTimeout {
-	//	return nil, "", errors.New("timestamp in request timed out")
-	//}
-
-	// 3. 根据apikey找到对应的secretkey
-	// 3. find the secret key according the api key
-	keyPair,err := service.GetKeyByApiKey(reqApiKey)
+	// 2. 根据apikey找到对应的secretkey
+	// 2. find the secret key according the api key
+	keyPair, err := service.GetKeyByApiKey(reqApiKey)
 	if err != nil {
 		logger.Logger().Error("Get key by api key err, ", err)
 		return nil, "", err
@@ -434,34 +339,29 @@ func checkSystemAuth(r *http.Request) (*models.SessionUser, string, error) {
 		return nil, "", errors.New("cannot find secretKey from apiKey")
 	}
 	secretKey := keyPair.SecretKey
+	if reqSign != secretKey && reqApiKey != "MLFLOW" {
+		return nil, "", errors.New("App signature is not matched, APP KEY is" + reqApiKey)
+	}
 
-	// 4. 将apikey及timestamp头部生成有序map
-	// 4. generate the SortedMap with apikey and timestamp
-	reqForm := map[string]string{}
-	reqForm[constants.AUTH_HEADER_APIKEY] = reqApiKey
-	reqForm[constants.AUTH_HEADER_TIMESTAMP] = reqTimestamp
-	reqForm[constants.AUTH_HEADER_AUTH_TYPE] = constants.TypeSYSTEM
-	reqForm[constants.AUTH_HEADER_USERID] = userId
-
-	// 5. 计算出签名并与传来的签名比对
-	// 5. calculate Sign and check whether it is equal with whe sign input
-
-	logger.Logger().Debugf("secretKey: %v", secretKey)
-
-	//验证用户
-	userByUserName, err := service.GetUserByUserName(userId)
+	//3.检查用户是否匹配
+	var sessionUser models.SessionUser
+	user, err := service.GetUserByUserName(userId)
 	if err != nil {
 		return nil, "", err
 	}
-	token := uuid.New().String()
-
-	var sessionUser = &models.SessionUser{
-		UserName: userByUserName.Name,
-		UserID:   userByUserName.Name,
+	if keyPair.SuperAdmin == 1 {
+		sessionUser.UserName = userId
+		sessionUser.UserID = strconv.Itoa(int(user.ID))
+	} else {
+		if keyPair.Name != userId {
+			return nil, "", errors.New("User Name is not matched the app key")
+		}
 	}
+	token := uuid.New().String()
 	authcache.TokenCache.Set(token, sessionUser, cache.DefaultExpiration)
 
-	return sessionUser, token, nil
+	return &sessionUser, token, nil
+
 }
 
 func auth(su *url.URL, ticket string) (*models.SessionUser, error) {
@@ -498,12 +398,22 @@ func checkLDAPAuth(r *http.Request) (*models.SessionUser, string, error) {
 		return nil, "", errors.New("username and password can't be empty")
 	}
 
-	loginResult, checkErr := LDAPAuth(username, password)
+	var loginResult bool
+	var checkErr error
+	if username == common.GetAppConfig().Application.Admin.User {
+		if password == common.GetAppConfig().Application.Admin.Password {
+			loginResult = true
+		}
+	} else {
+		loginResult, checkErr = LDAPAuth(username, password)
+	}
 	if nil != checkErr {
 		return nil, "", checkErr
 	}
+	if loginResult == false {
+		return nil, "admin login error", errors.New("admin password is wrong")
+	}
 	if loginResult {
-		var username string
 		sa := service.GetSAByName(username)
 		var sessionUser = &models.SessionUser{
 			UserName:     username,

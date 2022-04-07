@@ -25,7 +25,7 @@ import (
 	"mlss-controlcenter-go/pkg/logger"
 	"mlss-controlcenter-go/pkg/models"
 	"mlss-controlcenter-go/pkg/repo"
-	"strings"
+	"os"
 )
 
 func GetUserByUserId(userId int64) (models.User, error) {
@@ -197,6 +197,35 @@ func AddUser(user models.UserRequest) (*models.User, error) {
 }
 
 func UpdateUser(user models.User) (*models.User, error) {
+
+	//更新user gid uid时校验权限
+	uid := user.UID
+	gid := user.Gid
+	pathStr := ""
+
+	if isExist, _ := common.PathExists(pathStr); !isExist {
+		err := os.MkdirAll(pathStr, os.ModePerm)
+		if err != nil {
+			return nil, err
+		}
+		err = os.Chown(pathStr, int(uid), int(gid))
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if user.Type == constants.TypeSYSTEM {
+		err := os.Chmod(pathStr, 0770)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		err := os.Chmod(pathStr, 0700)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	log := logger.Logger()
 	db := datasource.GetDB()
 	err := repo.UpdateUser(user, db)
@@ -219,6 +248,18 @@ func GetUserByUID(uid int64) (*models.User, error) {
 		return nil, err
 	}
 	return &user, err
+}
+
+func IfUserIdExisted(uid int64) (bool, error) {
+	count, err := repo.CountUserByUID(uid)
+	if err != nil {
+		logger.Logger().Errorf("getUserByUID error:%v", err.Error())
+		return false, err
+	}
+	if count == 0 {
+		return false, err
+	}
+	return true, err
 }
 
 func GetSAByName(username string) models.Superadmin {
@@ -248,7 +289,7 @@ func createUser(user models.User, tx *gorm.DB) error {
 			log.Errorf(err.Error())
 			return err
 		}
-	}else{
+	} else {
 		if user.Name == delUByName.Name {
 			user.ID = delUByName.ID
 			err = repo.UpdateUser(user, tx)
@@ -266,31 +307,28 @@ func createGroupForUser(user models.UserRequest, tx *gorm.DB) error {
 	// create group for user
 	groupName := constants.GROUP_SUB_NAME + user.Name
 
-	dbGroup, err := repo.GetDeleteGroupByName(groupName)
-	if err != nil {
+	dbGroup, _ := repo.GetDeleteGroupByName(groupName)
+
+	if groupName == dbGroup.Name {
+		dbGroup.EnableFlag = 1
+		err := repo.UpdateGroup(*dbGroup, tx)
+		if err != nil {
+			log.Errorf(err.Error())
+			return err
+		}
+	} else {
 		var group = models.Group{
 			Remarks:        constants.USER_GROUP,
 			GroupType:      constants.TypePRIVATE,
-			ClusterName:    user.ClusterName,
 			Name:           groupName,
 			DepartmentName: constants.MLSS,
-			DepartmentID:   0,
+			DepartmentID:   "0",
 			EnableFlag:     1,
 		}
 		err := repo.AddGroup(group, tx)
 		if err != nil {
 			log.Errorf(err.Error())
 			return err
-		}
-	}else{
-		if groupName == dbGroup.Name {
-			dbGroup.EnableFlag = 1
-			dbGroup.ClusterName = user.ClusterName
-			err := repo.UpdateGroup(*dbGroup, tx)
-			if err != nil {
-				log.Errorf(err.Error())
-				return err
-			}
 		}
 	}
 
@@ -336,89 +374,18 @@ func createGroupForUser(user models.UserRequest, tx *gorm.DB) error {
 	return nil
 }
 
-func createStorage(subPath string, name string, tx *gorm.DB, groupName string) error {
-	log := logger.Logger()
-	var path = subPath + name
-	var pType = strings.Split(subPath[1:], "/")[1]
-	dbStorage, err := repo.GetDeleteStorageByPath(path, tx)
-
-	storageByPath, err := repo.GetStorageByPath(path, tx)
-	if err != nil {
-		logger.Logger().Errorf("GetStorageByPath error:%v", err.Error())
-		return err
-	}
-
-	log.Debugf("add user to createStorage with path: %v and name: %v", path, name)
-	// create storage
-	if dbStorage != nil && path == dbStorage.Path {
-		dbStorage.EnableFlag = 1
-		err := repo.UpdateStorage(*dbStorage, tx)
-		if err != nil {
-			log.Errorf(err.Error())
-			return err
-		}
-	} else if dbStorage != nil && path == storageByPath.Path {
-		log.Debugf("add user to createStorage already exist")
-	} else {
-		var storage = models.Storage{
-			Path:       path,
-			Remarks:    "path for " + name,
-			EnableFlag: 1,
-			Type:       pType,
-		}
-		err := repo.AddStorage(storage, tx)
-		if err != nil {
-			log.Errorf(err.Error())
-			return err
-		}
-	}
-
-	dbStorage, err = repo.GetStorageByPath(path, tx)
-	if err != nil {
-		log.Errorf(err.Error())
-		return err
-	}
-	dbGroup, err := repo.GetGroupByName(groupName, tx)
-	if err != nil {
-		logger.Logger().Errorf("GetGroupByName error:%v", err.Error())
-		return err
-	}
-
-	dbGS, err := repo.GetDeleteGroupStorageByStorageIdAndGroupId(dbStorage.ID, dbGroup.ID, tx)
-	if err != nil {
-		logger.Logger().Errorf("GetDeleteGroupStorageByStorageIdAndGroupId error:%v", err.Error())
-		return err
-	}
-
-	if dbStorage.ID == dbGS.StorageID && dbGroup.ID == dbGS.GroupID {
-		dbGS.EnableFlag = 1
-		if err := repo.UpdateGroupStorageDB(tx, dbGS); nil != err {
-			//tx.Rollback()
-			return err
-		}
-	} else {
-		var gs = models.GroupStorage{
-			GroupID:     dbGroup.ID,
-			StorageID:   dbStorage.ID,
-			Path:        path,
-			Remarks:     "storage for " + name,
-			EnableFlag:  1,
-			Permissions: "rw",
-			Type:        pType,
-		}
-		if err := repo.AddStorageToGroupDB(tx, gs); nil != err {
-			//tx.Rollback()
-			return err
-		}
-	}
-
-	return nil
-}
-
 func HasSA(username string) bool {
 	_, err := repo.GetSAByName(username)
 	if err != nil {
 		return false
 	}
 	return true
+}
+
+func GetDeleteUserByUserName(userName string) (models.User, error) {
+	user, err := repo.GetDeleteUserByName(userName)
+	if err != nil {
+		logger.Logger().Errorf("GetSAByName error:%v", err.Error())
+	}
+	return user, err
 }

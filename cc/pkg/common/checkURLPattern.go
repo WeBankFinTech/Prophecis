@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package common
 
 import (
 	"mlss-controlcenter-go/pkg/logger"
 	"mlss-controlcenter-go/pkg/models"
+	"os"
 	"regexp"
 	"strings"
 )
@@ -88,4 +90,19 @@ func CheckExcludeList(pathPattern []string, requestPath string) bool {
 func CheckExclude(pathPattern string, requestPath string) bool {
 	return false
 
+}
+
+func PathExists(path string) (bool, error) {
+	info, err := os.Stat(path)
+	if err == nil {
+		if info.IsDir() {
+			return true, nil
+		}
+		return false, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+
+	return false, err
 }

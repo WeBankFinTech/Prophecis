@@ -24,18 +24,21 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"github.com/go-ldap/ldap/v3"
-	"github.com/go-openapi/runtime"
-	"github.com/go-openapi/runtime/middleware"
-	"github.com/spf13/viper"
 	"mlss-controlcenter-go/pkg/common"
 	"mlss-controlcenter-go/pkg/logger"
 	"mlss-controlcenter-go/pkg/models"
+	"mlss-controlcenter-go/pkg/repo"
+	"mlss-controlcenter-go/pkg/restapi/restapi/operations/auths"
 	"mlss-controlcenter-go/pkg/restapi/restapi/operations/logins"
 	"mlss-controlcenter-go/pkg/service"
 	"mlss-controlcenter-go/pkg/umclient"
 	"net/http"
 	"strings"
+
+	"github.com/go-ldap/ldap/v3"
+	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/runtime/middleware"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -124,11 +127,11 @@ func LDAPLogin(params logins.LDAPLoginParams) middleware.Responder {
 		isAccess, err = LDAPAuth(username, string(decryptPassword))
 		if err != nil {
 			logger.Logger().Error("Failed to login, LDAP Auth Error:", err.Error())
-			return ResponderFunc(http.StatusBadRequest, "Failed to login, LDAP auth failed:", err.Error())
+			return ResponderFunc(http.StatusBadRequest, "LDAP auth failed.", "用户名或密码错误。")
 		}
 	}
 	if isAccess == false {
-		return ResponderFunc(http.StatusBadRequest, "failed to login", "failed to login")
+		return ResponderFunc(http.StatusBadRequest, "LDAP auth failed.", "用户名或密码错误。")
 	}
 
 	// Check system permission
@@ -168,8 +171,9 @@ func LDAPAuth(username string, password string) (bool, error) {
 
 	//Dial LDAP Server
 	l, err := ldap.DialURL(address)
+	defer l.Close()
 	if err != nil {
-		logger.Logger().Errorf("LDAP Dial Fail:%v",err.Error())
+		logger.Logger().Errorf("LDAP Dial Fail:%v", err.Error())
 		return false, err
 	}
 	if l == nil {
@@ -182,7 +186,7 @@ func LDAPAuth(username string, password string) (bool, error) {
 		fmt.Sprintf("(&(objectClass=organizationalPerson)(uid=%s))", username), []string{"dn"}, nil)
 	sr, err := l.Search(nsr)
 	if err != nil {
-		logger.Logger().Errorf("LDAP Search Fail:%v",err.Error())
+		logger.Logger().Errorf("LDAP Search Fail:%v", err.Error())
 		return false, err
 	}
 
@@ -192,7 +196,6 @@ func LDAPAuth(username string, password string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	defer l.Close()
 	return true, nil
 }
 
@@ -219,4 +222,13 @@ func RsaDecrypt(context []byte) ([]byte, error) {
 		return nil, err
 	}
 	return rsa.DecryptPKCS1v15(rand.Reader, priv, context)
+}
+
+func CheckGroupByUser(params auths.CheckGroupByUserParams) middleware.Responder {
+	userId := params.UserID
+	group := repo.GetUserGroupByUserId(userId)
+	return middleware.ResponderFunc(func(w http.ResponseWriter, _ runtime.Producer) {
+		payload, _ := json.Marshal(group)
+		w.Write(payload)
+	})
 }

@@ -1,0 +1,144 @@
+spring:
+  profile: dev
+  platformNS: mlss-dev
+  datasource:
+    driverClassName: com.mysql.jdbc.Driver
+#    url: jdbc:mysql://10.107.108.178:3306/mlss_gzpc_bdap_dev_01?useUnicode=true&characterEncoding=utf-8
+    url: jdbc:mysql://localhost:3306/mlss_local_db?useUnicode=true&characterEncoding=utf-8
+#    url: jdbc:mysql://10.35.1.46:3306/mlss_local_db?useUnicode=true&characterEncoding=utf-8
+#    username: root
+#    password: 123456
+    username: mlss_gzpc_bdap_dev
+    #    password: root123!
+    password: mlss@2018
+#    ip: localhost
+#    port: 3306
+#    db: mlss_local_db
+    ip: 10.107.108.178
+    port: 3306
+    db: mlss_gzpc_bdap_dev_01
+  tokenDB:
+    username: hdfs_gz_bdap
+    password: hdfs@201901
+    ip: 10.107.108.111
+    port: 3306
+    db: hdfs_gz_bdap_test_01
+server:
+  port: 7777
+  servlet:
+    context-path: /cc
+  session:
+    timeout: 86400
+  error:
+    whitelabel:
+      enabled: false
+
+logging:
+  level:
+    root: INFO
+    cn.webank.bdp.controlcenter.dao: DEBUG
+  path: /var/log/controlcenter
+
+core:
+  interceptor:
+    configs:
+      - name: IpInterceptor
+        add:
+          - "/v1/auth/access/namespaces/**/notebooks/**"
+        exclude:
+      #      - "/v1/**"
+      - name: UserInterceptor
+        add:
+          - "/v1/**"
+        exclude:
+          - "/v1/login"
+          - "/v1/logout"
+          - "/v1/alerts"
+          - "/v1/alerts/training"
+          - "/v1/auth/access/namespaces/**/notebooks/**"
+      - name: AuthInterceptor
+        add:
+          - "/v1/**"
+        exclude:
+          - "/v1/login"
+          - "/v1/logout"
+          - "/v1/alerts"
+          - "/v1/alerts/training"
+          - "/v1/auth/access/namespaces/**/notebooks/**"
+    maxTokenSize: 10000
+    maxTokenExpireHour: 24
+    defaultTimestampTimeout: 2592000
+  um:
+    host: 10.107.96.15
+    port: 8088
+    appId: "0015395862955265"
+    appToken: MLSS-DI
+    appPem: "-----BEGIN PRIVATE KEY-----
+          MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDAn+BWO+9o5DEH
+          4yUrGGJgnIjlLDDLXuxjnq/vrl/+i/02b9usgWZQ6yLRVHao2FX7MfuFob90Xb8k
+          5WB2pE3uEMBt3e4kq8WwO3CRJT0e+lkZvb0ygeUCSQQISJPiRMco0e8S2WWBVVUo
+          6IwOLt5MvRw5H1VL7qrOaqjuKaK5FH35qm/dJsjNwnG8Xmi8zb8b0Mz57y49OXv7
+          8fKXlc7pTBVpnspBWdPZzQcu1NRn76PjyR6cF9ZmLtQSHe0uz2tMqF7ps6Q0f/Ik
+          jSYVhI6SWsRRAg3gmShvkLcwy6Ovt1zlQecESD+Uk1+YTmPW+2nQm3k0OX6P6oQV
+          XJ6j2GgvAgMBAAECggEBALxJSuNgMLRKIfdAvCs06azgNhw1pviUL+Ns0TMrMyBB
+          PGFC0+r6jcXZIi6WLmr7FIi3IdJM+jVIEbiCElnGX3qumzqJrefglBug7naifO1T
+          71ZvFopRWEZ0kuF5+Dw72KV5GAVHxaW3gMe9EHIotBk03Wqkyx6vC/07Wyd6QVpB
+          EGdfuNjLtDwT0KiBSXQ4e6cDjAI5KXfMDSD2x0J2EHqEy07nNCztckW7aJkPz4i/
+          1AqPnnpUW2ovSUKVEOkbSmTZiS8ONow2XfvTrIioBj4Rnk136gRUsJ5NuiVqRh5L
+          pNaARMhuv+cwu9oU78niOs7B7F92uAKYA1NjVyDxgKECgYEA40xpKPIrV4zjpfop
+          3flghOu6i1F+YmEtCka2zH0h7KetkJGy3wh6y300g2oOsbPRAn5gW3A+3rzR+mKu
+          h+mU3iw2Ug2jw0BslvMUMSzWQ/IZyb7Yn9F9+nueAHrZWCr5zJNzuXZrwqItbHqi
+          NgidaLigi9LKoB/kCNKGnWlcnp8CgYEA2PKauQ8dEfoiLkaC6FL9dltD1kHbkmDm
+          YHLFUPYmZNdua+R2q5ccZLR5KMcJxdBa9CvzCNEtuUJGLqICuKBUPqo6/6JEfHWh
+          6Vxor84yIl40kKzveaeshnHRmXdN8xKR/BijsoI0zXRR4nbqloTfiLdpzhjMRiMz
+          05t1+GNDHHECgYBgURHCuxPorpgMzjwNhs4CpU1QGgFfOOR4FU0CzAejG86tkz/j
+          yNkX/39QLJH7dUIdN2YneSH7CrJD0qs4hp+BoeSG0qbRZyxcrragu+ozspSA6/Ep
+          kAE9MkLa2zPca6GcseL49RhmyohLDpBMK0xggtPtTC52uezMXEGU1H/d6wKBgEhM
+          6dV8vPJtyxBi/WORrNjR55SzFAr/cid4eFvX/Mmkpi8cz5O144eIQcyeMJqVKoqv
+          TuqEU9mmxZ7q7T88Z3cO4mSpXmugBFqyKk1UyY58mMYSbCi+AZg4vGKJyReV+8Lp
+          Lzzhedlyx4tSmDGbjKeSgJdn2kQRnUcLS1CBPC9xAoGAf8Qya9WsB5a0GkhYrAFU
+          FoYyNfHWpXt8Hh1uja/X284vnVs+szQ1eB4CecsjLssmoPBAbidh0QHAHX36KehQ
+          0qFNcF3ddBAves3tfXPikb2vrR4Cv2XnVvlzAdlFeiJs8I14E4oNwuNG661HpOnw
+          JYexQ9KCFZMkvplb10Nr8fE=
+          -----END PRIVATE KEY-----"
+  sso:
+    defaultService: http://10.255.32.137:7777/home.html
+    casServiceUrlPrefix: http://10.107.99.46:8080/cas
+    casLogin: http://10.107.99.46:8080/cas/login
+    ssoLanding: http://10.255.32.137:7777/ssolanding.html
+  ims:
+    accessUrl: http://10.107.118.38:10812/ims_data_access/send_alarm_by_json.do
+    subSystemId: 5265
+    alertWay: 1,2,3
+    alertReceiver: luckliu
+  kube:
+    apiConfig:
+      sysProperty: "user.dir"
+      defaultPath: "/certs/config"
+      path: "/etc/config/kube-config"
+    namespacedResourceConfig:
+      defaultRQName: mlss-default-rq
+      defaultRQCpu: 0
+      defaultRQMem: 0Mi
+      defaultRQGpu: 0
+  es:
+    #    address: elasticsearch
+    #    port: 9300
+    address: 10.107.105.207
+    port: 30782
+    learnerIndex: dlaas_learner_data
+    dateIndex: logstash-
+  gateway:
+    bdpAddress: http://10.107.105.207:30795
+    bdapAddress: http://10.107.105.207:30794
+    bdapsafeAddress: http://10.107.105.207:30796
+  authAddress:
+    user: http://10.107.105.207:30800/cc/v1/inter/user
+    auth: http://10.107.105.207:30800/cc/v1/inter/auth
+    ip: http://10.107.105.207:30800/cc/v1/inter/ip
+  cache:
+    cacheTime: 24h
+    defaultTimestampTimeout: 30000
+  cookie:
+    defaultTime: 86400
+    path: "/"

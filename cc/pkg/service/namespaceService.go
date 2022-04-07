@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package service
 
 import (
+	"errors"
+	"github.com/jinzhu/gorm"
 	"math"
 	"mlss-controlcenter-go/pkg/common"
 	"mlss-controlcenter-go/pkg/constants"
@@ -34,20 +37,20 @@ func GetAllNamespaces(page int64, size int64) (*models.PageNamespaceList, error)
 	if page > 0 && size > 0 {
 		allNamespaces, err = repo.GetAllNamespacesByOffset(offSet, size)
 		if err != nil {
-			logger.Logger().Error("Get all namespace by offset err, ",err)
+			logger.Logger().Error("Get all namespace by offset err, ", err)
 			return &models.PageNamespaceList{}, err
 		}
 	} else {
 		allNamespaces, err = repo.GetAllNamespaces()
 		if err != nil {
-			logger.Logger().Error("Get all namespaces err, ",err)
+			logger.Logger().Error("Get all namespaces err, ", err)
 			return &models.PageNamespaceList{}, err
 		}
 	}
 
 	total, err := repo.CountNamespaces()
 	if err != nil {
-		logger.Logger().Error("Count namespaces err, ",err)
+		logger.Logger().Error("Count namespaces err, ", err)
 		return &models.PageNamespaceList{}, err
 	}
 
@@ -132,7 +135,7 @@ func GetAllNamespace() ([]models.GroupNamespace, error) {
 	return groupNamespace, err
 }
 
-func GetNamespaceByID(id int64) (models.Namespace, error){
+func GetNamespaceByID(id int64) (models.Namespace, error) {
 	return repo.GetNamespaceByID(id)
 }
 
@@ -182,7 +185,7 @@ func AddNamespace(namespace models.Namespace, namespaceRequest models.NamespaceR
 			tx.Rollback()
 			return err
 		}
-	}else{
+	} else {
 		if nsByName.Namespace == namespace.Namespace {
 			namespace.ID = nsByName.ID
 			if err := repo.UpdateNamespaceDB(tx, namespace); nil != err {
@@ -205,7 +208,7 @@ func AddNamespace(namespace models.Namespace, namespaceRequest models.NamespaceR
 func UpdateNamespace(namespace models.Namespace) (models.Namespace, error) {
 	err := repo.UpdateNamespace(namespace)
 	if err != nil {
-		logger.Logger().Error("Update namespace err, ",err)
+		logger.Logger().Error("Update namespace err, ", err)
 		return models.Namespace{}, err
 	}
 	return repo.GetNamespaceByName(namespace.Namespace)
@@ -234,4 +237,59 @@ func AddNSToK8s(namespace string, namespaceRequest models.NamespaceRequest) erro
 		return CreateNamespaceWithResourcesErrMsg
 	}
 	return nil
+}
+
+func ListNamespaceByRoleNameAndUserName(roleName, userName string) ([]string, error) {
+	if roleName == "" || userName == "" {
+		logger.Logger().Errorf("ListNamespaceByRoleNameAndUserName params can't be empty string,"+
+			" roleName:%s, userName: %s\n", roleName, userName)
+		return nil, errors.New("params error")
+	}
+	role, err := repo.GetRoleByName(roleName)
+	if err != nil {
+		if err.Error() != gorm.ErrRecordNotFound.Error() {
+			logger.Logger().Errorf("fail to get role info by rolename, roleName: %s, err: %v\n", roleName, err)
+			return nil, err
+		}
+		logger.Logger().Infof("role info not exist by rolename, roleName: %s, err: %v\n", roleName, err)
+		return nil, nil
+	}
+	user, err := repo.GetUserByName(userName, datasource.GetDB())
+	if err != nil {
+		if err.Error() != gorm.ErrRecordNotFound.Error() {
+			logger.Logger().Errorf("fail to get user info by userName, userName: %s, err: %v\n", userName, err)
+			return nil, err
+		}
+		logger.Logger().Errorf("user info not exist by userName, userName: %s, err: %v\n", userName, err)
+		return nil, nil
+	}
+	groupIdList, err := repo.GetGroupIdListByUserIdRoleId(user.ID, role.ID)
+	if err != nil {
+		if err.Error() != gorm.ErrRecordNotFound.Error() {
+			logger.Logger().Errorf("fail to get group id list info by userId and roleId, "+
+				"userId: %d, roleId: %d, err: %v\n", user.ID, role.ID, err)
+			return nil, err
+		}
+		logger.Logger().Errorf("group id list info not exist by userId and roleId, "+
+			"userId: %d, roleId: %d, err: %v\n", user.ID, role.ID, err)
+		return nil, nil
+	}
+	groupNamespaceList, err := repo.GetNamespaceByGroupIdList(*groupIdList)
+	if err != nil {
+		if err.Error() != gorm.ErrRecordNotFound.Error() {
+			logger.Logger().Errorf("fail to get group namespace list by group id list,"+
+				" groupIdList: %v, err: %v\n", *groupIdList, err)
+			return nil, err
+		}
+		logger.Logger().Errorf("group namespace list not found by group id list,"+
+			" groupIdList: %v, err: %v\n", *groupIdList, err)
+		return nil, nil
+	}
+	nsStr := make([]string, 0)
+	if len(groupNamespaceList) > 0 {
+		for _, ns := range groupNamespaceList {
+			nsStr = append(nsStr, ns.Namespace)
+		}
+	}
+	return nsStr, nil
 }

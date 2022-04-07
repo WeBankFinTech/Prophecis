@@ -31,9 +31,9 @@ func GetAllStorage(params storages.GetAllStorageParams) middleware.Responder {
 	size := *params.Size
 	logger.Logger().Debugf("v1/groups GetAllGroups params page: %v, size: %v", page, size)
 
-	repoStorage ,err:= service.GetAllStorage(page, size)
+	repoStorage, err := service.GetAllStorage(page, size)
 	if err != nil {
-		logger.Logger().Error("Get all storage err, ",err)
+		logger.Logger().Error("Get all storage err, ", err)
 		return ResponderFunc(http.StatusBadRequest, err.Error(), err.Error())
 	}
 	marshal, marshalErr := json.Marshal(repoStorage)
@@ -54,7 +54,7 @@ func AddStorage(params storages.AddStorageParams) middleware.Responder {
 		if err != nil {
 			return ResponderFunc(http.StatusBadRequest, "failed to add storage", err.Error())
 		}
-	}else{
+	} else {
 		if deleteStorage != nil {
 			storageRequest.ID = deleteStorage.ID
 			repoStorage, err = service.UpdateStorage(storageRequest)
@@ -76,9 +76,9 @@ func UpdateStorage(params storages.UpdateStorageParams) middleware.Responder {
 
 	storageRequest := common.FromUpdateStorageRequest(params)
 
-	storageById,err := service.GetStorageById(storageRequest.ID)
+	storageById, err := service.GetStorageById(storageRequest.ID)
 	if err != nil {
-		logger.Logger().Error("Get storage by id err, ",err)
+		logger.Logger().Error("Get storage by id err, ", err)
 		return ResponderFunc(http.StatusBadRequest, err.Error(), err.Error())
 	}
 	if storageRequest.ID != storageById.ID {
@@ -98,9 +98,9 @@ func UpdateStorage(params storages.UpdateStorageParams) middleware.Responder {
 func DeleteStorageByID(params storages.DeleteStorageByIDParams) middleware.Responder {
 	storageId := params.StorageID
 
-	storageById,err := service.GetStorageById(storageId)
+	storageById, err := service.GetStorageById(storageId)
 	if err != nil {
-		logger.Logger().Error("Get all storage by id err, ",err)
+		logger.Logger().Error("Get all storage by id err, ", err)
 		return ResponderFunc(http.StatusBadRequest, err.Error(), err.Error())
 	}
 	if storageId != storageById.ID {

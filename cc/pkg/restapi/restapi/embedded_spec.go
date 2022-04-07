@@ -79,6 +79,39 @@ func init() {
         }
       }
     },
+    "/cc/v1/alerts": {
+      "post": {
+        "description": "alert to ims",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Alerts"
+        ],
+        "summary": "alert to ims",
+        "operationId": "PostAlert",
+        "responses": {
+          "200": {
+            "description": "alert to ims success.",
+            "schema": {
+              "$ref": "#/definitions/Result"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "url to alert not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/cc/v1/alerts/training": {
       "post": {
         "description": "Optional extended description in Markdown.",
@@ -116,6 +149,39 @@ func init() {
           },
           "404": {
             "description": "url to add role not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/cc/v1/auth/access": {
+      "get": {
+        "description": "Use in Model Perditct， Auth If User Access to this service",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Auths"
+        ],
+        "summary": "Use in Model Perditct， Auth If User Access to this service",
+        "operationId": "CheckURLAccess",
+        "responses": {
+          "200": {
+            "description": "auth by namespace and notebook.",
+            "schema": {
+              "$ref": "#/definitions/Result"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "url to add namespace not found.",
             "schema": {
               "$ref": "#/definitions/Error"
             }
@@ -256,6 +322,96 @@ func init() {
         }
       }
     },
+    "/cc/v1/auth/access/group/{userId}": {
+      "get": {
+        "description": "Optional extended description in Markdown.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Auths"
+        ],
+        "summary": "auth group by userId .",
+        "operationId": "CheckGroupByUser",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "userId.",
+            "name": "userId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "auth group.",
+            "schema": {
+              "$ref": "#/definitions/Result"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/cc/v1/auth/access/mlflow/uri/{request_uri}": {
+      "get": {
+        "description": "Use in MLFlow Resource Check",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Auths"
+        ],
+        "summary": "Use",
+        "operationId": "CheckMLFlowResourceAccess",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "request_uri.",
+            "name": "request_uri",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "auth by namespace and notebook.",
+            "schema": {
+              "$ref": "#/definitions/Result"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Forbiddent",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "url to add namespace not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/cc/v1/auth/access/namespaces/{namespace}/notebooks/{notebook}": {
       "get": {
         "description": "Optional extended description in Markdown.",
@@ -298,6 +454,48 @@ func init() {
           },
           "404": {
             "description": "url to add namespace not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/cc/v1/auth/access/usergroups/{userName}": {
+      "get": {
+        "description": "Optional extended description in Markdown.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Returns userGroups.",
+        "operationId": "GetUserGroups",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "the userId of userGroups",
+            "name": "userName",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detailed userGroup and userGroup information.",
+            "schema": {
+              "$ref": "#/definitions/UserGroups"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Model with the given ID not found.",
             "schema": {
               "$ref": "#/definitions/Error"
             }
@@ -508,6 +706,66 @@ func init() {
         }
       }
     },
+    "/cc/v1/auth/access/{namespace}/checkresource": {
+      "get": {
+        "description": "Check resource",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Auths"
+        ],
+        "summary": "Check resource",
+        "operationId": "checkResource",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "Cpu.",
+            "name": "cpu",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "Gpu.",
+            "name": "gpu",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "Memory.",
+            "name": "memory",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "url to add namespace not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/cc/v1/getrsapubkey": {
       "get": {
         "description": "get LDAP login's rsa public key",
@@ -670,7 +928,7 @@ func init() {
         }
       }
     },
-    "/cc/v1/groups/group/storage": {
+    "/cc/v1/groups/group/storage/{clusterName}": {
       "get": {
         "description": "Optional extended description in Markdown.",
         "produces": [
@@ -681,6 +939,15 @@ func init() {
         ],
         "summary": "Returns a storage list.",
         "operationId": "GetCurrentUserStoragePath",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "the clusterName",
+            "name": "clusterName",
+            "in": "path",
+            "required": true
+          }
+        ],
         "responses": {
           "200": {
             "description": "Detailed GroupStorage and GroupStorage information.",
@@ -1388,6 +1655,48 @@ func init() {
             "description": "Detailed userGroup and userGroup information.",
             "schema": {
               "$ref": "#/definitions/UserGroup"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Model with the given ID not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/cc/v1/groups/username/{username}": {
+      "get": {
+        "description": "Optional extended description in Markdown.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Returns a Group.",
+        "operationId": "GetGroupByUsername",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "the username of group",
+            "name": "username",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detailed Group and Group information.",
+            "schema": {
+              "$ref": "#/definitions/Group"
             }
           },
           "401": {
@@ -2207,6 +2516,55 @@ func init() {
         }
       }
     },
+    "/cc/v1/namespaces/role/{roleName}/user/{userName}": {
+      "get": {
+        "description": "Optional extended description in Markdown.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Namespaces"
+        ],
+        "summary": "Returns a namespace list.",
+        "operationId": "ListNamespaceByRoleNameAndUserName",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "the name of role",
+            "name": "roleName",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "the name of user",
+            "name": "userName",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "get namespace by role name and user name.",
+            "schema": {
+              "$ref": "#/definitions/ListNamespaceByRolenameAndUserNameResp"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Model with the given ID not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/cc/v1/nodes/{nodeName}/labels/{label}": {
       "delete": {
         "description": "Optional extended description in Markdown.",
@@ -2249,6 +2607,320 @@ func init() {
           },
           "404": {
             "description": "url to add namespace not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/cc/v1/proxyUser": {
+      "post": {
+        "description": "Optional extended description in Markdown.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "proxyUser"
+        ],
+        "summary": "add proxyUser to User .",
+        "operationId": "AddProxyUser",
+        "parameters": [
+          {
+            "description": "The alert of job Request",
+            "name": "keyPair",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ProxyUserPost"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Post Proxy User Success.",
+            "schema": {
+              "$ref": "#/definitions/Result"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "url to add keyPair not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/cc/v1/proxyUser/{id}": {
+      "get": {
+        "description": "Optional extended description in Markdown.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "proxyUser"
+        ],
+        "summary": "get ProxyUser Details .",
+        "operationId": "getProxyUser",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "The name of proxy user",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Proxy User.",
+            "schema": {
+              "$ref": "#/definitions/ProxyUser"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "url to add keyPair not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "put": {
+        "description": "Optional extended description in Markdown.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "proxyUser"
+        ],
+        "summary": "delete ProxyUser.",
+        "operationId": "UpdateProxyUser",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "The name of proxy user",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "proxy update entity.",
+            "name": "proxyUser",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/ProxyUserPut"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "keyPair interceptor.",
+            "schema": {
+              "$ref": "#/definitions/Result"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "url to add keyPair not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "Optional extended description in Markdown.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "proxyUser"
+        ],
+        "summary": "delete ProxyUser.",
+        "operationId": "DeleteProxyUser",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "The name of proxy user",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "keyPair interceptor.",
+            "schema": {
+              "$ref": "#/definitions/Result"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "url to add keyPair not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/cc/v1/proxyUser/{name}/user/{userName}": {
+      "get": {
+        "description": "Optional extended description in Markdown.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "proxyUser"
+        ],
+        "summary": "get proxy user by name and userid.",
+        "operationId": "GetProxyUserByUserId",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The name of proxy user",
+            "name": "name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "The user id of job Request",
+            "name": "userName",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Proxy User Entity.",
+            "schema": {
+              "$ref": "#/definitions/ProxyUser"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "url to add keyPair not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/cc/v1/proxyUserCheck/{proxyUserName}/{userName}": {
+      "get": {
+        "description": "Optional extended description in Markdown.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "proxyUser"
+        ],
+        "summary": "get proxy user by name and userid.",
+        "operationId": "ProxyUserCheck",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The name of proxy user",
+            "name": "proxyUserName",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "The user id of job Request",
+            "name": "userName",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Proxy User Entity.",
+            "schema": {
+              "$ref": "#/definitions/ProxyUser"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "url to add keyPair not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/cc/v1/proxyUsers/{user}": {
+      "get": {
+        "description": "Optional extended description in Markdown.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "proxyUser"
+        ],
+        "summary": "list proxy user.",
+        "operationId": "ListProxyUser",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The alert of job Request",
+            "name": "user",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "keyPair interceptor.",
+            "schema": {
+              "$ref": "#/definitions/ProxyUsers"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "url to add keyPair not found.",
             "schema": {
               "$ref": "#/definitions/Error"
             }
@@ -3289,6 +3961,15 @@ func init() {
         ],
         "summary": "Returns a list of users.",
         "operationId": "GetMyUsers",
+        "parameters": [
+          {
+            "type": "string",
+            "default": "",
+            "description": "clusterName.",
+            "name": "clusterName",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
             "description": "Detailed User and User information.",
@@ -3392,6 +4073,39 @@ func init() {
           }
         }
       }
+    },
+    "/cc/v1/users/token": {
+      "get": {
+        "description": "Optional extended description in Markdown.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Users"
+        ],
+        "summary": "Returns a user.",
+        "operationId": "GetUserToken",
+        "responses": {
+          "200": {
+            "description": "Detailed User and User information.",
+            "schema": {
+              "$ref": "#/definitions/TokenMsg"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Model with the given ID not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
     }
   },
   "definitions": {
@@ -3452,8 +4166,7 @@ func init() {
         },
         "departmentId": {
           "description": "the departmentId of group",
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "departmentName": {
           "description": "the departmentId of group",
@@ -3480,6 +4193,16 @@ func init() {
         "remarks": {
           "description": "the uid remarks user",
           "type": "string"
+        },
+        "rmb_dcn": {
+          "type": "string"
+        },
+        "rmb_idc": {
+          "type": "string"
+        },
+        "service_id": {
+          "type": "integer",
+          "format": "int64"
         },
         "subsystemId": {
           "description": "the systemId of group",
@@ -3579,6 +4302,10 @@ func init() {
           "type": "integer",
           "format": "int64"
         },
+        "groupType": {
+          "description": "the type of group",
+          "type": "string"
+        },
         "id": {
           "description": "the id of GroupStorage",
           "type": "integer",
@@ -3602,7 +4329,7 @@ func init() {
           "format": "int64"
         },
         "type": {
-          "description": "thr type of storage",
+          "description": "the type of storage",
           "type": "string"
         }
       }
@@ -3790,6 +4517,11 @@ func init() {
         "secretKey": {
           "description": "the secretKey",
           "type": "string"
+        },
+        "superAdmin": {
+          "description": "the secretKey",
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -3828,6 +4560,13 @@ func init() {
             "type": "string"
           }
         }
+      }
+    },
+    "ListNamespaceByRolenameAndUserNameResp": {
+      "type": "array",
+      "items": {
+        "description": "namespace name",
+        "type": "string"
       }
     },
     "LoginRequest": {
@@ -4231,6 +4970,203 @@ func init() {
         }
       }
     },
+    "PostAlertRequest": {
+      "type": "object",
+      "properties": {
+        "alertList": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PostAlertSubRequest"
+          }
+        }
+      }
+    },
+    "PostAlertSubRequest": {
+      "type": "object",
+      "required": [
+        "subSystemId",
+        "alertTitle"
+      ],
+      "properties": {
+        "alertInfo": {
+          "description": "the info of alert",
+          "type": "string"
+        },
+        "alertIp": {
+          "description": "the ip address of alert, default is server's ip",
+          "type": "string"
+        },
+        "alertLevel": {
+          "description": "1:critical, 2:major, 3:minor, 4:warning ,5:info; default: 5",
+          "type": "number",
+          "format": "int"
+        },
+        "alertObj": {
+          "description": "alert object that trigger alert",
+          "type": "string"
+        },
+        "alertTitle": {
+          "type": "string"
+        },
+        "receivers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Receiver"
+          }
+        },
+        "remarkInfo": {
+          "type": "string"
+        },
+        "subSystemId": {
+          "type": "number",
+          "format": "int64"
+        }
+      }
+    },
+    "ProxyUser": {
+      "type": "object",
+      "properties": {
+        "enableFlag": {
+          "description": "Whether the data is valid",
+          "type": "integer",
+          "format": "int64"
+        },
+        "gid": {
+          "description": "the gid of user",
+          "type": "integer",
+          "format": "int64"
+        },
+        "id": {
+          "description": "name of proxy user.",
+          "type": "integer"
+        },
+        "isActivated": {
+          "description": "the active of proxy user",
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "description": "the username",
+          "type": "string"
+        },
+        "path": {
+          "description": "storage path of proxy user.",
+          "type": "string"
+        },
+        "remarks": {
+          "description": "the uid remarks user",
+          "type": "string"
+        },
+        "token": {
+          "description": "the client_token of user",
+          "type": "string"
+        },
+        "uid": {
+          "description": "the uid of user",
+          "type": "integer",
+          "format": "int64"
+        },
+        "user_id": {
+          "description": "the userId of user",
+          "type": "number",
+          "format": "int64"
+        }
+      }
+    },
+    "ProxyUserPost": {
+      "type": "object",
+      "properties": {
+        "enableFlag": {
+          "description": "Whether the data is valid",
+          "type": "integer",
+          "format": "int64"
+        },
+        "gid": {
+          "description": "the gid of user",
+          "type": "integer",
+          "format": "int64"
+        },
+        "isActivated": {
+          "description": "the active of the proxy user.",
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "description": "the username",
+          "type": "string"
+        },
+        "path": {
+          "description": "storage path of proxy user.",
+          "type": "string"
+        },
+        "remarks": {
+          "description": "the uid remarks user",
+          "type": "string"
+        },
+        "uid": {
+          "description": "the uid of user",
+          "type": "integer",
+          "format": "int64"
+        },
+        "user_id": {
+          "description": "the userId of user",
+          "type": "number",
+          "format": "int64"
+        }
+      }
+    },
+    "ProxyUserPut": {
+      "type": "object",
+      "properties": {
+        "enableFlag": {
+          "description": "Whether the data is valid",
+          "type": "integer",
+          "format": "int64"
+        },
+        "gid": {
+          "description": "the gid of user",
+          "type": "integer",
+          "format": "int64"
+        },
+        "id": {
+          "description": "name of proxy user.",
+          "type": "integer"
+        },
+        "isActivated": {
+          "description": "the active of the proxy user.",
+          "type": "integer",
+          "format": "int64"
+        },
+        "path": {
+          "description": "storage path of proxy user.",
+          "type": "string"
+        },
+        "remarks": {
+          "description": "the uid remarks user",
+          "type": "string"
+        },
+        "uid": {
+          "description": "the uid of user",
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "ProxyUsers": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ProxyUser"
+      }
+    },
+    "Receiver": {
+      "type": "object",
+      "properties": {
+        "alert_receiver": {
+          "description": "the alert receiver",
+          "type": "string"
+        }
+      }
+    },
     "ResourcesQuota": {
       "type": "object",
       "properties": {
@@ -4386,6 +5322,19 @@ func init() {
         }
       }
     },
+    "TokenMsg": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "description": "the namespace name",
+          "type": "string"
+        },
+        "user": {
+          "description": "Whether the data is valid",
+          "type": "string"
+        }
+      }
+    },
     "User": {
       "type": "object",
       "properties": {
@@ -4465,6 +5414,55 @@ func init() {
         }
       }
     },
+    "UserGroupInfo": {
+      "type": "object",
+      "properties": {
+        "enableFlag": {
+          "description": "Whether the data is valid",
+          "type": "integer",
+          "format": "int8"
+        },
+        "gid": {
+          "description": "the gid of user",
+          "type": "integer",
+          "format": "int64"
+        },
+        "group": {
+          "$ref": "#/definitions/Group"
+        },
+        "guidCheck": {
+          "description": "true or false",
+          "type": "integer",
+          "format": "int64"
+        },
+        "id": {
+          "description": "the id of user",
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "description": "the username",
+          "type": "string"
+        },
+        "remarks": {
+          "description": "the uid remarks user",
+          "type": "string"
+        },
+        "token": {
+          "description": "the client_token of user",
+          "type": "string"
+        },
+        "type": {
+          "description": "the type of user, user or system",
+          "type": "string"
+        },
+        "uid": {
+          "description": "the uid of user",
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "UserGroupRes": {
       "type": "object",
       "properties": {
@@ -4513,6 +5511,12 @@ func init() {
           "description": "the username",
           "type": "string"
         }
+      }
+    },
+    "UserGroups": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/UserGroup"
       }
     },
     "UserList": {
@@ -4665,6 +5669,39 @@ func init() {
         }
       }
     },
+    "/cc/v1/alerts": {
+      "post": {
+        "description": "alert to ims",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Alerts"
+        ],
+        "summary": "alert to ims",
+        "operationId": "PostAlert",
+        "responses": {
+          "200": {
+            "description": "alert to ims success.",
+            "schema": {
+              "$ref": "#/definitions/Result"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "url to alert not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/cc/v1/alerts/training": {
       "post": {
         "description": "Optional extended description in Markdown.",
@@ -4702,6 +5739,39 @@ func init() {
           },
           "404": {
             "description": "url to add role not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/cc/v1/auth/access": {
+      "get": {
+        "description": "Use in Model Perditct， Auth If User Access to this service",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Auths"
+        ],
+        "summary": "Use in Model Perditct， Auth If User Access to this service",
+        "operationId": "CheckURLAccess",
+        "responses": {
+          "200": {
+            "description": "auth by namespace and notebook.",
+            "schema": {
+              "$ref": "#/definitions/Result"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "url to add namespace not found.",
             "schema": {
               "$ref": "#/definitions/Error"
             }
@@ -4842,6 +5912,96 @@ func init() {
         }
       }
     },
+    "/cc/v1/auth/access/group/{userId}": {
+      "get": {
+        "description": "Optional extended description in Markdown.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Auths"
+        ],
+        "summary": "auth group by userId .",
+        "operationId": "CheckGroupByUser",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "userId.",
+            "name": "userId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "auth group.",
+            "schema": {
+              "$ref": "#/definitions/Result"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/cc/v1/auth/access/mlflow/uri/{request_uri}": {
+      "get": {
+        "description": "Use in MLFlow Resource Check",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Auths"
+        ],
+        "summary": "Use",
+        "operationId": "CheckMLFlowResourceAccess",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "request_uri.",
+            "name": "request_uri",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "auth by namespace and notebook.",
+            "schema": {
+              "$ref": "#/definitions/Result"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Forbiddent",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "url to add namespace not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/cc/v1/auth/access/namespaces/{namespace}/notebooks/{notebook}": {
       "get": {
         "description": "Optional extended description in Markdown.",
@@ -4884,6 +6044,48 @@ func init() {
           },
           "404": {
             "description": "url to add namespace not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/cc/v1/auth/access/usergroups/{userName}": {
+      "get": {
+        "description": "Optional extended description in Markdown.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Returns userGroups.",
+        "operationId": "GetUserGroups",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "the userId of userGroups",
+            "name": "userName",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detailed userGroup and userGroup information.",
+            "schema": {
+              "$ref": "#/definitions/UserGroups"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Model with the given ID not found.",
             "schema": {
               "$ref": "#/definitions/Error"
             }
@@ -5094,6 +6296,66 @@ func init() {
         }
       }
     },
+    "/cc/v1/auth/access/{namespace}/checkresource": {
+      "get": {
+        "description": "Check resource",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Auths"
+        ],
+        "summary": "Check resource",
+        "operationId": "checkResource",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "namespace.",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "Cpu.",
+            "name": "cpu",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "Gpu.",
+            "name": "gpu",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "Memory.",
+            "name": "memory",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "url to add namespace not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/cc/v1/getrsapubkey": {
       "get": {
         "description": "get LDAP login's rsa public key",
@@ -5256,7 +6518,7 @@ func init() {
         }
       }
     },
-    "/cc/v1/groups/group/storage": {
+    "/cc/v1/groups/group/storage/{clusterName}": {
       "get": {
         "description": "Optional extended description in Markdown.",
         "produces": [
@@ -5267,6 +6529,15 @@ func init() {
         ],
         "summary": "Returns a storage list.",
         "operationId": "GetCurrentUserStoragePath",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "the clusterName",
+            "name": "clusterName",
+            "in": "path",
+            "required": true
+          }
+        ],
         "responses": {
           "200": {
             "description": "Detailed GroupStorage and GroupStorage information.",
@@ -5974,6 +7245,48 @@ func init() {
             "description": "Detailed userGroup and userGroup information.",
             "schema": {
               "$ref": "#/definitions/UserGroup"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Model with the given ID not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/cc/v1/groups/username/{username}": {
+      "get": {
+        "description": "Optional extended description in Markdown.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Returns a Group.",
+        "operationId": "GetGroupByUsername",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "the username of group",
+            "name": "username",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detailed Group and Group information.",
+            "schema": {
+              "$ref": "#/definitions/Group"
             }
           },
           "401": {
@@ -6793,6 +8106,55 @@ func init() {
         }
       }
     },
+    "/cc/v1/namespaces/role/{roleName}/user/{userName}": {
+      "get": {
+        "description": "Optional extended description in Markdown.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Namespaces"
+        ],
+        "summary": "Returns a namespace list.",
+        "operationId": "ListNamespaceByRoleNameAndUserName",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "the name of role",
+            "name": "roleName",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "the name of user",
+            "name": "userName",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "get namespace by role name and user name.",
+            "schema": {
+              "$ref": "#/definitions/ListNamespaceByRolenameAndUserNameResp"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Model with the given ID not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/cc/v1/nodes/{nodeName}/labels/{label}": {
       "delete": {
         "description": "Optional extended description in Markdown.",
@@ -6835,6 +8197,320 @@ func init() {
           },
           "404": {
             "description": "url to add namespace not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/cc/v1/proxyUser": {
+      "post": {
+        "description": "Optional extended description in Markdown.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "proxyUser"
+        ],
+        "summary": "add proxyUser to User .",
+        "operationId": "AddProxyUser",
+        "parameters": [
+          {
+            "description": "The alert of job Request",
+            "name": "keyPair",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ProxyUserPost"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Post Proxy User Success.",
+            "schema": {
+              "$ref": "#/definitions/Result"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "url to add keyPair not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/cc/v1/proxyUser/{id}": {
+      "get": {
+        "description": "Optional extended description in Markdown.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "proxyUser"
+        ],
+        "summary": "get ProxyUser Details .",
+        "operationId": "getProxyUser",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "The name of proxy user",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Proxy User.",
+            "schema": {
+              "$ref": "#/definitions/ProxyUser"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "url to add keyPair not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "put": {
+        "description": "Optional extended description in Markdown.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "proxyUser"
+        ],
+        "summary": "delete ProxyUser.",
+        "operationId": "UpdateProxyUser",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "The name of proxy user",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "proxy update entity.",
+            "name": "proxyUser",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/ProxyUserPut"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "keyPair interceptor.",
+            "schema": {
+              "$ref": "#/definitions/Result"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "url to add keyPair not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "Optional extended description in Markdown.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "proxyUser"
+        ],
+        "summary": "delete ProxyUser.",
+        "operationId": "DeleteProxyUser",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "The name of proxy user",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "keyPair interceptor.",
+            "schema": {
+              "$ref": "#/definitions/Result"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "url to add keyPair not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/cc/v1/proxyUser/{name}/user/{userName}": {
+      "get": {
+        "description": "Optional extended description in Markdown.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "proxyUser"
+        ],
+        "summary": "get proxy user by name and userid.",
+        "operationId": "GetProxyUserByUserId",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The name of proxy user",
+            "name": "name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "The user id of job Request",
+            "name": "userName",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Proxy User Entity.",
+            "schema": {
+              "$ref": "#/definitions/ProxyUser"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "url to add keyPair not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/cc/v1/proxyUserCheck/{proxyUserName}/{userName}": {
+      "get": {
+        "description": "Optional extended description in Markdown.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "proxyUser"
+        ],
+        "summary": "get proxy user by name and userid.",
+        "operationId": "ProxyUserCheck",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The name of proxy user",
+            "name": "proxyUserName",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "The user id of job Request",
+            "name": "userName",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Proxy User Entity.",
+            "schema": {
+              "$ref": "#/definitions/ProxyUser"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "url to add keyPair not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/cc/v1/proxyUsers/{user}": {
+      "get": {
+        "description": "Optional extended description in Markdown.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "proxyUser"
+        ],
+        "summary": "list proxy user.",
+        "operationId": "ListProxyUser",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The alert of job Request",
+            "name": "user",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "keyPair interceptor.",
+            "schema": {
+              "$ref": "#/definitions/ProxyUsers"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "url to add keyPair not found.",
             "schema": {
               "$ref": "#/definitions/Error"
             }
@@ -7875,6 +9551,15 @@ func init() {
         ],
         "summary": "Returns a list of users.",
         "operationId": "GetMyUsers",
+        "parameters": [
+          {
+            "type": "string",
+            "default": "",
+            "description": "clusterName.",
+            "name": "clusterName",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
             "description": "Detailed User and User information.",
@@ -7978,6 +9663,39 @@ func init() {
           }
         }
       }
+    },
+    "/cc/v1/users/token": {
+      "get": {
+        "description": "Optional extended description in Markdown.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "Users"
+        ],
+        "summary": "Returns a user.",
+        "operationId": "GetUserToken",
+        "responses": {
+          "200": {
+            "description": "Detailed User and User information.",
+            "schema": {
+              "$ref": "#/definitions/TokenMsg"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Model with the given ID not found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
     }
   },
   "definitions": {
@@ -8038,8 +9756,7 @@ func init() {
         },
         "departmentId": {
           "description": "the departmentId of group",
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "departmentName": {
           "description": "the departmentId of group",
@@ -8066,6 +9783,16 @@ func init() {
         "remarks": {
           "description": "the uid remarks user",
           "type": "string"
+        },
+        "rmb_dcn": {
+          "type": "string"
+        },
+        "rmb_idc": {
+          "type": "string"
+        },
+        "service_id": {
+          "type": "integer",
+          "format": "int64"
         },
         "subsystemId": {
           "description": "the systemId of group",
@@ -8165,6 +9892,10 @@ func init() {
           "type": "integer",
           "format": "int64"
         },
+        "groupType": {
+          "description": "the type of group",
+          "type": "string"
+        },
         "id": {
           "description": "the id of GroupStorage",
           "type": "integer",
@@ -8188,7 +9919,7 @@ func init() {
           "format": "int64"
         },
         "type": {
-          "description": "thr type of storage",
+          "description": "the type of storage",
           "type": "string"
         }
       }
@@ -8376,6 +10107,11 @@ func init() {
         "secretKey": {
           "description": "the secretKey",
           "type": "string"
+        },
+        "superAdmin": {
+          "description": "the secretKey",
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -8414,6 +10150,13 @@ func init() {
             "type": "string"
           }
         }
+      }
+    },
+    "ListNamespaceByRolenameAndUserNameResp": {
+      "type": "array",
+      "items": {
+        "description": "namespace name",
+        "type": "string"
       }
     },
     "LoginRequest": {
@@ -8817,6 +10560,203 @@ func init() {
         }
       }
     },
+    "PostAlertRequest": {
+      "type": "object",
+      "properties": {
+        "alertList": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PostAlertSubRequest"
+          }
+        }
+      }
+    },
+    "PostAlertSubRequest": {
+      "type": "object",
+      "required": [
+        "subSystemId",
+        "alertTitle"
+      ],
+      "properties": {
+        "alertInfo": {
+          "description": "the info of alert",
+          "type": "string"
+        },
+        "alertIp": {
+          "description": "the ip address of alert, default is server's ip",
+          "type": "string"
+        },
+        "alertLevel": {
+          "description": "1:critical, 2:major, 3:minor, 4:warning ,5:info; default: 5",
+          "type": "number",
+          "format": "int"
+        },
+        "alertObj": {
+          "description": "alert object that trigger alert",
+          "type": "string"
+        },
+        "alertTitle": {
+          "type": "string"
+        },
+        "receivers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Receiver"
+          }
+        },
+        "remarkInfo": {
+          "type": "string"
+        },
+        "subSystemId": {
+          "type": "number",
+          "format": "int64"
+        }
+      }
+    },
+    "ProxyUser": {
+      "type": "object",
+      "properties": {
+        "enableFlag": {
+          "description": "Whether the data is valid",
+          "type": "integer",
+          "format": "int64"
+        },
+        "gid": {
+          "description": "the gid of user",
+          "type": "integer",
+          "format": "int64"
+        },
+        "id": {
+          "description": "name of proxy user.",
+          "type": "integer"
+        },
+        "isActivated": {
+          "description": "the active of proxy user",
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "description": "the username",
+          "type": "string"
+        },
+        "path": {
+          "description": "storage path of proxy user.",
+          "type": "string"
+        },
+        "remarks": {
+          "description": "the uid remarks user",
+          "type": "string"
+        },
+        "token": {
+          "description": "the client_token of user",
+          "type": "string"
+        },
+        "uid": {
+          "description": "the uid of user",
+          "type": "integer",
+          "format": "int64"
+        },
+        "user_id": {
+          "description": "the userId of user",
+          "type": "number",
+          "format": "int64"
+        }
+      }
+    },
+    "ProxyUserPost": {
+      "type": "object",
+      "properties": {
+        "enableFlag": {
+          "description": "Whether the data is valid",
+          "type": "integer",
+          "format": "int64"
+        },
+        "gid": {
+          "description": "the gid of user",
+          "type": "integer",
+          "format": "int64"
+        },
+        "isActivated": {
+          "description": "the active of the proxy user.",
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "description": "the username",
+          "type": "string"
+        },
+        "path": {
+          "description": "storage path of proxy user.",
+          "type": "string"
+        },
+        "remarks": {
+          "description": "the uid remarks user",
+          "type": "string"
+        },
+        "uid": {
+          "description": "the uid of user",
+          "type": "integer",
+          "format": "int64"
+        },
+        "user_id": {
+          "description": "the userId of user",
+          "type": "number",
+          "format": "int64"
+        }
+      }
+    },
+    "ProxyUserPut": {
+      "type": "object",
+      "properties": {
+        "enableFlag": {
+          "description": "Whether the data is valid",
+          "type": "integer",
+          "format": "int64"
+        },
+        "gid": {
+          "description": "the gid of user",
+          "type": "integer",
+          "format": "int64"
+        },
+        "id": {
+          "description": "name of proxy user.",
+          "type": "integer"
+        },
+        "isActivated": {
+          "description": "the active of the proxy user.",
+          "type": "integer",
+          "format": "int64"
+        },
+        "path": {
+          "description": "storage path of proxy user.",
+          "type": "string"
+        },
+        "remarks": {
+          "description": "the uid remarks user",
+          "type": "string"
+        },
+        "uid": {
+          "description": "the uid of user",
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "ProxyUsers": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ProxyUser"
+      }
+    },
+    "Receiver": {
+      "type": "object",
+      "properties": {
+        "alert_receiver": {
+          "description": "the alert receiver",
+          "type": "string"
+        }
+      }
+    },
     "ResourcesQuota": {
       "type": "object",
       "properties": {
@@ -8972,6 +10912,19 @@ func init() {
         }
       }
     },
+    "TokenMsg": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "description": "the namespace name",
+          "type": "string"
+        },
+        "user": {
+          "description": "Whether the data is valid",
+          "type": "string"
+        }
+      }
+    },
     "User": {
       "type": "object",
       "properties": {
@@ -9051,6 +11004,55 @@ func init() {
         }
       }
     },
+    "UserGroupInfo": {
+      "type": "object",
+      "properties": {
+        "enableFlag": {
+          "description": "Whether the data is valid",
+          "type": "integer",
+          "format": "int8"
+        },
+        "gid": {
+          "description": "the gid of user",
+          "type": "integer",
+          "format": "int64"
+        },
+        "group": {
+          "$ref": "#/definitions/Group"
+        },
+        "guidCheck": {
+          "description": "true or false",
+          "type": "integer",
+          "format": "int64"
+        },
+        "id": {
+          "description": "the id of user",
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "description": "the username",
+          "type": "string"
+        },
+        "remarks": {
+          "description": "the uid remarks user",
+          "type": "string"
+        },
+        "token": {
+          "description": "the client_token of user",
+          "type": "string"
+        },
+        "type": {
+          "description": "the type of user, user or system",
+          "type": "string"
+        },
+        "uid": {
+          "description": "the uid of user",
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "UserGroupRes": {
       "type": "object",
       "properties": {
@@ -9099,6 +11101,12 @@ func init() {
           "description": "the username",
           "type": "string"
         }
+      }
+    },
+    "UserGroups": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/UserGroup"
       }
     },
     "UserList": {
