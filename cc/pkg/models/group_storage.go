@@ -21,6 +21,9 @@ type GroupStorage struct {
 	// the groupId
 	GroupID int64 `json:"groupId,omitempty"`
 
+	// the type of group
+	GroupType string `json:"groupType,omitempty"`
+
 	// the id of GroupStorage
 	ID int64 `json:"id,omitempty"`
 
@@ -36,7 +39,7 @@ type GroupStorage struct {
 	// the storageId
 	StorageID int64 `json:"storageId,omitempty"`
 
-	// thr type of storage
+	// the type of storage
 	Type string `json:"type,omitempty"`
 }
 

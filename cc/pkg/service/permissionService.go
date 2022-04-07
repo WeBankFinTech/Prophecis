@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package service
 
 import (
@@ -33,8 +34,21 @@ func GetPermissionsByLike(queryStr string) ([]*models.Permission, error) {
 func GetPermissionIdsByRoleId(ids []int) (common.IntSet, error) {
 	rolePermissions, err := repo.GetPermissionIdsByRoleId(ids)
 	if err != nil {
-		logger.Logger().Error("Get permission ids by roleId err, ",err)
-		return common.IntSet{},err
+		logger.Logger().Error("Get permission ids by roleId err, ", err)
+		return common.IntSet{}, err
+	}
+	perIds := *common.NewIntSet()
+	for _, rp := range rolePermissions {
+		perIds.Add(int(rp.PermissionID))
+	}
+	return perIds, nil
+}
+
+func GetPermissionsByRoleId(id int) (common.IntSet, error) {
+	rolePermissions, err := repo.GetPermissionByRoleId(id)
+	if err != nil {
+		logger.Logger().Error("Get permission ids by roleId err, ", err)
+		return common.IntSet{}, err
 	}
 	perIds := *common.NewIntSet()
 	for _, rp := range rolePermissions {

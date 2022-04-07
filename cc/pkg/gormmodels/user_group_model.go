@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package repo
 
-import (
-	"mlss-controlcenter-go/pkg/datasource"
-	"mlss-controlcenter-go/pkg/models"
-)
+package gormmodels
 
-func GetRolePermissionsByRoleId(roleId int64) ([]*models.RolePermission, error) {
-	var rolePermissions []*models.RolePermission
-	err := datasource.GetDB().Find(&rolePermissions, "role_id = ? AND enable_flag = ?",roleId, 1).Error
-	return rolePermissions, err
+type UserGroupBase struct {
+	ID         int64  `gorm:"column:id; PRIMARY_KEY" json:"id"`
+	EnableFlag int8   `json:"enable_flag"`
+	UserId     int64  `json:"user_id"`
+	RoleId     int64  `json:"role_id"`
+	GroupId    int64  `json:"group_id"`
+	Remarks    string `json:"remarks"`
 }

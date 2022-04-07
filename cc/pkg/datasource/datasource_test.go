@@ -77,8 +77,8 @@ func TestTX(t *testing.T) {
 
 		//add group-------------------
 		group := models.Group{
-			Name:        "aha-buoy",
-			ClusterName: "BDAP",
+			Name:         "aha-buoy",
+			ClusterName:  "BDAP",
 			DepartmentID: "89999",
 		}
 

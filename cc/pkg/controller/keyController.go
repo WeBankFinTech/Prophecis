@@ -47,15 +47,15 @@ func AddKey(params keys.AddKeyParams) middleware.Responder {
 	if name == deleteKeyByName.Name {
 		keyPair.ID = deleteKeyByName.ID
 		repoKey, err = service.UpdateKey(keyPair)
-		if err !=nil {
-			logger.Logger().Error("Update key err, ",err)
-			return ResponderFunc(http.StatusBadRequest, err.Error(),err.Error())
+		if err != nil {
+			logger.Logger().Error("Update key err, ", err)
+			return ResponderFunc(http.StatusBadRequest, err.Error(), err.Error())
 		}
 	} else {
 		repoKey, err = service.AddKey(keyPair)
-		if err !=nil {
-			logger.Logger().Error("Add key err, ",err)
-			return ResponderFunc(http.StatusBadRequest, err.Error(),err.Error())
+		if err != nil {
+			logger.Logger().Error("Add key err, ", err)
+			return ResponderFunc(http.StatusBadRequest, err.Error(), err.Error())
 		}
 	}
 
@@ -66,10 +66,10 @@ func AddKey(params keys.AddKeyParams) middleware.Responder {
 
 func GetByName(params keys.GetByNameParams) middleware.Responder {
 	name := params.Name
-	keyByName,err := service.GetKeyByName(name)
-	if err !=nil {
-		logger.Logger().Error("Update err, ",err)
-		return ResponderFunc(http.StatusBadRequest, err.Error(),err.Error())
+	keyByName, err := service.GetKeyByName(name)
+	if err != nil {
+		logger.Logger().Error("Update err, ", err)
+		return ResponderFunc(http.StatusBadRequest, err.Error(), err.Error())
 	}
 	if name != keyByName.Name {
 		return ResponderFunc(http.StatusBadRequest, "failed to get key by name", "key is not exist in db")
@@ -83,18 +83,18 @@ func GetByName(params keys.GetByNameParams) middleware.Responder {
 func DeleteByName(params keys.DeleteByNameParams) middleware.Responder {
 	name := params.Name
 	keyByName, err := service.GetKeyByName(name)
-	if err !=nil {
-		logger.Logger().Error("Get key by name err, ",err)
-		return ResponderFunc(http.StatusBadRequest, err.Error(),err.Error())
+	if err != nil {
+		logger.Logger().Error("Get key by name err, ", err)
+		return ResponderFunc(http.StatusBadRequest, err.Error(), err.Error())
 	}
 	if name != keyByName.Name {
 		return ResponderFunc(http.StatusBadRequest, "failed to delete key by name", "key is not exist in db")
 	}
 
 	deleteByName, err := service.DeleteByName(name)
-	if err !=nil {
-		logger.Logger().Error("Delete by name err, ",err)
-		return ResponderFunc(http.StatusBadRequest, err.Error(),err.Error())
+	if err != nil {
+		logger.Logger().Error("Delete by name err, ", err)
+		return ResponderFunc(http.StatusBadRequest, err.Error(), err.Error())
 	}
 	marshal, marshalErr := json.Marshal(deleteByName)
 

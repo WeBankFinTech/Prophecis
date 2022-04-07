@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package repo
 
 import (
@@ -32,8 +33,14 @@ func GetPermissionIdsByRoleId(ids []int) ([]models.RolePermission, error) {
 	return rps, err
 }
 
+func GetPermissionByRoleId(id int) ([]models.RolePermission, error) {
+	var rps []models.RolePermission
+	err := datasource.GetDB().Find(&rps, "enable_flag = ? AND role_id = ?", 1, id).Error
+	return rps, err
+}
+
 func GetPermissionsByLike(queryStr string) ([]*models.Permission, error) {
 	var rps []*models.Permission
-	err := datasource.GetDB().Find(&rps, "enable_flag = ? AND url LIKE ?", 1, "%" + queryStr + "%").Error
+	err := datasource.GetDB().Find(&rps, "enable_flag = ? AND url LIKE ?", 1, "%"+queryStr+"%").Error
 	return rps, err
 }

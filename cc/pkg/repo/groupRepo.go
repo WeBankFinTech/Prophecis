@@ -16,10 +16,24 @@
 package repo
 
 import (
-	"github.com/jinzhu/gorm"
 	"mlss-controlcenter-go/pkg/datasource"
+	"mlss-controlcenter-go/pkg/logger"
 	"mlss-controlcenter-go/pkg/models"
+
+	"github.com/jinzhu/gorm"
 )
+
+type GroupStorage struct {
+	EnableFlag  int64  `json:"enableFlag,omitempty" gorm:"enable_flag"`
+	GroupID     int64  `json:"groupId" gorm:"group_id"`
+	ID          int64  `json:"id,omitempty" gorm:"id"`
+	Path        string `json:"path,omitempty" gorm:"path"`
+	Permissions string `json:"permissions,omitempty" gorm:"permissions"`
+	Remarks     string `json:"remarks,omitempty" gorm:"remarks"`
+	StorageID   int64  `json:"storageId,omitempty" gorm:"storage_id"`
+	Type        string `json:"type,omitempty" gorm:"type"`
+	//GroupType string `json:"groupType,omitempty"`
+}
 
 func GetAllGroupsByOffset(offSet int64, size int64) ([]*models.Group, error) {
 	var groups []*models.Group
@@ -47,9 +61,13 @@ func UpdateGroup(group models.Group, db *gorm.DB) error {
 	return db.Model(&group).Omit("name", "group_type").Updates(&group).Error
 }
 
+func UpdateGroupById(groupId int64, m map[string]interface{}, db *gorm.DB) error {
+	return datasource.GetDB().Table("t_group").Where("id = ? AND enable_flag = ?", groupId, 1).Update(m).Error
+}
+
 func GetGroupByName(groupName string, db *gorm.DB) (*models.Group, error) {
 	var group models.Group
-	err := db.Find(&group, "name = ?", groupName).Error
+	err := db.Find(&group, "name = ? AND enable_flag = ?", groupName, 1).Error
 	return &group, err
 }
 
@@ -71,7 +89,7 @@ func GetDeleteGroupByName(groupName string) (*models.Group, error) {
 
 func GetGroupByGroupId(groupId int64) (*models.Group, error) {
 	var group models.Group
-	err := datasource.GetDB().Find(&group, "id = ?", groupId).Error
+	err := datasource.GetDB().Find(&group, "id = ? AND enable_flag = ?", groupId, 1).Error
 	return &group, err
 }
 
@@ -188,6 +206,13 @@ func GetGroupStorageByStorageIdAndGroupId(storageId int64, groupId int64) (model
 	return groupStorage, err
 }
 
+func CountGroupStorageByStorageIdAndGroupId(storageId int64, groupId int64) (int64, error) {
+	var count int64
+	err := datasource.GetDB().Table("t_group_storage").Where("storage_id = ? AND group_id = ? AND enable_flag = ?",
+		storageId, groupId, 1).Count(&count).Error
+	return count, err
+}
+
 func GetDeleteGroupStorageByStorageIdAndGroupId(storageId int64, groupId int64, db *gorm.DB) (models.GroupStorage, error) {
 	var groupStorage models.GroupStorage
 	err := db.Find(&groupStorage, "storage_id = ? AND group_id = ? AND enable_flag = ?", storageId, groupId, 0).Error
@@ -195,22 +220,42 @@ func GetDeleteGroupStorageByStorageIdAndGroupId(storageId int64, groupId int64, 
 }
 
 func AddStorageToGroupDB(db *gorm.DB, groupStorage models.GroupStorage) error {
-	return db.Create(&groupStorage).Error
+	logger.Logger().Debugf("AddStorageToGroupDB groupStorage: %+v", groupStorage)
+	obj := GroupStorage{
+		EnableFlag:  groupStorage.EnableFlag,
+		GroupID:     groupStorage.GroupID,
+		Path:        groupStorage.Path,
+		Permissions: groupStorage.Permissions,
+		Remarks:     groupStorage.Remarks,
+		StorageID:   groupStorage.StorageID,
+		Type:        groupStorage.Type,
+	}
+	return db.Create(&obj).Error
 }
 
 func AddStorageToGroup(groupStorage models.GroupStorage) error {
-	return datasource.GetDB().Create(&groupStorage).Error
+	obj := GroupStorage{
+		EnableFlag:  groupStorage.EnableFlag,
+		GroupID:     groupStorage.GroupID,
+		Path:        groupStorage.Path,
+		Permissions: groupStorage.Permissions,
+		Remarks:     groupStorage.Remarks,
+		StorageID:   groupStorage.StorageID,
+		Type:        groupStorage.Type,
+	}
+	logger.Logger().Debugf("AddStorageToGroup obj: %+v", obj)
+	return datasource.GetDB().Table("t_group_storage").Create(&obj).Error
 }
 
 func UpdateGroupStorageDB(db *gorm.DB, groupStorage models.GroupStorage) error {
 	return db.Model(&groupStorage).Omit("storage_id", "group_id").Updates(&groupStorage).Error
 }
 
-func UpdateGroupStorage(groupStorage models.GroupStorage) error{
+func UpdateGroupStorage(groupStorage models.GroupStorage) error {
 	return datasource.GetDB().Model(&groupStorage).Omit("storage_id", "group_id").Updates(&groupStorage).Error
 }
 
-func DeleteStorageFromGroupById(id int64) error{
+func DeleteStorageFromGroupById(id int64) error {
 	return datasource.GetDB().Table("t_group_storage").Where("id = ?", id).Update("enable_flag", 0).Error
 }
 
@@ -222,10 +267,10 @@ func DeleteGroupStorageByGroupId(db *gorm.DB, groupId int64) error {
 	return db.Table("t_group_storage").Where("group_id = ?", groupId).Update("enable_flag", 0).Error
 }
 
-func GetAllGroupStorageByStorageIdAndPageAndSize(db *gorm.DB, storageId int64, offSet int64, size int64) ([]models.GroupStorage,error) {
+func GetAllGroupStorageByStorageIdAndPageAndSize(db *gorm.DB, storageId int64, offSet int64, size int64) ([]models.GroupStorage, error) {
 	var groupStorageList []models.GroupStorage
 	err := db.Offset(offSet).Limit(size).Find(&groupStorageList, "storage_id = ? AND enable_flag = ?", storageId, 1).Error
-	return groupStorageList,err
+	return groupStorageList, err
 }
 
 func GetAllGroupStorageByStorageId(db *gorm.DB, storageId int64) ([]models.GroupStorage, error) {
@@ -389,3 +434,50 @@ func GetGroupIdListByUserIdRoleId(userId int64, roleId int64) (*[]int64, error) 
 	}
 	return &ids, err
 }
+
+func GetUserGroupByUserId(userId string) models.UserGroup {
+	var userGroup models.UserGroup
+	datasource.GetDB().Find(&userGroup, "user_id = ? AND enable_flag = ?", userId, 1)
+	logger.Logger().Info("userGroup is ", userGroup)
+	return userGroup
+}
+
+func GetGroupIdListByUserIdRoleIdAndClusterName(userId int64, roleId int64, clusterName string) []int64 {
+	var userGroups []models.UserGroup
+	db := datasource.GetDB()
+	if "" == clusterName {
+		db.Raw("select tug.* from t_user_group tug LEFT JOIN t_group tg ON tug.group_id = tg.id where tug.user_id = ? and tug.role_id = ? and tug.enable_flag = ? and tg.enable_flag = ?", userId, roleId, 1, 1).Scan(&userGroups)
+	} else {
+		db.Raw("select tug.* from t_user_group tug LEFT JOIN t_group tg ON tug.group_id = tg.id where tug.user_id = ? and tug.role_id = ? and tg.cluster_name = ? and tug.enable_flag = ? and tg.enable_flag = ?", userId, roleId, clusterName, 1, 1).Scan(&userGroups)
+	}
+	var ids []int64
+	for _, userGroup := range userGroups {
+		ids = append(ids, userGroup.GroupID)
+	}
+	return ids
+}
+
+func GetAllUsersByClusterName(clusterName string) []*models.User {
+	var users []*models.User
+	db := datasource.GetDB()
+	if "" != clusterName {
+		db.Raw("select * from t_user where enable_flag = 1 and id IN (select DISTINCT(user_id) from t_group tg right JOIN t_user_group tug on tg.id = tug.group_id where tg.cluster_name = ? and tg.enable_flag = 1 and tug.enable_flag = 1)", clusterName).Scan(&users)
+	} else {
+		//db.Table("t_user tu").Select([]string{"tu.id"}).Joins("left join t_user_group tug on tu.id = tug.user_id ANG enable_flag = ?", 1).Joins("left join t_group tg on")
+		db.Raw("select * from t_user where enable_flag = 1 and id IN (select DISTINCT(user_id) from t_group tg right JOIN t_user_group tug on tg.id = tug.group_id where tg.enable_flag = 1 and tug.enable_flag = 1)").Scan(&users)
+	}
+	return users
+}
+
+func GetGroupIdsByUserIdAndClusterName(userId int64, clusterName string) []int64 {
+	var groups []models.Group
+	var ids []int64
+	datasource.GetDB().Raw("select tg.id from t_group tg LEFT JOIN t_user_group tug on tg.id = tug.group_id where tg.cluster_name = ? AND tg.enable_flag = 1 AND tug.user_id = ? AND tug.enable_flag = 1", clusterName, userId).Scan(&groups)
+	if len(groups) > 0 {
+		for _, group := range groups {
+			ids = append(ids, group.ID)
+		}
+	}
+	return ids
+}
+

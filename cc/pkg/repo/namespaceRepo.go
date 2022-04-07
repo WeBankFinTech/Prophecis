@@ -16,8 +16,10 @@
 package repo
 
 import (
+	"fmt"
 	"github.com/jinzhu/gorm"
 	"mlss-controlcenter-go/pkg/datasource"
+	"mlss-controlcenter-go/pkg/logger"
 	"mlss-controlcenter-go/pkg/models"
 )
 
@@ -51,13 +53,13 @@ func GetNamespaceByID(id int64) (models.Namespace, error) {
 	return namespace, err
 }
 
-func GetDeleteNamespaceByID(id int64) (models.Namespace,error) {
+func GetDeleteNamespaceByID(id int64) (models.Namespace, error) {
 	var namespace models.Namespace
 	err := datasource.GetDB().Find(&namespace, "id = ?", id).Error
-	return namespace,err
+	return namespace, err
 }
 
-func DeleteNamespaceByID(id int64) error{
+func DeleteNamespaceByID(id int64) error {
 	return datasource.GetDB().Table("t_namespace").Where("id = ?", id).Update("enable_flag", 0).Error
 }
 
@@ -83,4 +85,23 @@ func UpdateNamespace(namespace models.Namespace) error {
 
 func UpdateNamespaceDB(db *gorm.DB, namespace models.Namespace) error {
 	return db.Model(&namespace).Omit("namespace").Updates(&namespace).Error
+}
+
+func GetNamespaceByGroupIdList(groupIdList []int64) ([]*models.GroupNamespace, error) {
+	var namespaces []*models.GroupNamespace
+	subQuery := ""
+	if len(groupIdList) > 0 {
+		for _, id := range groupIdList {
+			subQuery += fmt.Sprintf("%d,", id)
+		}
+	}
+	if subQuery != "" {
+		subQuery = subQuery[0 : len(subQuery)-1]
+		subQuery = " AND t_group_namespace.group_id IN (" + subQuery + ")"
+	}
+	logger.Logger().Infof("GetNamespaceByGroupIdList subQuery: %v\n", subQuery)
+	err := datasource.GetDB().Table("t_group_namespace").
+		Where("t_group_namespace.enable_flag = ?"+subQuery, 1).
+		Find(&namespaces).Error
+	return namespaces, err
 }

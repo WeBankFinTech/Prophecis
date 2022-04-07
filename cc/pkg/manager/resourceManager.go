@@ -17,11 +17,16 @@ package manager
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
+	seldonV1 "github.com/seldonio/seldon-core/operator/apis/machinelearning.seldon.io/v1"
+	"github.com/seldonio/seldon-core/operator/client/machinelearning.seldon.io/v1/clientset/versioned"
 	"gopkg.in/yaml.v2"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	"mlss-controlcenter-go/pkg/common"
 	"mlss-controlcenter-go/pkg/config"
 	"mlss-controlcenter-go/pkg/constants"
@@ -29,10 +34,21 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 )
+
+func initSeldonClient() (seldonClient *versioned.Clientset) {
+	// create the mpijobClientset
+	seldonClient = versioned.NewForConfigOrDie(config.GetKubernetesConfig())
+	return seldonClient
+}
+
+var (
+	seldonClient *versioned.Clientset
+)
+
+func init() {
+	seldonClient = initSeldonClient()
+}
 
 type K8sApiClient struct {
 }
@@ -51,7 +67,7 @@ func (kac *K8sApiClient) GetNSFromK8sForAdd(namespace string) (*v1.Namespace, er
 	k8sClient := getClient()
 
 	options := metav1.GetOptions{}
-	nsFromK8s, e := k8sClient.CoreV1().Namespaces().Get(namespace, options)
+	nsFromK8s, e := k8sClient.CoreV1().Namespaces().Get(context.TODO(), namespace, options)
 	if e != nil {
 		logger.Logger().Debugf("AddNamespace getNS err: %v", e.Error())
 		if strings.Contains(e.Error(), "not found") {
@@ -67,7 +83,7 @@ func (kac *K8sApiClient) GetNSFromK8s(namespace string) (*v1.Namespace, error) {
 	k8sClient := getClient()
 
 	options := metav1.GetOptions{}
-	nsFromK8s, e := k8sClient.CoreV1().Namespaces().Get(namespace, options)
+	nsFromK8s, e := k8sClient.CoreV1().Namespaces().Get(context.TODO(), namespace, options)
 	if e != nil {
 		return nil, e
 	}
@@ -78,16 +94,7 @@ func (kac *K8sApiClient) GetNSFromK8s(namespace string) (*v1.Namespace, error) {
 func (kac *K8sApiClient) DeleteNSFromK8s(namespace string) error {
 	k8sClient := getClient()
 
-	var typeMeta = metav1.TypeMeta{
-		APIVersion: "v1",
-		Kind:       "DeleteOptions",
-	}
-
-	options := &metav1.DeleteOptions{
-		TypeMeta: typeMeta,
-	}
-
-	return k8sClient.CoreV1().Namespaces().Delete(namespace, options)
+	return k8sClient.CoreV1().Namespaces().Delete(context.TODO(), namespace, metav1.DeleteOptions{})
 }
 
 func (kac *K8sApiClient) CreateNamespaceWithResources(namespace string, annotations map[string]string, platformNamespace string) error {
@@ -104,29 +111,29 @@ func (kac *K8sApiClient) CreateNamespaceWithResources(namespace string, annotati
 		ObjectMeta: *objectMeta,
 	}
 
-	_, createErr := k8sClient.CoreV1().Namespaces().Create(v1Namespace)
+	_, createErr := k8sClient.CoreV1().Namespaces().Create(context.TODO(), v1Namespace, metav1.CreateOptions{})
 	if nil != createErr {
 		return createErr
 	}
 
-	//logger.Logger().Debugf("start creating configMaps & secrets for namespace: %v, platformNamespace: %v", namespace, platformNamespace)
-	//leaFiErr := kac.CopyCMFromPlatformNamespace("learner-entrypoint-files", namespace, platformNamespace)
-	//if leaFiErr != nil {
-	//	logger.Logger().Errorf("failed to create configMap to k8s for namespace: %v, configName: learner-entrypoint-files", namespace)
-	//	return leaFiErr
-	//}
+	logger.Logger().Debugf("start creating configMaps & secrets for namespace: %v, platformNamespace: %v", namespace, platformNamespace)
+	leaFiErr := kac.CopyCMFromPlatformNamespace("learner-entrypoint-files", namespace, platformNamespace)
+	if leaFiErr != nil {
+		logger.Logger().Errorf("failed to create configMap to k8s for namespace: %v, configName: learner-entrypoint-files", namespace)
+		return leaFiErr
+	}
 
-	//leaConErr := kac.CopyCMFromPlatformNamespace("learner-config", namespace, platformNamespace)
-	//if leaConErr != nil {
-	//	logger.Logger().Errorf("failed to create configMap to k8s for namespace: %v, configName: learner-config", namespace)
-	//	return leaConErr
-	//}
+	leaConErr := kac.CopyCMFromPlatformNamespace("learner-config", namespace, platformNamespace)
+	if leaConErr != nil {
+		logger.Logger().Errorf("failed to create configMap to k8s for namespace: %v, configName: learner-config", namespace)
+		return leaConErr
+	}
 
-	//diConErr := kac.CopyCMFromPlatformNamespace("di-config", namespace, platformNamespace)
-	//if diConErr != nil {
-	//	logger.Logger().Errorf("failed to create configMap to k8s for namespace: %v, configName: di-config", namespace)
-	//	return diConErr
-	//}
+	diConErr := kac.CopyCMFromPlatformNamespace("di-config", namespace, platformNamespace)
+	if diConErr != nil {
+		logger.Logger().Errorf("failed to create configMap to k8s for namespace: %v, configName: di-config", namespace)
+		return diConErr
+	}
 
 	noteErr := kac.CopyCMFromPlatformNamespace("notebook-entrypoint-files", namespace, platformNamespace)
 	if noteErr != nil {
@@ -264,7 +271,7 @@ func (kac *K8sApiClient) CopyCMFromPlatformNamespace(name string, namespace stri
 	k8sClient := getClient()
 
 	options := metav1.GetOptions{}
-	configMap, configErr := k8sClient.CoreV1().ConfigMaps(platformNamespace).Get(name, options)
+	configMap, configErr := k8sClient.CoreV1().ConfigMaps(platformNamespace).Get(context.TODO(), name, options)
 	if configErr != nil {
 		return configErr
 	}
@@ -285,7 +292,7 @@ func (kac *K8sApiClient) CopyCMFromPlatformNamespace(name string, namespace stri
 		ObjectMeta: *meta,
 	}
 
-	create, createErr := k8sClient.CoreV1().ConfigMaps(namespace).Create(newConfig)
+	create, createErr := k8sClient.CoreV1().ConfigMaps(namespace).Create(context.TODO(), newConfig, metav1.CreateOptions{})
 	if configErr != nil {
 		logger.Logger().Errorf("failed to create configMap to k8s for namespace: %v, config: %v", namespace, create)
 		return createErr
@@ -301,7 +308,7 @@ func (kac *K8sApiClient) CopySecretFromNamespace(name string, namespace string, 
 
 	options := metav1.GetOptions{}
 
-	secret, secretErr := k8sClient.CoreV1().Secrets(platformNamespace).Get(name, options)
+	secret, secretErr := k8sClient.CoreV1().Secrets(platformNamespace).Get(context.TODO(), name, options)
 
 	if secretErr != nil {
 		return secretErr
@@ -324,7 +331,7 @@ func (kac *K8sApiClient) CopySecretFromNamespace(name string, namespace string, 
 		ObjectMeta: *meta,
 	}
 
-	create, createErr := k8sClient.CoreV1().Secrets(namespace).Create(newSecret)
+	create, createErr := k8sClient.CoreV1().Secrets(namespace).Create(context.TODO(), newSecret, metav1.CreateOptions{})
 	if createErr != nil {
 		logger.Logger().Errorf("failed to create secret to k8s for namespace: %v, secret: %v", namespace, create)
 		return createErr
@@ -339,8 +346,8 @@ func (kac *K8sApiClient) CopySecretFromNamespace(name string, namespace string, 
 func (kac *K8sApiClient) CopyPVCFromPlatformNamespace(name string, namespace string, platformNamespace string) error {
 	k8sClient := getClient()
 
-	options := metav1.GetOptions{}
-	pvc, perVolumeErr := k8sClient.CoreV1().PersistentVolumeClaims(platformNamespace).Get(name, options)
+	pvc, perVolumeErr := k8sClient.CoreV1().PersistentVolumeClaims(platformNamespace).
+		Get(context.TODO(), name, metav1.GetOptions{})
 	if perVolumeErr != nil {
 		return perVolumeErr
 	}
@@ -371,7 +378,7 @@ func (kac *K8sApiClient) CopyPVCFromPlatformNamespace(name string, namespace str
 		Spec:       *spec,
 	}
 
-	claim, createPerVolumeErr := k8sClient.CoreV1().PersistentVolumeClaims(namespace).Create(newPVC)
+	claim, createPerVolumeErr := k8sClient.CoreV1().PersistentVolumeClaims(namespace).Create(context.TODO(), newPVC, metav1.CreateOptions{})
 	if createPerVolumeErr != nil {
 		logger.Logger().Errorf("failed to create pvc to k8s for namespace: %v, pvc: %v", namespace, claim)
 		return createPerVolumeErr
@@ -385,8 +392,7 @@ func (kac *K8sApiClient) CopyPVCFromPlatformNamespace(name string, namespace str
 func (kac *K8sApiClient) GenerateCMFromPVC(pvcName string, configKeyName string, configMapName string, namespace string) error {
 	k8sClient := getClient()
 
-	options := metav1.GetOptions{}
-	pvc, pvcErr := k8sClient.CoreV1().PersistentVolumeClaims(namespace).Get(pvcName, options)
+	pvc, pvcErr := k8sClient.CoreV1().PersistentVolumeClaims(namespace).Get(context.TODO(), pvcName, metav1.GetOptions{})
 	if pvcErr != nil {
 		return pvcErr
 	}
@@ -411,7 +417,7 @@ func (kac *K8sApiClient) GenerateCMFromPVC(pvcName string, configKeyName string,
 		ObjectMeta: *meta,
 	}
 
-	configMap, cfgErr := k8sClient.CoreV1().ConfigMaps(namespace).Create(newConfig)
+	configMap, cfgErr := k8sClient.CoreV1().ConfigMaps(namespace).Create(context.TODO(), newConfig, metav1.CreateOptions{})
 	if cfgErr != nil {
 		logger.Logger().Errorf("failed to create configMap to k8s for namespace: %v, configMap: %v", namespace, newConfig)
 		return cfgErr
@@ -454,7 +460,7 @@ func (kac *K8sApiClient) GenerateV2CMFromPVC(pvcName string, configKeyName strin
 		ObjectMeta: *meta,
 	}
 
-	configMap, cfgErr := k8sClient.CoreV1().ConfigMaps(namespace).Create(newConfig)
+	configMap, cfgErr := k8sClient.CoreV1().ConfigMaps(namespace).Create(context.TODO(), newConfig, metav1.CreateOptions{})
 	if cfgErr != nil {
 		logger.Logger().Errorf("failed to create configMap to k8s for namespace: %v, configMap: %v", namespace, newConfig)
 		return cfgErr
@@ -521,7 +527,7 @@ func (kac *K8sApiClient) CreateRQ(name string, namespace string, cpuRequests str
 		Spec:       *spec,
 	}
 
-	quota, quotaErr := k8sClient.CoreV1().ResourceQuotas(namespace).Create(rq)
+	quota, quotaErr := k8sClient.CoreV1().ResourceQuotas(namespace).Create(context.TODO(), rq, metav1.CreateOptions{})
 
 	if quotaErr != nil {
 		logger.Logger().Errorf("failed to create quota to k8s for namespace: %v, quota: %v", namespace, rq)
@@ -536,7 +542,7 @@ func (kac *K8sApiClient) CreateRQ(name string, namespace string, cpuRequests str
 func (kac *K8sApiClient) ReplaceNamespace(namespace string, annotations map[string]string) error {
 	k8sClient := getClient()
 
-	v1Namespace, getNSErr := k8sClient.CoreV1().Namespaces().Get(namespace, metav1.GetOptions{})
+	v1Namespace, getNSErr := k8sClient.CoreV1().Namespaces().Get(context.TODO(), namespace, metav1.GetOptions{})
 
 	if getNSErr != nil {
 		logger.Logger().Errorf("failed to get ns from k8s for namespace: %v", namespace)
@@ -555,7 +561,7 @@ func (kac *K8sApiClient) ReplaceNamespace(namespace string, annotations map[stri
 
 	v1Namespace.ObjectMeta.Annotations = nsAnnotations
 
-	updateNS, updateNSErr := k8sClient.CoreV1().Namespaces().Update(v1Namespace)
+	updateNS, updateNSErr := k8sClient.CoreV1().Namespaces().Update(context.TODO(), v1Namespace, metav1.UpdateOptions{})
 
 	if nil != updateNSErr {
 		logger.Logger().Errorf("failed to update namespace from k8s for namespace: %v with annotations: %v", namespace, nsAnnotations)
@@ -589,7 +595,7 @@ func (kac *K8sApiClient) CreateSAForNotebook(namespace string) error {
 		ObjectMeta: *meta,
 	}
 
-	account, SAErr := k8sClient.CoreV1().ServiceAccounts(namespace).Create(serviceAccount)
+	account, SAErr := k8sClient.CoreV1().ServiceAccounts(namespace).Create(context.TODO(), serviceAccount, metav1.CreateOptions{})
 	if nil != SAErr {
 		logger.Logger().Errorf("failed to create serviceAccount from k8s for namespace: %v with serviceAccount: %v", namespace, serviceAccount)
 		return SAErr
@@ -602,18 +608,13 @@ func (kac *K8sApiClient) CreateSAForNotebook(namespace string) error {
 
 func (kac *K8sApiClient) GetAllNamespacesFromK8s() (*v1.NamespaceList, error) {
 	k8sClient := getClient()
-
-	options := metav1.ListOptions{}
-
-	return k8sClient.CoreV1().Namespaces().List(options)
+	return k8sClient.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
 }
 
 func (kac *K8sApiClient) ListRqOfNamespace(namespace string) (*v1.ResourceQuotaList, error) {
 	k8sClient := getClient()
 
-	options := metav1.ListOptions{}
-
-	return k8sClient.CoreV1().ResourceQuotas(namespace).List(options)
+	return k8sClient.CoreV1().ResourceQuotas(namespace).List(context.TODO(), metav1.ListOptions{})
 }
 
 func (kac *K8sApiClient) GetNodesByNamespace(namespace string) ([]v1.Node, error) {
@@ -666,10 +667,7 @@ func (kac *K8sApiClient) GetNodesByNamespace(namespace string) ([]v1.Node, error
 
 func (kac *K8sApiClient) GetAllNodes() (*v1.NodeList, error) {
 	k8sClient := getClient()
-
-	options := metav1.ListOptions{}
-
-	return k8sClient.CoreV1().Nodes().List(options)
+	return k8sClient.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 }
 
 func (kac *K8sApiClient) CheckForRQRequest(nodes []v1.Node, cpu string, gpu string, memory string) error {
@@ -776,7 +774,8 @@ func (kac *K8sApiClient) UpdateRQ(namespace string, cpu string, gpu string, memo
 		Spec:       *spec,
 	}
 
-	resourceQuota, updateRQErr := k8sClient.CoreV1().ResourceQuotas(namespace).Update(quota)
+	resourceQuota, updateRQErr := k8sClient.CoreV1().ResourceQuotas(namespace).
+		Update(context.TODO(), quota, metav1.UpdateOptions{})
 
 	if updateRQErr != nil {
 		logger.Logger().Errorf("failed to update resourcesQuota for namespace: %v", namespace)
@@ -790,10 +789,7 @@ func (kac *K8sApiClient) UpdateRQ(namespace string, cpu string, gpu string, memo
 
 func (kac *K8sApiClient) GetNodeByName(nodeName string) (*v1.Node, error) {
 	k8sClient := getClient()
-
-	options := metav1.GetOptions{}
-
-	return k8sClient.CoreV1().Nodes().Get(nodeName, options)
+	return k8sClient.CoreV1().Nodes().Get(context.TODO(), nodeName, metav1.GetOptions{})
 }
 
 func (kac *K8sApiClient) ReplaceNode(nodeName string, labels map[string]string) error {
@@ -810,7 +806,7 @@ func (kac *K8sApiClient) ReplaceNode(nodeName string, labels map[string]string) 
 	}
 	node.ObjectMeta.Labels = noLabels
 
-	updateNode, updateErr := k8sClient.CoreV1().Nodes().Update(node)
+	updateNode, updateErr := k8sClient.CoreV1().Nodes().Update(context.TODO(), node, metav1.UpdateOptions{})
 
 	if nil != updateErr {
 		return updateErr
@@ -847,7 +843,7 @@ func (kac *K8sApiClient) RemoveNodeLabel(nodeName string, labels []string) (map[
 
 	node.ObjectMeta.Labels = nodeLabels
 
-	_, updateErr := k8sClient.CoreV1().Nodes().Update(node)
+	_, updateErr := k8sClient.CoreV1().Nodes().Update(context.TODO(), node, metav1.UpdateOptions{})
 
 	if nil != updateErr {
 		return nil, updateErr
@@ -858,8 +854,36 @@ func (kac *K8sApiClient) RemoveNodeLabel(nodeName string, labels []string) (map[
 
 func (kac *K8sApiClient) GetPodsByNS(namespace string) (*v1.PodList, error) {
 	k8sClient := getClient()
+	return k8sClient.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
+}
 
-	options := metav1.ListOptions{}
+func (kac *K8sApiClient) GetPodLabelByNSAndName(namespace string, name string) (map[string]string, error) {
+	k8sClient := getClient()
+	pod, err := k8sClient.CoreV1().Pods(namespace).Get(context.TODO(), name, metav1.GetOptions{})
+	if err != nil {
+		logger.Logger().Errorf("Pod Get Error: %v", err.Error())
+		return nil, err
+	}
 
-	return k8sClient.CoreV1().Pods(namespace).List(options)
+	return pod.Labels, nil
+}
+
+func (kac *K8sApiClient) GetPodEnvlByNSAndName(namespace string, name string) ([]v1.EnvVar, error) {
+	k8sClient := getClient()
+	pod, err := k8sClient.CoreV1().Pods(namespace).Get(context.TODO(), name, metav1.GetOptions{})
+	if err != nil {
+		logger.Logger().Errorf("Pod Get Error: %v", err.Error())
+		return nil, err
+	}
+
+	return pod.Spec.Containers[0].Env, nil
+}
+
+func (kac *K8sApiClient) GetSeldonDeployment(namespace string, sldpName string) (*seldonV1.SeldonDeployment, error) {
+	sldp, err := seldonClient.MachinelearningV1().SeldonDeployments(namespace).Get(context.TODO(), sldpName, metav1.GetOptions{})
+	if err != nil || sldp == nil {
+		logger.Logger().Error("get seldonDeployment err, ", err)
+		return nil, err
+	}
+	return sldp, nil
 }

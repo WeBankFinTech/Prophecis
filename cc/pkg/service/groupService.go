@@ -25,6 +25,7 @@ import (
 	"mlss-controlcenter-go/pkg/logger"
 	"mlss-controlcenter-go/pkg/models"
 	"mlss-controlcenter-go/pkg/repo"
+	"os"
 )
 
 func GetAllGroups(page int64, size int64) (*models.PageGroupList, error) {
@@ -64,7 +65,7 @@ func GetAllGroups(page int64, size int64) (*models.PageGroupList, error) {
 func AddGroup(group models.Group) (*models.Group, error) {
 	log := logger.Logger()
 	var groupByName *models.Group
-	log.Infof("groupName:%v",group.Name)
+	log.Infof("groupName:%v", group.Name)
 	err := datasource.GetDB().Transaction(func(tx *gorm.DB) error {
 		err := repo.AddGroup(group, tx)
 		if err != nil {
@@ -90,7 +91,16 @@ func UpdateGroupByDB(group models.Group) (*models.Group, error) {
 
 	var groupByName *models.Group
 	err := datasource.GetDB().Transaction(func(tx *gorm.DB) error {
-		err := repo.UpdateGroup(group, tx)
+		//err := repo.UpdateGroup(group, tx)
+		m := make(map[string]interface{})
+		m["cluster_name"] = group.ClusterName
+		m["department_id"] = group.DepartmentID
+		m["department_name"] = group.DepartmentName
+		m["enable_flag"] = group.EnableFlag
+		m["remarks"] = group.Remarks
+		m["subsystem_id"] = group.SubsystemID
+		m["subsystem_name"] = group.SubsystemName
+		err := repo.UpdateGroupById(group.ID, m, tx)
 		if err != nil {
 			log.Errorf("UpdateGroupByDB error:%v", err.Error())
 			return err
@@ -112,7 +122,22 @@ func UpdateGroupByDB(group models.Group) (*models.Group, error) {
 
 func UpdateGroup(group models.Group, db *gorm.DB) (*models.Group, error) {
 	log := logger.Logger()
-	err := repo.UpdateGroup(group, db)
+	//err := repo.UpdateGroup(group, db)
+	//if err != nil {
+	//	log.Errorf("Update Group error：%v", err.Error())
+	//	return nil, err
+	//}
+
+	m := make(map[string]interface{})
+	m["cluster_name"] = group.ClusterName
+	m["department_id"] = group.DepartmentID
+	m["department_name"] = group.DepartmentName
+	m["enable_flag"] = group.EnableFlag
+	m["remarks"] = group.Remarks
+	m["subsystem_id"] = group.SubsystemID
+	m["subsystem_name"] = group.SubsystemName
+
+	err := repo.UpdateGroupById(group.ID, m, db)
 	if err != nil {
 		log.Errorf("Update Group error：%v", err.Error())
 		return nil, err
@@ -134,6 +159,10 @@ func GetGroupByGroupId(groupId int64) (*models.Group, error) {
 		return nil, err
 	}
 	return group, err
+}
+
+func GetGroupIdsByUserIdAndClusterName(userId int64, clusterName string) []int64 {
+	return repo.GetGroupIdsByUserIdAndClusterName(userId, clusterName)
 }
 
 func DeleteGroupByIdDB(tx *gorm.DB, groupId int64) error {
@@ -246,6 +275,18 @@ func DeleteGroupById(groupId int64) error {
 func GetGroupByName(groupName string) (*models.Group, error) {
 	log := logger.Logger()
 	db := datasource.GetDB()
+	group, err := repo.GetGroupByName(groupName, db)
+	if err != nil {
+		log.Errorf("GetGroupByName error:%v", err.Error())
+		return nil, err
+	}
+	return group, err
+}
+
+func GetGroupByUsername(username string) (*models.Group, error) {
+	log := logger.Logger()
+	db := datasource.GetDB()
+	groupName := "gp-private-" + username
 	group, err := repo.GetGroupByName(groupName, db)
 	if err != nil {
 		log.Errorf("GetGroupByName error:%v", err.Error())
@@ -383,7 +424,6 @@ func GetAllUserGroupByUserId(userId int64, page int64, size int64) (*models.Page
 		userGroups = userGroupsFromDB
 	}
 
-
 	var ugList []*models.UserGroupRes
 	if nil != userGroups && len(userGroups) > 0 {
 		for _, ug := range userGroups {
@@ -515,6 +555,16 @@ func GetGroupStorageByStorageIdAndGroupId(storageId int64, groupId int64) (*mode
 	return &groupStorage, err
 }
 
+func CountGroupStorageByStorageIdAndGroupId(storageId int64, groupId int64) (int64, error) {
+	log := logger.Logger()
+	count, err := repo.CountGroupStorageByStorageIdAndGroupId(storageId, groupId)
+	if err != nil {
+		log.Errorf("CountGroupStorageByStorageIdAndGroupId error:", err.Error())
+		return 0, err
+	}
+	return count, err
+}
+
 func GetDeleteGroupStorageByStorageIdAndGroupId(storageId int64, groupId int64) (*models.GroupStorage, error) {
 	log := logger.Logger()
 	db := datasource.GetDB()
@@ -582,6 +632,13 @@ func DeleteStorageFromGroupById(id int64) (*models.GroupStorage, error) {
 		log.Errorf("GetDeleteGroupStorageById error:%v", err.Error())
 		return nil, err
 	}
+	if isExist, _ := common.PathExists(groupStorages.Path); isExist {
+		err := os.RemoveAll(groupStorages.Path)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return &groupStorages, err
 }
 
@@ -761,9 +818,9 @@ func CheckAdmin(namespace string, admin string, username string) error {
 	}
 	_, err := repo.GetSAByName(admin)
 	if err != nil {
-		getNamespace,err := repo.GetNamespaceByName(namespace)
-		if  err != nil {
-			logger.Logger().Error("Get namespace by name err, ",err)
+		getNamespace, err := repo.GetNamespaceByName(namespace)
+		if err != nil {
+			logger.Logger().Error("Get namespace by name err, ", err)
 			return err
 		}
 		if namespace != getNamespace.Namespace {
@@ -797,7 +854,7 @@ func CheckAdmin(namespace string, admin string, username string) error {
 
 		roleByName, err := GetRoleByName(constants.ADMIN)
 		if err != nil {
-			logger.Logger().Error("GetRoles err, ",err)
+			logger.Logger().Error("GetRoles err, ", err)
 			return err
 		}
 		if constants.ADMIN != roleByName.Name {
@@ -928,4 +985,27 @@ func GetAllGroupStorageByStorageId(storageId int64, page int64, size int64) (*mo
 	}
 
 	return pageGroupStorage, nil
+}
+
+func GetGroups(userId int64) []*models.Group {
+	userGroups, _ := repo.GetAllUserGroupByUserId(userId)
+	var groups []*models.Group
+	if userGroups != nil && len(userGroups) > 0 {
+		for _, userGroup := range userGroups {
+			getUserGroup, _ := repo.GetGroupByGroupId(userGroup.GroupID)
+			groups = append(groups, getUserGroup)
+		}
+	}
+	return groups
+}
+
+func GetAllGroupsNoPage() ([]*models.Group, error) {
+	//var groups []*models.Group
+	log := logger.Logger()
+	groups, err := repo.GetAllGroups()
+	if err != nil {
+		log.Errorf("GetAllGroupsNoPage error:%v", err.Error())
+		return nil, err
+	}
+	return groups, nil
 }
