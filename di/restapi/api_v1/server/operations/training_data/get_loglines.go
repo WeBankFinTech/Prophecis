@@ -12,16 +12,16 @@ import (
 )
 
 // GetLoglinesHandlerFunc turns a function with the right signature into a get loglines handler
-type GetLoglinesHandlerFunc func(GetLoglinesParams) middleware.Responder
+type GetLoglinesHandlerFunc func(GetLoglinesParams, interface{}) middleware.Responder
 
 // Handle executing the request and returning a response
-func (fn GetLoglinesHandlerFunc) Handle(params GetLoglinesParams) middleware.Responder {
-	return fn(params)
+func (fn GetLoglinesHandlerFunc) Handle(params GetLoglinesParams, principal interface{}) middleware.Responder {
+	return fn(params, principal)
 }
 
 // GetLoglinesHandler interface for that can handle valid get loglines params
 type GetLoglinesHandler interface {
-	Handle(GetLoglinesParams) middleware.Responder
+	Handle(GetLoglinesParams, interface{}) middleware.Responder
 }
 
 // NewGetLoglines creates a new http.Handler for the get loglines operation
@@ -46,12 +46,25 @@ func (o *GetLoglines) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 	var Params = NewGetLoglinesParams()
 
+	uprinc, aCtx, err := o.Context.Authorize(r, route)
+	if err != nil {
+		o.Context.Respond(rw, r, route.Produces, route, err)
+		return
+	}
+	if aCtx != nil {
+		r = aCtx
+	}
+	var principal interface{}
+	if uprinc != nil {
+		principal = uprinc
+	}
+
 	if err := o.Context.BindValidRequest(r, route, &Params); err != nil { // bind params
 		o.Context.Respond(rw, r, route.Produces, route, err)
 		return
 	}
 
-	res := o.Handler.Handle(Params) // actually handle the request
+	res := o.Handler.Handle(Params, principal) // actually handle the request
 
 	o.Context.Respond(rw, r, route.Produces, route, res)
 

@@ -33,6 +33,9 @@ const (
 	DataStoreTypeMountCOSS3 = "mount_cos"
 	DataStoreTypeS3         = "s3_datastore"
 	defaultRegion           = "us-standard"
+    learnerEntrypointFilesVolume = "learner-entrypoint-files"
+    WorkSpaceVolume = "workspace"
+	WorkSpaceHostPath = "/workspace"
 )
 
 //COSVolume ...
@@ -41,15 +44,27 @@ type COSVolume struct {
 	MountSpec                                                                          VolumeMountSpec
 }
 
+type HostPathVolume struct {
+	VolumeType, ID, Region, Bucket, Endpoint, SecretRef, CacheSize, DiskFree, HostPath string
+	MountSpec                                                                          VolumeMountSpec
+}
+
+type ConfigMapVolume struct {
+	VolumeType, Name string
+	MountSpec        VolumeMountSpec
+}
+
 //Volumes ...
 type Volumes struct {
 	TrainingData    *COSVolume
 	ResultsDir      *COSVolume
-	WorkDir         *COSVolume
+	WorkDir         *HostPathVolume
 	AppComConfig    *COSVolume
 	AppComCommonLib *COSVolume
 	AppComInstall   *COSVolume
 	JDK             *COSVolume
+	Script          *ConfigMapVolume
+	LogDir          *HostPathVolume
 }
 
 //VolumeMountSpec ...
@@ -64,41 +79,23 @@ func (volumes Volumes) CreateVolumeForLearner() []v1core.Volume {
 
 	if volumes.TrainingData != nil {
 		trainingDataParams := volumes.TrainingData
-		if trainingDataParams.VolumeType == DataStoreTypeMountCOSS3 {
-			volumeSpecs = append(volumeSpecs, generateCOSTrainingDataVolume(trainingDataParams.ID, trainingDataParams.Region, trainingDataParams.Bucket,
-				trainingDataParams.Endpoint, trainingDataParams.SecretRef, trainingDataParams.CacheSize, trainingDataParams.DiskFree))
-		} else if trainingDataParams.VolumeType == DataStoreHostMountVolume {
-			volumeSpecs = append(volumeSpecs,
-				generateHostMountTrainingDataVolume(
-					trainingDataParams.ID,
-					trainingDataParams.HostPath,
-					v1core.HostPathUnset))
-		}
+		volumeSpecs = append(volumeSpecs,
+			generateHostMountTrainingDataVolume(trainingDataParams.ID, trainingDataParams.HostPath, v1core.HostPathUnset))
 	}
 
 	if volumes.ResultsDir != nil {
 		resultDirParams := volumes.ResultsDir
-		if resultDirParams.VolumeType == DataStoreTypeMountCOSS3 {
-			volumeSpecs = append(volumeSpecs, generateCOSResultsVolume(resultDirParams.ID, resultDirParams.Region, resultDirParams.Bucket,
-				resultDirParams.Endpoint, resultDirParams.SecretRef, resultDirParams.CacheSize, resultDirParams.DiskFree))
-		} else if resultDirParams.VolumeType == DataStoreHostMountVolume {
-			volumeSpecs = append(volumeSpecs,
-				generateHostMountTrainingDataVolume(
-					resultDirParams.ID,
-					resultDirParams.HostPath,
-					v1core.HostPathDirectoryOrCreate))
-		}
+		volumeSpecs = append(volumeSpecs,
+			generateHostMountTrainingDataVolume(resultDirParams.ID, resultDirParams.HostPath, v1core.HostPathDirectoryOrCreate))
 	}
-	// FIXME MLSS Change: v_1.5.1 added workDir to volumes
+
 	if volumes.WorkDir != nil {
 		workDirParams := volumes.WorkDir
-		if workDirParams.VolumeType == DataStoreHostMountVolume {
 			volumeSpecs = append(volumeSpecs,
-				generateHostMountTrainingDataVolume(
+				generateHostPathVolume(
 					workDirParams.ID,
 					workDirParams.HostPath,
 					v1core.HostPathUnset))
-		}
 	}
 
 	// FIXME MLSS Change: v_1.6.0 added HDFS config
@@ -128,6 +125,44 @@ func (volumes Volumes) CreateVolumeForLearner() []v1core.Volume {
 				jdkParams.HostPath,
 				v1core.HostPathUnset))
 	}
+
+	if volumes.Script != nil {
+		scriptParams := volumes.Script
+		volumeSpecs = append(volumeSpecs,
+			generateConfigMapVolume(
+				scriptParams.Name,
+				7))
+	}
+
+	// learner entrypoint files volume
+	learnerEntrypointFilesVolume := v1core.Volume{
+		Name: learnerEntrypointFilesVolume,
+		VolumeSource: v1core.VolumeSource{
+			ConfigMap: &v1core.ConfigMapVolumeSource{
+				LocalObjectReference: v1core.LocalObjectReference{
+					Name: learnerEntrypointFilesVolume,
+				},
+			},
+		},
+	}
+	volumeSpecs = append(volumeSpecs, learnerEntrypointFilesVolume)
+
+	if volumes.LogDir != nil {
+		LogDirParams := volumes.LogDir
+		volumeSpecs = append(volumeSpecs,
+			generateHostPathVolume(
+				LogDirParams.ID,
+				LogDirParams.HostPath,
+				v1core.HostPathUnset))
+
+	}
+
+	//Workspace volume
+	workspaceVolume := generateHostMountTrainingDataVolume(
+		WorkSpaceVolume,
+		WorkSpaceHostPath,
+		v1core.HostPathUnset)
+	volumeSpecs = append(volumeSpecs, workspaceVolume)
 
 	return volumeSpecs
 }
@@ -166,39 +201,12 @@ func (volumes Volumes) CreateVolumeMountsForLearner() []v1core.VolumeMount {
 			volumes.JDK.MountSpec.SubPath))
 	}
 
-	return mounts
-}
-
-func generateCOSTrainingDataVolume(id, region, bucket, endpoint, secretRef, cacheSize, diskfree string) v1core.Volume {
-	cosInputVolume := v1core.Volume{
-		Name: id,
-		VolumeSource: v1core.VolumeSource{
-			FlexVolume: &v1core.FlexVolumeSource{
-				Driver:    cosMountDriverName,
-				FSType:    "",
-				SecretRef: &v1core.LocalObjectReference{Name: secretRef},
-				ReadOnly:  false,
-				Options: map[string]string{
-					"bucket":                bucket,
-					"endpoint":              endpoint,
-					"region":                region,
-					"cache-size-gb":         cacheSize, // Amount of host memory to use for cache
-					"chunk-size-mb":         "52",      // value suggested for cruiser10 by benchmarking with a dallas COS instance
-					"parallel-count":        "5",       // should be at least expected file size / chunk size.  Extra threads will just sit idle
-					"ensure-disk-free":      diskfree,  // don't completely fill the cache, leave some buffer for parallel thread pulls
-					"tls-cipher-suite":      "DEFAULT",
-					"multireq-max":          "20",
-					"stat-cache-size":       "100000",
-					"kernel-cache":          "true",
-					"debug-level":           "warn",
-					"curl-debug":            "false",
-					"s3fs-fuse-retry-count": "30", // 4 second delay between retries * 30 = 2min
-				},
-			},
-		},
+	if volumes.LogDir != nil {
+		mounts = append(mounts, generateJDKVolumeMount(volumes.LogDir.ID, volumes.LogDir.MountSpec.MountPath,
+			volumes.LogDir.MountSpec.SubPath))
 	}
 
-	return cosInputVolume
+	return mounts
 }
 
 func generateHostMountTrainingDataVolume(id, path string, pathType v1core.HostPathType) v1core.Volume {
@@ -211,42 +219,24 @@ func generateHostMountTrainingDataVolume(id, path string, pathType v1core.HostPa
 			},
 		},
 	}
-
 	return cosInputVolume
 }
 
-func generateCOSResultsVolume(id, region, bucket, endpoint, secretRef, cacheSize, diskfree string) v1core.Volume {
-	cosOutputVolume := v1core.Volume{
-		Name: id,
+func generateHostMountWorkspaceVolume(name, path string, pathType v1core.HostPathType) v1core.Volume {
+	cosInputVolume := v1core.Volume{
+		Name: name,
 		VolumeSource: v1core.VolumeSource{
-			FlexVolume: &v1core.FlexVolumeSource{
-				Driver:    cosMountDriverName,
-				FSType:    "",
-				SecretRef: &v1core.LocalObjectReference{Name: secretRef},
-				ReadOnly:  false,
-				Options: map[string]string{
-					"bucket":   bucket,
-					"endpoint": endpoint,
-					"region":   region,
-					// tuning values suitable for writing checkpoints and logs
-					"cache-size-gb":         cacheSize,
-					"chunk-size-mb":         "52",
-					"parallel-count":        "2",
-					"ensure-disk-free":      diskfree,
-					"tls-cipher-suite":      "DEFAULT",
-					"multireq-max":          "20",
-					"stat-cache-size":       "100000",
-					"kernel-cache":          "false",
-					"debug-level":           "warn",
-					"curl-debug":            "false",
-					"s3fs-fuse-retry-count": "30", // 4 second delay between retries * 30 = 2min
-				},
+			HostPath: &v1core.HostPathVolumeSource{
+				Path: path,
+				Type: &pathType,
 			},
 		},
 	}
-
-	return cosOutputVolume
+	return cosInputVolume
 }
+
+
+
 
 func generateDataDirVolumeMount(id, bucket string, subPath string) v1core.VolumeMount {
 	return v1core.VolumeMount{
@@ -294,4 +284,34 @@ func generateJDKVolumeMount(id, bucket string, subPath string) v1core.VolumeMoun
 		MountPath: bucket,
 		SubPath:   subPath,
 	}
+}
+
+func generateHostPathVolume(id, path string, pathType v1core.HostPathType) v1core.Volume {
+	hostMountVolume := v1core.Volume{
+		Name: id,
+		VolumeSource: v1core.VolumeSource{
+			HostPath: &v1core.HostPathVolumeSource{
+				Path: path,
+				Type: &pathType,
+			},
+		},
+	}
+
+	return hostMountVolume
+}
+
+func generateConfigMapVolume(name string, mode int32) v1core.Volume {
+	configmapVolume := v1core.Volume{
+		Name: name,
+		VolumeSource: v1core.VolumeSource{
+			ConfigMap: &v1core.ConfigMapVolumeSource{
+				DefaultMode: &mode,
+				LocalObjectReference: v1core.LocalObjectReference{
+					Name: name,
+				},
+			},
+		},
+	}
+
+	return configmapVolume
 }

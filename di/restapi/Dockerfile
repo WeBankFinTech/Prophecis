@@ -19,13 +19,11 @@
 #FROM ffdl/ffdl-restapi:v0.1.1
 #FROM ubuntu:latest
 FROM golang-dlv:latest
-
 # switch to root
 USER root
 
 ADD bin/main /
 ADD certs/* /etc/ssl/dlaas/
-ADD ./* /MLSS-DI-GPU/restapi/
 RUN chmod 755 /main
 
 # assign "random" non-root user id

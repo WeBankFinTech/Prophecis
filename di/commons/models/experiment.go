@@ -21,6 +21,8 @@ type Experiment struct {
 	BaseModel
 	ExpDesc             *string         `json:"exp_desc"`
 	ExpName             *string         `json:"exp_name"`
+	GroupName           string        `json:"group_name"`
+	MlflowExpID         *string        `json:"mlflow_exp_id" gorm:"column:mlflow_exp_id"`
 	DssProjectID        int64           `json:"dss_project_id"`
 	DssProjectVersionID int64           `json:"dss_project_version"`
 	DssWorkspaceID      int64           `json:"dss_workspace_id"`

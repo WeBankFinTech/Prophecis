@@ -1,0 +1,3189 @@
+swagger: "2.0"
+info:
+  description: Model Factory Service
+  version: 1.0.0
+  title: mf-server
+host: gateway.mlss.mf
+basePath: /
+schemes:
+  - http
+consumes:
+  - application/json
+  - application/octet-stream
+  - text/plain; charset=utf-8
+produces:
+  - application/json
+  - application/octet-stream
+  - text/plain; charset=utf-8
+paths:
+  /mf/v1/services:
+    get:
+      summary: Get the list of Services in the given Namespace
+      description: Get Services list.
+      tags:
+        - modelDeploy
+      operationId: listServices.
+      parameters:
+        - name: page
+          in: query
+          description: page number.
+          required: false
+          type: integer
+          format: int64
+          default: 0
+        - name: size
+          in: query
+          description: entity number per page.
+          required: false
+          type: integer
+          format: int64
+          default: 0
+        - name: query_str
+          in: query
+          required: false
+          type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Services'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Models cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+  /mf/v1/service:
+    post:
+      summary: Create a Service in the given Namesapce
+      description: Post Service.
+      tags:
+        - modelDeploy
+      operationId: postService
+      parameters:
+        - in: body
+          name: service
+          description: The Model Request
+          required: true
+          schema:
+            $ref: '#/definitions/ServicePost'
+      responses:
+        200:
+          description: OK
+          # schema:
+          #   $ref: '#/definitions/ServicePostResponse'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model create failed
+          schema:
+            $ref: '#/definitions/Error'
+  /mf/v1/dashboard:
+    get:
+      summary: Get service's dashborad
+      description: Service Dashborad
+      tags:
+        - modelDeploy
+      operationId: serviceDashborad
+      parameters:
+        - name: clusterName
+          in: query
+          description: entity clusterName
+          required: false
+          type: string
+          default: ""
+      responses:
+        200:
+          description: OK
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Service dashboard get failed
+          schema:
+            $ref: '#/definitions/Error'
+  /mf/v1/service/{id}:
+    get:
+      summary: Get Service by Service Id
+      operationId: getService
+      tags:
+        - modelDeploy
+      parameters:
+        - name: id
+          required: true
+          in: path
+          type: number
+          format: int64
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/GetService'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model create failed
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: Delete a Service in the given Namesapce
+      operationId: deleteService
+      tags:
+        - modelDeploy
+      parameters:
+        - name: id
+          required: true
+          in: path
+          type: number
+          format: int64
+      responses:
+        200:
+          description: OK
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model create failed
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: Update a Service in the given Namesapce
+      operationId: updateService
+      tags:
+        - modelDeploy
+      parameters:
+        - name: id
+          required: true
+          in: path
+          type: number
+          format: int64
+        - in: body
+          name: service
+          description: The Model Request
+          required: true
+          schema:
+            $ref: '#/definitions/ServicePut'
+      responses:
+        200:
+          description: OK
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Service put failed
+          schema:
+            $ref: '#/definitions/Error'
+  /mf/v1/serviceStop/{namespace}/{name}/{id}:
+    get:
+      summary: Get the list of Services in the given Namespace
+      description: Get Services list.
+      tags:
+        - modelDeploy
+      operationId: stopNamespacedService
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: integer
+          format: int64
+        - name: namespace
+          in: path
+          required: true
+          type: string
+          format: string
+        - name: name
+          in: path
+          required: true
+          type: string
+          format: string
+      responses:
+        200:
+          description: OK
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Models cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+  /mf/v1/serviceRun:
+    post:
+      summary: Run a Service CRD Object.
+      description: Run Service.
+      tags:
+        - modelDeploy
+      operationId: createNamespacedServiceRun
+      parameters:
+        - in: body
+          name: service
+          description: The Model Request
+          required: true
+          schema:
+            $ref: '#/definitions/ServicePost'
+      responses:
+        200:
+          description: OK
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model create failed
+          schema:
+            $ref: '#/definitions/Error'
+  /mf/v1/models:
+    get:
+      summary: Get the list of Models
+      description: Get Models list.
+      tags:
+        - modelStorage
+      operationId: getModels
+      parameters:
+        - name: query_str
+          in: query
+          required: false
+          type: string
+        - name: page
+          in: query
+          type: number
+          format: int64
+        - name: size
+          in: query
+          type: number
+          format: int64
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Models'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Models cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+  /mf/v1/models/{cluster}:
+    get:
+      summary: Get the list of Models in the given cluster.
+      description: Get Models list.
+      tags:
+        - modelStorage
+      operationId: getModelsByCluster
+      parameters:
+        - name: cluster
+          in: path
+          required: true
+          type: string
+          format: string
+        - name: query_str
+          in: query
+          required: false
+          type: string
+        - name: page
+          in: query
+          type: number
+          format: int64
+        - name: size
+          in: query
+          type: number
+          format: int64
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Models'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Models cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+  /mf/v1/model/:
+    post:
+      summary: Create a Model.
+      description: Post Model.
+      tags:
+        - modelStorage
+      operationId: postModel
+      parameters:
+        - in: body
+          name: model
+          description: The Model Request
+          required: true
+          schema:
+            $ref: '#/definitions/PostModelRequest'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/PostModelResp'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model create failed
+          schema:
+            $ref: '#/definitions/Error'
+  /mf/v1/model/uploadModel:
+    post:
+      summary: Upload Model
+      description: Upload Model's File
+      tags:
+        - modelStorage
+      operationId: uploadModel
+      consumes:
+        - multipart/form-data
+      produces:
+        - application/json
+      parameters:
+        - name: file
+          in: formData
+          required: true
+          type: file
+        - name: fileName
+          in: formData
+          type: string
+          required: true
+        - name: modelType
+          in: formData
+          type: string
+          required: true
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/UploadModelResponse'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model upload failed
+          schema:
+            $ref: '#/definitions/Error'
+  /mf/v1/model/{modelId}/export:
+    get:
+      tags:
+        - modelStorage
+      summary: Export Model
+      description: export Model.
+      operationId: exportModel
+      parameters:
+        - name: modelId
+          in: path
+          required: true
+          type: number
+          format: int64
+      responses:
+        200:
+          description: Model
+          schema:
+            type: string
+            format: binary
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model export failed
+          schema:
+            $ref: '#/definitions/Error'
+  /mf/v1/model/{modelID}:
+    put:
+      summary: Update a Model in the given Model ID
+      description: Update Model.
+      tags:
+        - modelStorage
+      operationId: updateModel
+      parameters:
+        - in: body
+          name: model
+          description: The Model Request
+          required: true
+          schema:
+            $ref: '#/definitions/ModelRequest'
+        - name: modelID
+          in: path
+          required: true
+          type: number
+          format: int64
+      responses:
+        200:
+          description: OK
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model update failed
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: Delete a Model in the given Model ID
+      description: Delete Model.
+      tags:
+        - modelStorage
+      operationId: deleteModel
+      parameters:
+        - name: modelID
+          in: path
+          required: true
+          type: number
+          format: int64
+      responses:
+        200:
+          description: OK
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model delete failed
+          schema:
+            $ref: '#/definitions/Error'
+    get:
+      summary: Get a Model in the given Model ID.
+      description: Get Model.
+      tags:
+        - modelStorage
+      operationId: getModel
+      parameters:
+        - name: modelID
+          in: path
+          required: true
+          type: number
+          format: int64
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Model'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model create failed
+          schema:
+            $ref: '#/definitions/Error'
+  /mf/v1/modelsByGroupID/{groupID}:
+    get:
+      summary: List Models By Group Id.
+      description: List Models
+      tags:
+        - modelStorage
+      operationId: listModelsByGroupID
+      parameters:
+        - name: groupID
+          in: path
+          required: true
+          type: string
+        - name: query_str
+          in: query
+          required: false
+          type: string
+        - name: page
+          in: query
+          type: number
+          format: int64
+        - name: size
+          in: query
+          type: number
+          format: int64
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Models'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model create failed
+          schema:
+            $ref: '#/definitions/Error'
+  /mf/v1/models/name/{modelName}/groupId/{groupId}:
+    get:
+      summary: Get models by model name and group id
+      description: Get Models.
+      tags:
+        - modelStorage
+      operationId: getModelsByGroupIdAndModelName
+      parameters:
+        - name: modelName
+          in: path
+          required: true
+          type: string
+        - name: groupId
+          in: path
+          required: true
+          type: string
+        - name: currentPage
+          in: query
+          type: number
+          format: int64
+        - name: pageSize
+          in: query
+          type: number
+          format: int64
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Models'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Models cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+  /mf/v1/modelversions/{modelId}:
+    get:
+      summary: Get the ModelVersion in given model id
+      description: Get ModelVersion.
+      tags:
+        - modelStorage
+      operationId: getModelVersion
+      parameters:
+        - name: modelId
+          in: path
+          required: true
+          type: number
+          format: int64
+        - name: query_str
+          in: query
+          required: false
+          type: string
+        - name: page
+          in: query
+          type: number
+          format: int64
+        - name: size
+          in: query
+          type: number
+          format: int64
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/getModelVersionResp'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Models cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+  /mf/v1/modelVersion/push/{modelVersionId}:
+    get:
+      summary: get model version push events list
+      tags:
+        - modelStorage
+      operationId: listModelVersionPushEventsByModelVersionId
+      parameters:
+        - name: modelVersionId
+          required: true
+          in: path
+          type: number
+          format: int64
+        - name: currentPage
+          in: query
+          type: number
+          format: int64
+          default: 1
+        - name: pageSize
+          in: query
+          type: number
+          format: int64
+          default: 10
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/ModelVersionPushEventResp'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Report push fail
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: push model by model version id
+      description: push model by model version id
+      tags:
+        - modelStorage
+      operationId: pushModelByModelVersionId
+      parameters:
+        - name: modelVersionId
+          required: true
+          in: path
+          type: number
+          format: int64
+        - in: body
+          name: modelPushEvent
+          description: The model push event Request
+          required: true
+          schema:
+            $ref: '#/definitions/PushModelRequest'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Event'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Report push fail
+          schema:
+            $ref: '#/definitions/Error'
+  /mf/v1/model/push/{modelId}:
+    post:
+      summary: push model by model id
+      description: push model by model id
+      tags:
+        - modelStorage
+      operationId: pushModelByModelId
+      parameters:
+        - name: modelId
+          required: true
+          in: path
+          type: number
+          format: int64
+        - in: body
+          name: modelPushEvent
+          description: The model push event Request
+          required: true
+          schema:
+            $ref: '#/definitions/PushModelRequest'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Event'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Report push fail
+          schema:
+            $ref: '#/definitions/Error'
+  /mf/v1/modelVersion/modelName/{modelName}/groupId/{groupId}/version/{version}:
+    get:
+      summary: Get the ModelVersion in given model name, group id and versoin.
+      description: Get ModelVersion.
+      tags:
+        - modelStorage
+      operationId: getModelVersionByNameAndVersion
+      parameters:
+        - name: modelName
+          in: path
+          required: true
+          type: string
+        - name: version
+          in: path
+          type: string
+          required: true
+        - name: groupId
+          in: path
+          type: number
+          format: int64
+          required: true
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/getModelVersionResp'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Models cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+  /mf/v1/image:
+    post:
+      summary: Create image by given info.
+      description: Create Image.
+      tags:
+        - image
+      operationId: createImage
+      parameters:
+        - in: body
+          name: image
+          description: The Image Put Request
+          required: true
+          schema:
+            $ref: '#/definitions/ImagePostRequest'
+      responses:
+        200:
+          description: OK
+          # schema:
+          #   $ref: '#/definitions/ImagePostResponse'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Models cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+  /mf/v1/image/{image_id}:
+    delete:
+      summary: Delete the Image in given image id
+      description: Delete Image.
+      tags:
+        - image
+      operationId: deleteImage
+      parameters:
+        - name: image_id
+          in: path
+          required: true
+          type: number
+          format: int64
+      responses:
+        200:
+          description: OK
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Models cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: Update image by given info
+      description: Update Image.
+      tags:
+        - image
+      operationId: updateImage
+      parameters:
+        - name: image_id
+          in: path
+          required: true
+          type: number
+          format: int64
+        - in: body
+          name: image
+          description: The Image Put Request
+          required: true
+          schema:
+            $ref: '#/definitions/ImagePutRequest'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Image'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Models cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+    get:
+      summary: Get the ModelVersion in given model id
+      description: Get ModelVersion.
+      tags:
+        - image
+      operationId: getImage
+      parameters:
+        - name: image_id
+          in: path
+          required: true
+          type: number
+          format: int64
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Image'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Models cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+  /mf/v1/images:
+    get:
+      summary: List Image
+      description: List Image.
+      tags:
+        - image
+      operationId: listImage
+      parameters:
+        - name: user_name
+          in: query
+          required: false
+          type: string
+        - name: query_str
+          in: query
+          required: false
+          type: string
+        - name: page
+          in: query
+          type: number
+          format: int64
+        - name: size
+          in: query
+          type: number
+          format: int64
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Images'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Images cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+  /mf/v1/images/{model_version_id}:
+    get:
+      summary: List Image By Model Version Id
+      description: List Image By Model Version Id.
+      tags:
+        - image
+      operationId: listImageByModelVersionId
+      parameters:
+        - name: model_version_id
+          in: path
+          required: true
+          type: number
+          format: int64
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Images'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Images cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+  /mf/v1/service/containers/{namespace}/{service_name}:
+    get:
+      summary: Get Container list by namespace and seldonDeployment
+      operationId: listContainer
+      tags:
+        - container
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          type: string
+          format: string
+        - name: service_name
+          in: path
+          required: true
+          type: string
+          format: string
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Pods'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Container list failed
+          schema:
+            $ref: '#/definitions/Error'
+  /mf/v1/service/{service_name}/namespace/{namespace}/container/{container_name}/log:
+    get:
+      summary: Get log of service'container in the given namespace
+      description: Get container of service log.
+      operationId: getNamespacedServiceContainerLog
+      tags:
+        - container
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          type: string
+          format: string
+        - name: service_name
+          in: path
+          required: true
+          type: string
+          format: string
+        - name: container_name
+          in: path
+          required: true
+          type: string
+          format: string
+        - in: query
+          name: currentPage
+          type: integer
+          default: 1
+        - in: query
+          name: pageSize
+          type: integer
+          default: 10
+        - in: query
+          name: asc
+          type: boolean
+          default: false
+          description: whether sort by time  in asc, default false (desc).
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/GetServiceContainerLogResponse'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The service container cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+  /mf/v1/report/name/{modelName}/version/{modelVersion}:
+    get:
+      summary: Get report by model name and model version
+      operationId: getReportByModelNameAndModelVersion
+      tags:
+        - report
+      parameters:
+        - name: modelName
+          required: true
+          in: path
+          type: string
+        - name: modelVersion
+          required: true
+          in: path
+          type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Report'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Report get fail
+          schema:
+            $ref: '#/definitions/Error'
+  /mf/v1/reportversions/{reportId}:
+    get:
+      summary: get all version of specified report
+      consumes:
+        - application/json
+      tags:
+        - report
+      operationId: listReportVersionsByReportId
+      parameters:
+        - name: reportId
+          required: true
+          in: path
+          type: number
+          format: int64
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/ReportVersions'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The report cannot be created
+          schema:
+            $ref: '#/definitions/Error'
+  /mf/v1/report:
+    post:
+      summary: Create report by given info.
+      consumes:
+        - application/json
+      tags:
+        - report
+      operationId: createReport
+      parameters:
+        - in: body
+          name: report
+          description: The report Post Request
+          schema:
+            $ref: '#/definitions/ReportRequestPost'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/PostReportResp'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The report cannot be created
+          schema:
+            $ref: '#/definitions/Error'
+  /mf/v1/reports:
+    get:
+      summary: Get reports list
+      operationId: listReports
+      tags:
+        - report
+      parameters:
+        - in: query
+          name: queryStr
+          type: string
+          description: fuzzy query by model_name, model_version, training_id
+        - name: currentPage
+          in: query
+          type: number
+          format: int64
+          default: 1
+        - name: pageSize
+          in: query
+          type: number
+          format: int64
+          default: 10
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/ListReportsResp'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Report list fail
+          schema:
+            $ref: '#/definitions/Error'
+  /mf/v1/report/{reportId}:
+    delete:
+      summary: delete report by id
+      description: delete report
+      tags:
+        - report
+      operationId: deleteReportById
+      parameters:
+        - name: reportId
+          required: true
+          in: path
+          type: number
+          format: int64
+      responses:
+        200:
+          description: OK
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The report cannot be deleted
+          schema:
+            $ref: '#/definitions/Error'
+    get:
+      summary: get report by id
+      description: get report
+      tags:
+        - report
+      operationId: getReportById
+      parameters:
+        - name: reportId
+          required: true
+          in: path
+          type: number
+          format: int64
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Report'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Report get fail
+          schema:
+            $ref: '#/definitions/Error'
+  /mf/v1/pushEvent/{eventId}:
+    get:
+      summary: get push event by eventId
+      description: get push event
+      tags:
+        - report
+      operationId: getPushEventById
+      parameters:
+        - name: eventId
+          required: true
+          in: path
+          type: number
+          format: int64
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Event'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Report get fail
+          schema:
+            $ref: '#/definitions/Error'
+  /mf/v1/reportVersion/Push/{reportVersionId}:
+    post:
+      summary: push report by report version id
+      description: push report by report version id
+      tags:
+        - report
+      operationId: pushReportByReportVersionId
+      parameters:
+        - name: reportVersionId
+          required: true
+          in: path
+          type: number
+          format: int64
+        - in: body
+          name: reportPushEvent
+          description: The report push event Request
+          required: true
+          schema:
+            $ref: '#/definitions/PushReportRequest'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Event'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Report push fail
+          schema:
+            $ref: '#/definitions/Error'
+    get:
+      summary: get push events list
+      tags:
+        - report
+      operationId: listReportVersionPushEventsByReportVersionId
+      parameters:
+        - name: reportVersionId
+          required: true
+          in: path
+          type: number
+          format: int64
+        - name: currentPage
+          in: query
+          type: number
+          format: int64
+          default: 1
+        - name: pageSize
+          in: query
+          type: number
+          format: int64
+          default: 10
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/ReportVersionPushEventResp'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Report push fail
+          schema:
+            $ref: '#/definitions/Error'
+  /mf/v1/report/push/{reportId}:
+    post:
+      summary: push report by report id
+      description: push report
+      tags:
+        - report
+      operationId: pushReportByReportId
+      parameters:
+        - name: reportId
+          required: true
+          in: path
+          type: number
+          format: int64
+        - in: body
+          name: reportPushEvent
+          description: The report push event Request
+          required: true
+          schema:
+            $ref: '#/definitions/PushReportRequest'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Event'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Report push fail
+          schema:
+            $ref: '#/definitions/Error'
+  /mf/v1/report/reportDownload/{reportId}:
+    get:
+      summary: Download report by report id
+      produces:
+        - application/octet-stream
+      operationId: DownloadReportById
+      tags:
+        - report
+      parameters:
+        - name: reportId
+          required: true
+          in: path
+          type: number
+          format: int64
+      responses:
+        200:
+          description: OK
+          schema:
+            # type: file
+            type: string
+            format: binary
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: report download fail
+          schema:
+            $ref: '#/definitions/Error'
+  /mf/v1/report/reportUpload:
+    post:
+      summary: Upload Report
+      description: Upload Report's File
+      tags:
+        - report
+      operationId: uploadReport
+      consumes:
+        - multipart/form-data
+      produces:
+        - application/json
+      parameters:
+        - name: file
+          in: formData
+          required: true
+          type: file
+        - name: fileName
+          in: formData
+          type: string
+          required: true
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/UploadReportResponse'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model upload failed
+          schema:
+            $ref: '#/definitions/Error'
+  /mf/v1/result/{modelName}:
+    get:
+      summary: Get report by model name and model version
+      operationId: getResultByModelName
+      tags:
+        - model_result
+      parameters:
+        - name: modelName
+          required: true
+          in: path
+          type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Results'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Result get fail
+          schema:
+            $ref: '#/definitions/Error'
+  /mf/v1/result/id/{resultId}:
+    delete:
+      summary: delete result by id
+      description: delete result
+      tags:
+        - model_result
+      operationId: deleteResultById
+      parameters:
+        - name: resultId
+          required: true
+          in: path
+          type: number
+          format: int64
+      responses:
+        200:
+          description: OK
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The result cannot be deleted
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: update result
+      description: update result
+      tags:
+        - model_result
+      operationId: updateResultById
+      parameters:
+        - in: body
+          name: result
+          description:  The result put request
+          schema:
+            $ref: '#/definitions/ResultRequest'
+        - name: resultId
+          required: true
+          in: path
+          type: number
+          format: int64
+      responses:
+        200:
+          description: OK
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The result cannot be updated
+          schema:
+            $ref: '#/definitions/Error'
+  /mf/v1/result:
+    post:
+      summary: create result
+      consumes:
+        - application/json
+      tags:
+        - model_result
+      operationId: createResult
+      parameters:
+        - in: body
+          name: result
+          description:  The result post request
+          schema:
+            $ref: '#/definitions/ResultRequest'
+      responses:
+        200:
+          description: OK
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The result cannot be created
+          schema:
+            $ref: '#/definitions/Error'
+  /mf/v1/modelDownload/{modelId}:
+    get:
+      summary: Download model by model id
+      produces:
+        - application/octet-stream
+      operationId: DownloadModelById
+      tags:
+        - modelStorage
+      parameters:
+        - name: modelId
+          required: true
+          in: path
+          type: string
+      responses:
+        200:
+          description: OK
+          schema:
+            # type: file
+            type: string
+            format: binary
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model download fail
+          schema:
+            $ref: '#/definitions/Error'
+  /mf/v1/modelVersionDownload/{modelVersionId}:
+    get:
+      summary: Download model version by model version id
+      produces:
+        - application/octet-stream
+      operationId: DownloadModelVersionById
+      tags:
+        - modelStorage
+      parameters:
+        - name: modelVersionId
+          required: true
+          in: path
+          type: number
+          format: int64
+      responses:
+        200:
+          description: OK
+          schema:
+            # type: file
+            type: string
+            format: binary
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model version download fail
+          schema:
+            $ref: '#/definitions/Error'
+  #  /mf/v1/reports/pushEvents:
+  #    get:
+  #      summary: Get push event list
+  #      operationId: listReportsPushEvents
+  #      tags:
+  #        - report
+  #      parameters:
+  #        - name: currentPage
+  #          in: query
+  #          type: number
+  #          format: int64
+  #          default: 1
+  #        - name: pageSize
+  #          in: query
+  #          type: number
+  #          format: int64
+  #          default: 10
+  #      responses:
+  #        200:
+  #          description: OK
+  #          schema:
+  #            $ref: '#/definitions/ReportPushEventResp'
+  #        401:
+  #          description: Unauthorized
+  #          schema:
+  #            $ref: '#/definitions/Error'
+  #        404:
+  #          description: Report list fail
+  #          schema:
+  #            $ref: '#/definitions/Error'
+  /mf/v1/rmbLog/Download/{eventId}:
+    get:
+      summary: Download rmb log file by event id
+      produces:
+        - application/octet-stream
+      operationId: DownloadRmbLogByEventId
+      tags:
+        - rmb
+      parameters:
+        - name: eventId
+          required: true
+          in: path
+          type: number
+          format: int64
+      responses:
+        200:
+          description: OK
+          schema:
+            # type: file
+            type: string
+            format: binary
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: report download fail
+          schema:
+            $ref: '#/definitions/Error'
+securityDefinitions:
+  basicAuth:
+    description: Basic Athentication credentials for using the API
+    type: basic
+definitions:
+  Service:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int64
+        description:  Id for the Service.
+      service_name:
+        type: string
+        description:  Service Name.
+      type:
+        type: string
+        description: Service Type, Include Single, ABTest, Graph.
+      namespace:
+        type: string
+        description:  Service NameSpace.
+      creation_timestamp:
+        type: string
+        description: creation timestamp of service.
+      last_updated_timestamp:
+        type: string
+        description: last update timestamp of this service.
+      cpu:
+        type: number
+        format: double
+        description: Serivce CPU resource.
+      gpu:
+        type: string
+        description: Serivce GPU resource.
+      memory:
+        type: number
+        format: double
+        description: Service memory resource.
+      user_id:
+        type: number
+        format: int64
+        description: the owner id of this service.
+      group_id:
+        type: number
+        format: int64
+        description: the group id of this service.
+      log_path:
+        type: string
+        description: The location of log path.
+      remark:
+        type: string
+        description: The location path of the model material.
+      endpoint_type:
+        type: string
+        description: Endpoint type
+      modelversion:
+        $ref: '#/definitions/ServiceModelVersions'
+        description: models of servier.
+  GetService:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int64
+        description:  Id for the Service.
+      service_name:
+        type: string
+        description:  Service Name.
+      type:
+        type: string
+        description: Service Type, Include Single, ABTest, Graph.
+      status:
+        type: string
+        description: Service's Status
+      endpoint_type:
+        type: string
+        description: Service's Endpoint Type
+      parameters:
+        $ref: '#/definitions/ModelParametersList'
+        description: models of servier.
+      namespace:
+        type: string
+        description:  Service NameSpace.
+      creation_timestamp:
+        type: string
+        description: creation timestamp of service.
+      last_updated_timestamp:
+        type: string
+        description: last update timestamp of this service.
+      cpu:
+        type: number
+        format: double
+        description: Serivce CPU resource.
+      gpu:
+        type: string
+        description: Serivce GPU resource.
+      memory:
+        type: number
+        format: double
+        description: Service memory resource.
+      user_id:
+        type: number
+        format: int64
+        description: the owner id of this service.
+      group_id:
+        type: number
+        format: int64
+        description: the group id of this service.
+      log_path:
+        type: string
+        description: The location of log path.
+      remark:
+        type: string
+        description: The location path of the model material.
+      image:
+        type: string
+        description: The service's image
+      modelversion:
+        $ref: '#/definitions/ServiceModelVersions'
+        description: models of servier.
+  Services:
+    type: array
+    items:
+      $ref: '#/definitions/Service'
+  ServicePost:
+    type: object
+    properties:
+      service_id:
+        type: number
+        format: int64
+        description:  Service Id.
+      service_name:
+        type: string
+        description:  Service Name.
+      type:
+        type: string
+        description: Service Type, Include Single, ABTest, Graph.
+      namespace:
+        type: string
+        description:  Service NameSpace.
+      creation_timestamp:
+        type: string
+        description: creation timestamp of service.
+      last_updated_timestamp:
+        type: string
+        description: last update timestamp of this service.
+      cpu:
+        type: number
+        format: double
+        description: Serivce CPU resource.
+      gpu:
+        type: string
+        description: Serivce GPU resource.
+      memory:
+        type: number
+        format: double
+        description: Service memory resource.
+      group_id:
+        type: number
+        format: int64
+        description: the group id of this service.
+      log_path:
+        type: string
+        description: The location of log path.
+      remark:
+        type: string
+        description: The location path of the model material.
+      service_post_models:
+        type: object
+        $ref: '#/definitions/ServicePostModels'
+        description: the modelversion id of this service.
+    required:
+      - service_name
+      - type
+      - namespace
+      - cpu
+      - gpu
+      - memory
+  ServicePostModel:
+    type: object
+    properties:
+      modelversion_id:
+        type: number
+        format: int64
+        description: the modelversion id of this service.
+      model_name:
+        type: string
+        description: serivce model name
+      source:
+        type: string
+        description: model s3 path
+      model_type:
+        type: string
+        description: serivce model name
+      model_version:
+        type: string
+        description: serivce model name
+      group_name:
+        type: string
+        description: serivce model name
+      endpoint_type:
+        type: string
+        description: serivce model name
+      image:
+        type: string
+        description: Custom image
+      parameters:
+        type: array
+        items:
+          $ref: '#/definitions/ModelParameters'
+  ModelParametersList:
+    type: array
+    items:
+      $ref: '#/definitions/ModelParameters'
+  ModelParameters:
+    type: object
+    properties:
+      name:
+        type: string
+        description: params name
+      type:
+        type: string
+        description: params type, STRING
+      value:
+        type: string
+        description: params value
+  ServicePut:
+    type: object
+    properties:
+      cpu:
+        type: number
+        format: double
+        description: Serivce CPU resource.
+      gpu:
+        type: string
+        description: Serivce GPU resource.
+      memory:
+        type: number
+        format: double
+        description: Service memory resource.
+      modelversion_id:
+        type: number
+        format: int64
+        description: the modelversion id of this service.
+      modelversion:
+        type: string
+        description: the modelversion id of this service.
+      source:
+        type: string
+        description: the modelversion id of this service.
+      service_id:
+        type: number
+        format: int64
+        description: the service id of this service.
+      namespace:
+        type: string
+        description: the namespace of this service.
+      service_name:
+        type: string
+        description: the namespace of this service.
+      remark:
+        type: string
+        description: service remark
+      # # add by version 1.16.0
+      # training_id:
+      #   type: string
+      #   description: The id of training
+      # training_flag:
+      #   type: number
+      #   format: int8
+      #   description: The flag that whether generated by model operator.
+      # is_push:
+      #   type: number
+      #   format: int8
+      #   description: 1 normal, 0 freeze.
+      #   default: 1
+      # push_timestamp:
+      #   type: string
+      #   description: Timestamp pushed.
+  ServicePostModels:
+    type: array
+    items:
+      $ref: '#/definitions/ServicePostModel'
+  ServiceModelVersions:
+    type: array
+    items:
+      $ref: '#/definitions/ServiceModelVersion'
+  ServiceModelVersion:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int64
+        readOnly: true
+        description:  Id for the ModelVersion.
+      version:
+        type: string
+        description:  Model’s version number.
+      creation_timestamp:
+        type: string
+        description: Timestamp recorded when this model_version was created.
+      latest_flag:
+        type: integer
+        description: Timestamp recorded when metadata for this model_version was last updated.
+      source:
+        type: string
+        description: User that created this model_version.
+      filepath:
+        type: string
+        description: Running status of this model_version.
+      model:
+        type: object
+        $ref: '#/definitions/ServiceModel'
+        description: Description of this model_version.
+    # # add by version 1.16.0
+    #   training_id:
+    #     type: string
+    #     description: The id of training
+    #   training_flag:
+    #     type: number
+    #     format: int8
+    #     description: The flag that whether generated by model operator.
+    #   is_push:
+    #     type: number
+    #     format: int8
+    #     description: 1 normal, 0 freeze.
+    #     default: 1
+    #   push_timestamp:
+    #     type: string
+    #     description: Timestamp pushed.
+    required:
+      - filepath
+      - source
+      - version
+  ServiceModel:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int64
+        description:  id for the model.
+      model_name:
+        type: string
+        description:  Name for the model.
+      model_type:
+        type: string
+        description: type of model, eg. tensorflow, sklearn, xgboost
+      position:
+        type: integer
+        description: Timestamp recorded when metadata for this model was last updated.
+      creation_timestamp:
+        type: string
+        description: Timestamp recorded when metadata for this model was last updated.
+      user_id:
+        type: number
+        format: int64
+        description: User that created this model.
+      group_id:
+        type: number
+        format: int64
+        description: Group Id of User.
+      service_id:
+        type: number
+        format: int64
+        description: User that created this model.
+      reamrk:
+        type: string
+        description: Description of this model
+  ModelRequest:
+    type: object
+    properties:
+      model_name:
+        type: string
+        description: Name for the model
+      model_type:
+        type: string
+        description: Type for the model
+      file_name:
+        type: string
+        description: File Name
+      s3_path:
+        type: string
+        description: S3 path
+      root_path:
+        type: string
+        description: S3 path
+      child_path:
+        type: string
+        description: S3 path
+      model_version:
+        type: object
+        $ref: '#/definitions/ModelVersion'
+        description: Lastest version
+      group_id:
+        type: number
+        format: int64
+        description: Group Id of User.
+  PostModelRequest:
+    type: object
+    properties:
+      # model_name:
+      #   type: string
+      #   description: Name for the model
+      model_type:
+        type: string
+        description: Type for the model
+      root_path:
+        type: string
+        description: File's root path
+      child_path:
+        type: string
+        description: File's child path
+      file_name:
+        type: string
+        description: File's name
+      s3_path:
+        type: string
+        description: S3Path
+      # group_id:
+      #   type: number
+      #   format: int64
+      #   description: Group Id of User.
+      training_id:
+        type: string
+        description: The id of training
+      training_flag:
+        type: number
+        format: int8
+        description: The flag that whether generated by model operator.
+      # push_timestamp:
+      #   type: string
+      #   description: Timestamp pushed.
+      group_id:
+        type: integer
+        format: int64
+      model_name:
+        type: string
+      model_version:
+        description: model version , eg v1, v2 ...
+        type: string
+      filepath:
+        type: string
+        description: directory of file storage
+    required:
+      - group_id
+      - model_name
+      - model_type
+  Model:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int64
+        description:  id for the model.
+      model_name:
+        type: string
+        description:  Name for the model.
+      model_version:
+        type: object
+        $ref: '#/definitions/ModelVersion'
+        description: Lastest version
+      model_type:
+        type: string
+        description: type of model, eg. tensorflow, sklearn, xgboost
+      position:
+        type: integer
+        description: Timestamp recorded when metadata for this model was last updated.
+      creation_timestamp:
+        type: string
+        description: Timestamp recorded when metadata for this model was last updated.
+      update_timestamp:
+        type: string
+        description: Update time
+      user_id:
+        type: number
+        format: int64
+        description: User that created this model.
+      group_id:
+        type: number
+        format: int64
+        description: Group Id of User.
+      service_id:
+        type: number
+        format: int64
+        description: User that created this model.
+      reamrk:
+        type: string
+        description: Description of this model
+      enable_flag:
+        type: integer
+        format: int8
+        description: Latest model versions for this model.
+      modelversions:
+        $ref: '#/definitions/ModelVersions'
+        description: models of servier.
+  Models:
+    type: array
+    items:
+      $ref: '#/definitions/Model'
+  UploadModelResponse:
+    type: object
+    properties:
+      s3Path:
+        type: string
+        description: S3 Path
+      fileName:
+        type: string
+  UploadReportResponse:
+    type: object
+    properties:
+      s3Path:
+        type: string
+        description: S3 Path
+      file_name:
+        type: string
+      filepath:
+        type: string
+  ModelVersion:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int64
+        readOnly: true
+        description:  Id for the ModelVersion.
+      version:
+        type: string
+        description:  Model’s version number.
+      creation_timestamp:
+        type: string
+        description: Timestamp recorded when this model_version was created.
+      latest_flag:
+        type: integer
+        description: Timestamp recorded when metadata for this model_version was last updated.
+      source:
+        type: string
+        description: User that created this model_version.
+      filepath:
+        type: string
+        description: Running status of this model_version.
+      model_id:
+        type: number
+        format: int64
+        description: Description of this model_version.
+      enable_flag:
+        type: integer
+        format: int8
+      training_id:
+        type: string
+        description: The id of training
+      training_flag:
+        type: number
+        format: int8
+        description: The flag that whether generated by model operator.
+      push_timestamp:
+        type: string
+        description: Timestamp pushed.
+      push_id:
+        type: number
+        format: int64
+      file_name:
+        type: string
+      params:
+        type: string
+    required:
+      - filepath
+      - source
+      - version
+  ModelVersions:
+    type: array
+    items:
+      $ref: '#/definitions/ModelVersion'
+  Group:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int64
+        readOnly: true
+        description:  Id for the Group
+      name:
+        type: string
+        description: Group's name
+      group_type:
+        type: string
+        description: Group's type
+      subsystem_id:
+        type: number
+        format: int64
+        description: Group's subsystem id
+      subsystem_name:
+        type: string
+        description: Group's subsystem name
+      remarks:
+        type: string
+        description: Group's remarks
+      department_id:
+        type: string
+        description: Group's department id
+      department_name:
+        type: string
+        description: Group's department name
+      cluster_name:
+        type: string
+        description: Group's cluster name
+      rmb_idc:
+        type: string
+      rmb_dcn:
+        type: string
+      service_id:
+        type: number
+        format: int64
+  Groups:
+    type: array
+    items:
+      $ref: '#/definitions/Group'
+  ServicePatchRequest:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int64
+        description:  Id for the Service.
+      model_id:
+        type: number
+        format: int64
+        description:  Id for the Service.
+      cpu:
+        type: number
+        format: double
+        description: Serivce CPU resource.
+      gpu:
+        type: string
+        description: Serivce GPU resource.
+      memory:
+        type: number
+        format: double
+        description: Service memory resource.
+      name:
+        type: string
+        description: User that created this model_version.
+      namespace:
+        type: string
+        description: User that created this model_version.
+      source:
+        type: string
+        description: User that created this model_version.
+      filepath:
+        type: string
+        description: Running status of this model_version.
+  Image:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int64
+        readOnly: true
+        description:  Image Id.
+      image_name:
+        type: string
+        description: Image Name.
+      model_version_id:
+        type: number
+        format: int64
+        description: Model Version id.
+      user_id:
+        type: string
+        description: Creation user of this image.
+      creation_timestamp:
+        type: string
+        description: Creation timestamp.
+      last_updated_timestamp:
+        type: string
+        description: Last updated timestame.
+      status:
+        type: string
+        description: Image CI Status of Image, contains building, deploying, complete.
+  Images:
+    type: array
+    items:
+      $ref: '#/definitions/Image'
+  ImagePostRequest:
+    type: object
+    properties:
+      image_name:
+        type: string
+        description: Image Name.
+      model_version_id:
+        type: number
+        format: int64
+        description: Model Version id.
+      group_id:
+        type: number
+        format: int64
+        description: Model Version id.
+      user_name:
+        type: string
+        description: Creation user of this image.
+      remarks:
+        type: string
+        description: Remark.
+  ImagePutRequest:
+    type: object
+    properties:
+      image_name:
+        type: string
+        description: Image Name.
+      model_version_id:
+        type: number
+        format: int64
+        description: Model Version id.
+      remarks:
+        type: string
+        description: Remark.
+  Error:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int32
+      error:
+        type: string
+      description:
+        type: string
+  Pods:
+    type: array
+    items:
+      $ref: '#/definitions/Pod'
+  Pod:
+    type: object
+    properties:
+      name:
+        type: string
+        description: pod's name
+      namespace:
+        type: string
+        description: pod's namespaces
+      status:
+        type: string
+        description: pod's status
+      reason:
+        type: string
+        description: The reason why pod's status that it is.
+      message:
+        type: string
+        description: The message why pod's status that it is.
+      containers:
+        type: array
+        description: containers in this pod.
+        items:
+          $ref: '#/definitions/Container'
+  Container:
+    type: object
+    properties:
+      container_name:
+        type: string
+        description:  Name for the container.
+      pod_name:
+        type: string
+        description:  Name of pod that this container belong to.
+      namespace:
+        type: string
+        description:  k8s namespaces.
+      image:
+        type: string
+        description:  Image's name for the container.
+      image_id:
+        type: string
+        description: Image's Id for the container.
+      status:
+        type: string
+        description: Status of the container.
+      cpu:
+        type: number
+        format: int64
+        description: CPU.
+      gpu:
+        type: number
+        format: int64
+        description: GPU.
+      memory:
+        type: string
+        description: Memory size.
+      started_time:
+        type: string
+        description: The time that container started to create.
+      finished_time:
+        type: string
+        description: The time that container fineshed to launch.
+  GetServiceContainerLogResponse:
+    type: object
+    properties:
+      total:
+        type: integer
+        format: int64
+      log_list:
+        type: array
+        items:
+          $ref: '#/definitions/ServiceContainerLog'
+        description: container log info list.
+    required:
+      - total
+  ServiceContainerLog:
+    type: object
+    properties:
+      log:
+        type: string
+  ReportRequestPost:
+    type: object
+    properties:
+      root_path:
+        type: string
+        description: File's root path
+      child_path:
+        type: string
+        description: File's child path
+      file_name:
+        type: string
+        description: File's name
+      group_id:
+        type: integer
+        format: int64
+      model_name:
+        type: string
+      model_version:
+        description: model version , eg v1, v2 ...
+        type: string
+      report_name:
+        type: string
+      report_version:
+        type: string
+        description: if report_id + report_version not exist in report_version table, create report_version
+      s3_path:
+        type: string
+    required:
+      - group_id
+      - model_name
+      - model_version
+      - report_name
+  ModelInfo:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int64
+        description:  id for the model.
+      model_name:
+        type: string
+        description:  Name for the model.
+      model_latest_version_id:
+        type: number
+        format: int64
+      model_version:
+        $ref: '#/definitions/ModelVersionInfo'
+        description: models of servier.
+      model_type:
+        type: string
+        description: type of model, eg. tensorflow, sklearn, xgboost
+      position:
+        type: integer
+        description: Timestamp recorded when metadata for this model was last updated.
+      creation_timestamp:
+        type: string
+        description: Timestamp recorded when metadata for this model was last updated.
+      update_timestamp:
+        type: string
+        description: Update time
+      user_id:
+        type: number
+        format: int64
+        description: User that created this model.
+      group_id:
+        type: number
+        format: int64
+        description: Group Id of User.
+      service_id:
+        type: number
+        format: int64
+        description: User that created this model.
+      reamrk:
+        type: string
+        description: Description of this model
+      enable_flag:
+        type: integer
+        format: int8
+  ModelVersionInfo:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int64
+        readOnly: true
+        description:  Id for the ModelVersion.
+      version:
+        type: string
+        description:  Model’s version number.
+      creation_timestamp:
+        type: string
+        description: Timestamp recorded when this model_version was created.
+      latest_flag:
+        type: integer
+        description: Timestamp recorded when metadata for this model_version was last updated.
+      source:
+        type: string
+        description: User that created this model_version.
+      filepath:
+        type: string
+        description: Running status of this model_version.
+      model_id:
+        type: number
+        format: int64
+        description: Description of this model_version.
+      enable_flag:
+        type: integer
+        format: int8
+      file_name:
+        type: string
+      training_id:
+        type: string
+        description: The id of training
+      training_flag:
+        type: number
+        format: int8
+        description: The flag that whether generated by model operator.
+      push_timestamp:
+        type: string
+        description: Timestamp pushed.
+      push_id:
+        type: number
+        format: int64
+      event:
+        $ref: '#/definitions/Event'
+      user:
+        $ref: '#/definitions/UserInfo'
+  Report:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+        description: report id
+      user_id:
+        type: integer
+        format: int64
+      report_latest_version_id:
+        type: integer
+        format: int64
+        description: latest report version id
+      creation_timestamp:
+        type: string
+        format: date-time
+        description: create timestamp
+      update_timestamp:
+        type: string
+        format: date-time
+        description: report pushed timestamp
+      enable_flag:
+        type: integer
+        format: int8
+        default: 1
+        description: 1 normal; 0 freeze
+      latest_report_version:
+        $ref: '#/definitions/ReportVersionBase'
+      model_version:
+        $ref: '#/definitions/ModelVersionBase'
+      model:
+        description: model information
+        $ref: '#/definitions/ModelBase'
+      group:
+        $ref: '#/definitions/Group'
+      event:
+        $ref: '#/definitions/Event'
+      user:
+        $ref: '#/definitions/UserInfo'
+  ReportBase:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+        description: report id
+      report_name:
+        type: string
+      model_id:
+        type: integer
+        format: int64
+      model_version_id:
+        type: integer
+        format: int64
+      group_id:
+        type: integer
+        format: int64
+      user_id:
+        type: integer
+        format: int64
+      report_latest_version_id:
+        type: integer
+        format: int64
+        description: latest report version id
+      creation_timestamp:
+        type: string
+        format: date-time
+        description: create timestamp
+      update_timestamp:
+        type: string
+        format: date-time
+        description: report pushed timestamp
+      #      push_status:
+      #        type: string
+      #        description: status of lasted push
+      enable_flag:
+        type: integer
+        format: int8
+        default: 1
+        description: 1 normal; 0 freeze
+  Event:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+        description: report id
+      file_type:
+        type: string
+        format: string
+        description: "file type eg:MODEL, DATA"
+      file_id:
+        type: integer
+        format: int64
+        description: "report id or model id"
+      file_name:
+        type: string
+        format: string
+      fps_file_id:
+        type: string
+        format: string
+        description: "file id from FPS"
+      hash_value:
+        type: string
+        format: string
+        description: "hash from FPS"
+      params:
+        type: string
+        format: string
+      idc:
+        type: string
+        format: string
+        description: IDC of RMB
+      dcn:
+        type: string
+        format: string
+        description: "DCN of RMB"
+      status:
+        type: string
+        format: string
+        description: "hash from FPS"
+      enable_flag:
+        type: integer
+        format: int8
+        default: 1
+        description: 1 normal; 0 freeze
+      creation_timestamp:
+        type: string
+        format: date-time
+        description: create timestamp
+      update_timestamp:
+        type: string
+        format: date-time
+        description: report pushed timestamp
+      rmb_s3path:
+        type: string
+        format: string
+      rmb_resp_file_name:
+        type: string
+        format: string
+      version:
+        type: string
+        format: string
+    required:
+      - id
+      - file_type
+      - file_id
+      - file_name
+      - fps_file_id
+      - hash_value
+      - params
+      - idc
+      - dcn
+      - status
+      - enable_flag
+      - creation_timestamp
+      - update_timestamp
+  Reports:
+    type: array
+    items:
+      $ref: '#/definitions/Report'
+  ListReportsResp:
+    type: object
+    properties:
+      total:
+        type: integer
+        format: int64
+      Reports:
+        type: array
+        items:
+          $ref: '#/definitions/Report'
+
+  ResultRequest:
+    type: object
+    required:
+      # - model_id
+      # - model_version_id
+      - training_id
+      - result_msg
+    properties:
+      model_id:
+        type: number
+        format: int64
+        description: model id
+      model_version_id:
+        type: number
+        format: int64
+        description: model version id
+      training_id:
+        type: string
+      result_msg:
+        type: string
+      enable_flag:
+        type: integer
+        format: int8
+  Result:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+        description: report id
+      model:
+        description: model information
+        $ref: '#/definitions/ModelInfo'
+      training_id:
+        type: string
+      result_msg:
+        type: string
+      enable_flag:
+        type: integer
+        format: int8
+      creation_timestamp:
+        type: string
+        format: date-time
+        description: create timestamp
+      update_timestamp:
+        type: string
+        format: date-time
+        description:  update timestamp
+  Results:
+    type: array
+    items:
+      $ref: '#/definitions/Result'
+  ReportVersion:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+        description: report version id
+      report_name:
+        type: string
+      report_id:
+        type: integer
+        format: int64
+        description: report id
+      version:
+        type: string
+        description: report version
+      file_name:
+        type: string
+      filepath:
+        type: string
+        description: directory of report file storage
+      source:
+        type: string
+      push_id:
+        type: integer
+        format: int64
+        description: current version report id of push event
+      creation_timestamp:
+        type: string
+        format: date-time
+        description: create timestamp
+      update_timestamp:
+        type: string
+        format: date-time
+        description: report pushed timestamp
+      enable_flag:
+        type: integer
+        format: int8
+        default: 1
+        description: 1 normal; 0 freeze
+      event:
+        $ref: '#/definitions/Event'
+      user:
+        $ref: '#/definitions/UserInfo'
+  ListReportVersionBase:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+        description: report version id
+      report_name:
+        type: string
+      report_id:
+        type: integer
+        format: int64
+        description: report id
+      version:
+        type: string
+        description: report version
+      file_name:
+        type: string
+      filepath:
+        type: string
+        description: directory of report file storage
+      source:
+        type: string
+      push_id:
+        type: integer
+        format: int64
+        description: current version report id of push event
+      creation_timestamp:
+        type: string
+        format: date-time
+        description: create timestamp
+      update_timestamp:
+        type: string
+        format: date-time
+        description: report pushed timestamp
+      enable_flag:
+        type: integer
+        format: int8
+        default: 1
+        description: 1 normal; 0 freeze
+      event:
+        $ref: '#/definitions/Event'
+      user:
+        $ref: '#/definitions/UserInfo'
+      group:
+        $ref: '#/definitions/Group'
+      report:
+        $ref: '#/definitions/ReportBase'
+  ListReportVersionResp:
+    type: array
+    items:
+      $ref: '#/definitions/ListReportVersionBase'
+  ReportVersions:
+    type: array
+    items:
+      $ref: '#/definitions/ReportVersion'
+  ReportVersionBase:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+        description: report version id
+      report_name:
+        type: string
+      report_id:
+        type: integer
+        format: int64
+        description: report id
+      version:
+        type: string
+        description: report version
+      file_name:
+        type: string
+      filepath:
+        type: string
+        description: directory of report file storage
+      source:
+        type: string
+      push_id:
+        type: integer
+        format: int64
+        description: current version report id of push event
+      creation_timestamp:
+        type: string
+        format: date-time
+        description: create timestamp
+      update_timestamp:
+        type: string
+        format: date-time
+        description: report pushed timestamp
+      enable_flag:
+        type: integer
+        format: int8
+        default: 1
+        description: 1 normal; 0 freeze
+  ReportVersionPushEventResp:
+    type: object
+    properties:
+      total:
+        type: number
+        format: int64
+      reportVersion:
+        $ref: '#/definitions/ReportVersionBase'
+      report:
+        $ref: '#/definitions/ReportBase'
+      events:
+        type: array
+        items:
+          $ref: '#/definitions/ReportVersionPushEventRespBase'
+  ReportVersionPushEventRespBase:
+    type: object
+    properties:
+      event:
+        $ref: '#/definitions/Event'
+      user:
+        $ref: '#/definitions/UserInfo'
+  PostReportResp:
+    type: object
+    properties:
+      report_id:
+        type: integer
+        format: int64
+      report_version_id:
+        type: integer
+        format: int64
+      report_version:
+        type: string
+  PostModelResp:
+    type: object
+    properties:
+      model_id:
+        type: integer
+        format: int64
+      model_version_id:
+        type: integer
+        format: int64
+      model_version:
+        type: string
+  ReportPushEvent:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+        description: report id
+      model:
+        description: model information
+        $ref: '#/definitions/ModelInfo'
+      group:
+        $ref: '#/definitions/Group'
+      user_id:
+        type: integer
+        format: int64
+      report_latest_version_id:
+        type: integer
+        format: int64
+        description: latest report version id
+      creation_timestamp:
+        type: string
+        format: date-time
+        description: create timestamp
+      update_timestamp:
+        type: string
+        format: date-time
+        description: report pushed timestamp
+      push_status:
+        type: string
+        description: status of lasted push
+      enable_flag:
+        type: integer
+        format: int8
+        default: 1
+        description: 1 normal; 0 freeze
+      report_version_events:
+        type: array
+        items:
+          $ref: '#/definitions/ReportVersion'
+  ModelVersionPushEventResp:
+    type: object
+    properties:
+      total:
+        type: number
+        format: int64
+      events:
+        type: array
+        items:
+          $ref: '#/definitions/ModelVersionPushEventRespBase'
+      model_version:
+        $ref: '#/definitions/ModelVersionBase'
+      model:
+        $ref: '#/definitions/ModelBase'
+  ModelVersionPushEventRespBase:
+    type: object
+    properties:
+      event:
+        $ref: '#/definitions/Event'
+      user:
+        $ref: '#/definitions/UserInfo'
+  ModelBase:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int64
+        description:  id for the model.
+      model_name:
+        type: string
+        description:  Name for the model.
+      model_type:
+        type: string
+        description: type of model, eg. tensorflow, sklearn, xgboost
+      position:
+        type: integer
+        description: Timestamp recorded when metadata for this model was last updated.
+      creation_timestamp:
+        type: string
+        description: Timestamp recorded when metadata for this model was last updated.
+      update_timestamp:
+        type: string
+        description: Update time
+      user_id:
+        type: number
+        format: int64
+        description: User that created this model.
+      group_id:
+        type: number
+        format: int64
+        description: Group Id of User.
+      service_id:
+        type: number
+        format: int64
+        description: User that created this model.
+      reamrk:
+        type: string
+        description: Description of this model
+      enable_flag:
+        type: integer
+        format: int8
+        description: Latest model versions for this model.
+      model_latest_version_id:
+        type: number
+        format: int64
+  ModelVersionBase:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int64
+        readOnly: true
+        description:  Id for the ModelVersion.
+      version:
+        type: string
+        description:  Model’s version number.
+      creation_timestamp:
+        type: string
+        description: Timestamp recorded when this model_version was created.
+      latest_flag:
+        type: integer
+        description: Timestamp recorded when metadata for this model_version was last updated.
+      source:
+        type: string
+        description: User that created this model_version.
+      filepath:
+        type: string
+        description: Running status of this model_version.
+      model_id:
+        type: number
+        format: int64
+        description: Description of this model_version.
+      enable_flag:
+        type: integer
+        format: int8
+      file_name:
+        type: string
+      training_id:
+        type: string
+        description: The id of training
+      training_flag:
+        type: number
+        format: int8
+        description: The flag that whether generated by model operator.
+      push_timestamp:
+        type: string
+        description: Timestamp pushed.
+      push_id:
+        type: number
+        format: int64
+  ModelVersionPushEvent:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int64
+        readOnly: true
+        description:  Id for the ModelVersion.
+      version:
+        type: string
+        description:  Model’s version number.
+      creation_timestamp:
+        type: string
+        description: Timestamp recorded when this model_version was created.
+      latest_flag:
+        type: integer
+        description: Timestamp recorded when metadata for this model_version was last updated.
+      source:
+        type: string
+        description: User that created this model_version.
+      filepath:
+        type: string
+        description: Running status of this model_version.
+      model_id:
+        type: number
+        format: int64
+        description: Description of this model_version.
+      enable_flag:
+        type: integer
+        format: int8
+      file_name:
+        type: string
+      training_id:
+        type: string
+        description: The id of training
+      training_flag:
+        type: number
+        format: int8
+        description: The flag that whether generated by model operator.
+      push_timestamp:
+        type: string
+        description: Timestamp pushed.
+      push_id:
+        type: number
+        format: int64
+      model:
+        $ref: '#/definitions/ModelBase'
+      event:
+        $ref: '#/definitions/Event'
+      user:
+        $ref: '#/definitions/UserInfo'
+  UserInfo:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int64
+        description:  id for the model.
+      name:
+        type: string
+      gid:
+        type: number
+        format: int64
+      uid:
+        type: number
+        format: int64
+      user_type:
+        type: string
+      remarks:
+        type: string
+      enable_flag:
+        type: integer
+        format: int8
+      guid_check:
+        type: integer
+        format: int8
+  PushModelRequest:
+    type: object
+    properties:
+      factory_name:
+        type: string
+      model_type:
+        type: string
+      model_usage:
+        type: string
+    required:
+      - factory_name
+      - model_type
+      - model_usage
+  PushReportRequest:
+    type: object
+    properties:
+      factory_name:
+        type: string
+    required:
+      - factory_name
+  getModelVersionResp:
+    type: array
+    items:
+      $ref: '#/definitions/getModelVersionRespBase'
+  getModelVersionRespBase:
+    type: object
+    properties:
+      id:
+        type: number
+        format: int64
+        readOnly: true
+        description:  Id for the ModelVersion.
+      version:
+        type: string
+        description:  Model’s version number.
+      creation_timestamp:
+        type: string
+        description: Timestamp recorded when this model_version was created.
+      latest_flag:
+        type: integer
+        description: Timestamp recorded when metadata for this model_version was last updated.
+      source:
+        type: string
+        description: User that created this model_version.
+      filepath:
+        type: string
+        description: Running status of this model_version.
+      model_id:
+        type: number
+        format: int64
+        description: Description of this model_version.
+      enable_flag:
+        type: integer
+        format: int8
+      training_id:
+        type: string
+        description: The id of training
+      training_flag:
+        type: number
+        format: int8
+        description: The flag that whether generated by model operator.
+      push_timestamp:
+        type: string
+        description: Timestamp pushed.
+      push_id:
+        type: number
+        format: int64
+      file_name:
+        type: string
+      params:
+        type: string
+      model:
+        description: model information
+        $ref: '#/definitions/ModelBase'
+      group:
+        $ref: '#/definitions/Group'
+      user:
+        $ref: '#/definitions/UserInfo'

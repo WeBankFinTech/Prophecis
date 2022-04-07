@@ -29,7 +29,7 @@ func NewPatchNamespacedNotebook(ctx *middleware.Context, handler PatchNamespaced
 	return &PatchNamespacedNotebook{Context: ctx, Handler: handler}
 }
 
-/*PatchNamespacedNotebook swagger:route PATCH /aide/v1/namespaces/{namespace}/notebooks patchNamespacedNotebook
+/*PatchNamespacedNotebook swagger:route PATCH /aide/v1/notebooks/{id} patchNamespacedNotebook
 
 Patch a Notebook in the given Namesapce, Update Yarn Resource Setting
 

@@ -20,7 +20,7 @@ type ListModelsURL struct {
 	Page        *string
 	Size        *string
 	Userid      *string
-	Version     string
+	Version     *string
 
 	_basePath string
 	// avoid unkeyed usage
@@ -112,7 +112,10 @@ func (o *ListModelsURL) Build() (*url.URL, error) {
 		qs.Set("userid", useridQ)
 	}
 
-	versionQ := o.Version
+	var versionQ string
+	if o.Version != nil {
+		versionQ = *o.Version
+	}
 	if versionQ != "" {
 		qs.Set("version", versionQ)
 	}

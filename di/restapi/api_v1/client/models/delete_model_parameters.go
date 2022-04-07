@@ -6,10 +6,9 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"net/http"
 	"time"
-
-	"golang.org/x/net/context"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
@@ -25,7 +24,7 @@ func NewDeleteModelParams() *DeleteModelParams {
 		versionDefault = string("2017-02-13")
 	)
 	return &DeleteModelParams{
-		Version: versionDefault,
+		Version: &versionDefault,
 
 		timeout: cr.DefaultTimeout,
 	}
@@ -38,7 +37,7 @@ func NewDeleteModelParamsWithTimeout(timeout time.Duration) *DeleteModelParams {
 		versionDefault = string("2017-02-13")
 	)
 	return &DeleteModelParams{
-		Version: versionDefault,
+		Version: &versionDefault,
 
 		timeout: timeout,
 	}
@@ -51,7 +50,7 @@ func NewDeleteModelParamsWithContext(ctx context.Context) *DeleteModelParams {
 		versionDefault = string("2017-02-13")
 	)
 	return &DeleteModelParams{
-		Version: versionDefault,
+		Version: &versionDefault,
 
 		Context: ctx,
 	}
@@ -64,7 +63,7 @@ func NewDeleteModelParamsWithHTTPClient(client *http.Client) *DeleteModelParams 
 		versionDefault = string("2017-02-13")
 	)
 	return &DeleteModelParams{
-		Version:    versionDefault,
+		Version:    &versionDefault,
 		HTTPClient: client,
 	}
 }
@@ -83,7 +82,7 @@ type DeleteModelParams struct {
 	  The release date of the version of the API you want to use. Specify dates in YYYY-MM-DD format.
 
 	*/
-	Version string
+	Version *string
 
 	timeout    time.Duration
 	Context    context.Context
@@ -135,13 +134,13 @@ func (o *DeleteModelParams) SetModelID(modelID string) {
 }
 
 // WithVersion adds the version to the delete model params
-func (o *DeleteModelParams) WithVersion(version string) *DeleteModelParams {
+func (o *DeleteModelParams) WithVersion(version *string) *DeleteModelParams {
 	o.SetVersion(version)
 	return o
 }
 
 // SetVersion adds the version to the delete model params
-func (o *DeleteModelParams) SetVersion(version string) {
+func (o *DeleteModelParams) SetVersion(version *string) {
 	o.Version = version
 }
 
@@ -158,13 +157,20 @@ func (o *DeleteModelParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.R
 		return err
 	}
 
-	// query param version
-	qrVersion := o.Version
-	qVersion := qrVersion
-	if qVersion != "" {
-		if err := r.SetQueryParam("version", qVersion); err != nil {
-			return err
+	if o.Version != nil {
+
+		// query param version
+		var qrVersion string
+		if o.Version != nil {
+			qrVersion = *o.Version
 		}
+		qVersion := qrVersion
+		if qVersion != "" {
+			if err := r.SetQueryParam("version", qVersion); err != nil {
+				return err
+			}
+		}
+
 	}
 
 	if len(res) > 0 {

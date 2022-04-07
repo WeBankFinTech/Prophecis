@@ -39,6 +39,9 @@ type Notebook struct {
 	// GPU used
 	Gpu string `json:"gpu,omitempty"`
 
+	// id
+	ID string `json:"id,omitempty"`
+
 	// Docker Image used
 	Image string `json:"image,omitempty"`
 
@@ -54,11 +57,17 @@ type Notebook struct {
 	// Notebook pods
 	Pods string `json:"pods,omitempty"`
 
+	// Proxy User of Notebook.
+	ProxyUser string `json:"proxyUser,omitempty"`
+
 	// BDAP Yarn Queue Setting
 	Queue string `json:"queue,omitempty"`
 
 	// Notebook services
 	Service string `json:"service,omitempty"`
+
+	// The number of spark session
+	SparkSessionNum int64 `json:"sparkSessionNum,omitempty"`
 
 	// Image short name
 	SrtImage string `json:"srtImage,omitempty"`

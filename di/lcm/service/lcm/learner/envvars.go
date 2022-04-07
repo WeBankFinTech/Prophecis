@@ -17,7 +17,6 @@
 package learner
 
 import (
-	"github.com/spf13/viper"
 	"os"
 	"path"
 	"path/filepath"
@@ -28,10 +27,6 @@ import (
 )
 
 const (
-	mongoAddressKey  = "mongo.address"
-	mongoDatabaseKey = "mongo.database"
-	mongoUsernameKey = "mongo.username"
-	mongoPasswordKey = "mongo.password"
 	linkisAddress    = "LINKIS_ADDRESS"
 	linkisTokenCode  = "LINKIS_TOKEN_CODE"
 )
@@ -41,21 +36,12 @@ func PopulateLearnerEnvVariablesAndLabels(existingEnvVars []v1core.EnvVar, train
 
 	var envVars []v1core.EnvVar
 	envVars = append(envVars, existingEnvVars...)
-
-	envVars = append(envVars, v1core.EnvVar{Name: "DOWNWARD_API_POD_NAME", ValueFrom: &v1core.EnvVarSource{FieldRef: &v1core.ObjectFieldSelector{FieldPath: "metadata.name"}}})
-	envVars = append(envVars, v1core.EnvVar{Name: "DOWNWARD_API_POD_NAMESPACE", ValueFrom: &v1core.EnvVarSource{FieldRef: &v1core.ObjectFieldSelector{FieldPath: "metadata.namespace"}}})
-
-	//For now assuming sateful set name is same as service name
 	envVars = append(envVars, v1core.EnvVar{Name: "LEARNER_NAME_PREFIX", Value: statefulsetName})
 
 	envVars = append(envVars, v1core.EnvVar{Name: "TRAINING_ID", Value: trainingID})
 	envVars = append(envVars, v1core.EnvVar{Name: "DLAAS_JOB_ID", Value: trainingID})
 	envVars = append(envVars, v1core.EnvVar{Name: "NUM_LEARNERS", Value: strconv.Itoa(numLearners)})
 
-	envVars = append(envVars, v1core.EnvVar{Name: "MONGO_ADDRESS", Value: viper.GetString(mongoAddressKey)})
-	envVars = append(envVars, v1core.EnvVar{Name: "MONGO_DATABASE", Value: viper.GetString(mongoDatabaseKey)})
-	envVars = append(envVars, v1core.EnvVar{Name: "MONGO_USERNAME", Value: viper.GetString(mongoUsernameKey)})
-	envVars = append(envVars, v1core.EnvVar{Name: "MONGO_PASSWORD", Value: viper.GetString(mongoPasswordKey)})
 	envVars = append(envVars, v1core.EnvVar{Name: linkisAddress, Value: os.Getenv(linkisAddress)})
 	envVars = append(envVars, v1core.EnvVar{Name: linkisTokenCode, Value: os.Getenv(linkisTokenCode)})
 

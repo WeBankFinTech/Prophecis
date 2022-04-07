@@ -56,9 +56,15 @@ type NewNotebookRequest struct {
 	// Required: true
 	Namespace *string `json:"namespace"`
 
+	// Proxy User of Notebook.
+	ProxyUser string `json:"proxyUser,omitempty"`
+
 	// BDAP Yarn Queue Setting
 	//
 	Queue string `json:"queue,omitempty"`
+
+	// The number of spark session
+	SparkSessionNum int64 `json:"sparkSessionNum,omitempty"`
 
 	// workspace volume
 	WorkspaceVolume *MountInfo `json:"workspaceVolume,omitempty"`

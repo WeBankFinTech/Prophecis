@@ -12,16 +12,16 @@ import (
 )
 
 // DownloadTrainedModelHandlerFunc turns a function with the right signature into a download trained model handler
-type DownloadTrainedModelHandlerFunc func(DownloadTrainedModelParams) middleware.Responder
+type DownloadTrainedModelHandlerFunc func(DownloadTrainedModelParams, interface{}) middleware.Responder
 
 // Handle executing the request and returning a response
-func (fn DownloadTrainedModelHandlerFunc) Handle(params DownloadTrainedModelParams) middleware.Responder {
-	return fn(params)
+func (fn DownloadTrainedModelHandlerFunc) Handle(params DownloadTrainedModelParams, principal interface{}) middleware.Responder {
+	return fn(params, principal)
 }
 
 // DownloadTrainedModelHandler interface for that can handle valid download trained model params
 type DownloadTrainedModelHandler interface {
-	Handle(DownloadTrainedModelParams) middleware.Responder
+	Handle(DownloadTrainedModelParams, interface{}) middleware.Responder
 }
 
 // NewDownloadTrainedModel creates a new http.Handler for the download trained model operation
@@ -48,12 +48,25 @@ func (o *DownloadTrainedModel) ServeHTTP(rw http.ResponseWriter, r *http.Request
 	}
 	var Params = NewDownloadTrainedModelParams()
 
+	uprinc, aCtx, err := o.Context.Authorize(r, route)
+	if err != nil {
+		o.Context.Respond(rw, r, route.Produces, route, err)
+		return
+	}
+	if aCtx != nil {
+		r = aCtx
+	}
+	var principal interface{}
+	if uprinc != nil {
+		principal = uprinc
+	}
+
 	if err := o.Context.BindValidRequest(r, route, &Params); err != nil { // bind params
 		o.Context.Respond(rw, r, route.Produces, route, err)
 		return
 	}
 
-	res := o.Handler.Handle(Params) // actually handle the request
+	res := o.Handler.Handle(Params, principal) // actually handle the request
 
 	o.Context.Respond(rw, r, route.Produces, route, res)
 

@@ -29,6 +29,8 @@ import (
 	"webank/DI/commons/constants"
 	"webank/DI/commons/tfjob"
 
+	// "webank/DI/pkg/operators/tf-operator/client/clientset/versioned"
+
 	// "webank/DI/linkisexecutor/linkisclientutils"
 	// "webank/DI/linkisexecutor/models"
 	"webank/DI/commons/operators/tf-operator/client/clientset/versioned"
@@ -53,7 +55,6 @@ import (
 	"webank/DI/commons/logger"
 	"webank/DI/commons/service"
 	"webank/DI/lcm/lcmconfig"
-
 	"webank/DI/storage/client"
 
 	"github.com/cenkalti/backoff"
@@ -100,10 +101,11 @@ const (
 	jobHelperNumber  = 1
 	jobMonitorNumber = 1
 
-	mongoAddressKey  = "mongo.address"
-	mongoDatabaseKey = "mongo.database"
-	mongoUsernameKey = "mongo.username"
-	mongoPasswordKey = "mongo.password"
+	MongoAddressKey             = "MONGO_ADDRESS"
+	MongoDatabaseKey            = "MONGO_DATABASE"
+	MongoUsernameKey            = "MONGO_USERNAME"
+	MongoPasswordKey            = "MONGO_PASSWORD"
+	MongoAuthenticationDatabase = "MONGO_Authentication_Database"
 
 	//pollIntervalKey = "queue.poll.interval"
 	queuePollInterval = "queuePollInterval"
@@ -186,7 +188,7 @@ func newService() (*lcmService, error) {
 	//config.FatalOnAbsentKey(mongoAddressKey)
 	config.FatalOnAbsentKey(config.ETCDEndpoints)
 	//config.SetDefault(gpuLimitsQuerySizeKey, 200)
-	config.SetDefault(queueSize, 200)
+	config.SetDefault(queueSize, 5000)
 	config.SetDefault(queuePollInterval, 10) // in seconds
 
 	defaultBackoff := backoff.NewExponentialBackOff()
@@ -203,20 +205,25 @@ func newService() (*lcmService, error) {
 	}
 	// FIXME MLSS Change: v_1.4.1 init repo
 
-	logr.Debugf("MongoAddressKey: %v, MongoDatabaseKey: %v, MongoUsernameKey: %v, MongoPasswordKey: %v", viper.GetString(mongoAddressKey), viper.GetString(mongoDatabaseKey), viper.GetString(mongoUsernameKey), viper.GetString(mongoPasswordKey))
+	logr.Debugf("MongoAddressKey: %v, MongoDatabaseKey: %v, MongoUsernameKey: %v, MongoPasswordKey: %v",
+		viper.GetString(MongoAddressKey), viper.GetString(MongoDatabaseKey), viper.GetString(MongoUsernameKey),
+		viper.GetString(MongoPasswordKey))
 
-	repo, err := newTrainingsRepository(viper.GetString(mongoAddressKey),
-		viper.GetString(mongoDatabaseKey), viper.GetString(mongoUsernameKey),
-		viper.GetString(mongoPasswordKey), config.GetMongoCertLocation(), "training_jobs")
+	repo, err := newTrainingsRepository(viper.GetString(MongoAddressKey),
+		viper.GetString(MongoDatabaseKey), viper.GetString(MongoUsernameKey),
+		viper.GetString(MongoPasswordKey), viper.GetString(MongoAuthenticationDatabase),
+		config.GetMongoCertLocation(), "training_jobs")
 	if err != nil {
-		logr.WithError(err).Fatalf("Cannot create repository with %s %s %s", viper.GetString(mongoAddressKey), viper.GetString(mongoDatabaseKey), viper.GetString(mongoUsernameKey))
+		logr.WithError(err).Fatalf("Cannot create repository with %s %s %s", viper.GetString(MongoAddressKey),
+			viper.GetString(MongoDatabaseKey), viper.GetString(MongoUsernameKey))
 	}
-	jobHistoryRepo, err := newJobHistoryRepository(viper.GetString(mongoAddressKey),
-		viper.GetString(mongoDatabaseKey), viper.GetString(mongoUsernameKey),
-		viper.GetString(mongoPasswordKey), config.GetMongoCertLocation(), collectionNameJobHistory)
+	jobHistoryRepo, err := newJobHistoryRepository(viper.GetString(MongoAddressKey),
+		viper.GetString(MongoDatabaseKey), viper.GetString(MongoUsernameKey),
+		viper.GetString(MongoPasswordKey), viper.GetString(MongoAuthenticationDatabase),
+		config.GetMongoCertLocation(), collectionNameJobHistory)
 	if err != nil {
 		logr.WithError(err).Fatalf("Cannot create repository with %s %s %s %s", viper.GetString("mongo.address"),
-			viper.GetString(mongoDatabaseKey), viper.GetString(mongoUsernameKey), collectionNameJobHistory)
+			viper.GetString(MongoDatabaseKey), viper.GetString(MongoUsernameKey), collectionNameJobHistory)
 	}
 
 	k8sClient, err := kubernetes.NewForConfig(lcmconfig.GetKubernetesConfig())
@@ -234,9 +241,10 @@ func newService() (*lcmService, error) {
 		return nil, connectivityErr
 	}
 	// FIXME MLSS Change: v_1.4.1 init queues
-	queues, err := getQueuesFromDB(viper.GetString(mongoAddressKey),
-		viper.GetString(mongoDatabaseKey), viper.GetString(mongoUsernameKey),
-		viper.GetString(mongoPasswordKey), config.GetMongoCertLocation())
+	queues, err := getQueuesFromDB(viper.GetString(MongoAddressKey),
+		viper.GetString(MongoDatabaseKey), viper.GetString(MongoUsernameKey),
+		viper.GetString(MongoPasswordKey), viper.GetString(config.MongoAuthenticationDatabase),
+		config.GetMongoCertLocation())
 
 	if err != nil {
 		logr.WithError(err).Errorf("Failed to getQueues from mongo when newService", lcmconfig.GetKubernetesConfig())
@@ -263,9 +271,6 @@ func newService() (*lcmService, error) {
 	}
 	s.startQueues()
 
-	//FIXME MLSS Changes:  new job monitor
-	s.startJobMonitor()
-
 	return s, nil
 }
 
@@ -291,12 +296,10 @@ func (s *lcmService) DeployTrainingJob(ctx context.Context, req *service.JobDepl
 		Metrics:               nil,
 		EvaluationMetricsSpec: req.EvaluationMetricsSpec,
 		Namespace:             req.JobNamespace,
-		// FIXME MLSS Change: add GID & UID from request to training records
 		GID:           req.EnvVars["GID"],
 		UID:           req.EnvVars["UID"],
 		GuardianToken: req.EnvVars["GUARDIAN_TOKEN"],
 		JobAlert:      req.JobAlert,
-		// FIXME MLSS Change: v_1.5.2 added parameters server
 		PSs:          req.PSs,
 		PSCPU:        req.PSCPU,
 		PSImage:      req.PSImage,
@@ -309,16 +312,16 @@ func (s *lcmService) DeployTrainingJob(ctx context.Context, req *service.JobDepl
 		ExpName:      req.ExpName,
 		FileName:     req.FileName,
 		FilePath:     req.FilePath,
+		ProxyUser:    req.ProxyUser,
+		DataSet: req.DataSet,
+		MFModel: req.MfModel,
+		Algorithm: req.Algorithm,
+		JobParams: req.JobParams,
+		FitParams: req.FitParams,
+		APIType: req.APIType,
 	}
-
-	// FIXME MLSS Change: v_1.9.0 submit linkis
-	// if req.JobType == constants.TFOS {
-	// 	err := s.SubmitLinkisJob(tr, logr)
-	// 	if err != nil {
-	// 		return &service.JobDeploymentResponse{Name: req.Name}, err
-	// 	}
-	// 	return &service.JobDeploymentResponse{Name: req.Name}, nil
-	// }
+	// JobParmas:    req.Params,
+	// DataSet:      req.DataSet}
 
 	// FIXME MLSS Change: v_1.4.1 added
 	ns := req.JobNamespace
@@ -380,15 +383,12 @@ func (s *lcmService) DeployTrainingJob(ctx context.Context, req *service.JobDepl
 func (s *lcmService) ensureQueue(namespace string, logr *logger.LocLoggingEntry) (*queueHandler, error) {
 	queueName := trainer.QueueName(namespace)
 
-	//need to create queue sync
-	//s.mtx.Lock()
-	//defer s.mtx.Unlock() TransformResourceName
-
 	//named lock
 	const timeoutForTryLock = 30
 	timeout := lockForCreatingQueue.TryLockTimeout(namespace, time.Duration(timeoutForTryLock)*time.Second)
 	if !timeout {
-		timeoutMsg := fmt.Sprintf("try lock failed in %v sec, namespace: %s", viper.GetString(mongoAddressKey), viper.GetString(mongoDatabaseKey), viper.GetString(mongoUsernameKey))
+		timeoutMsg := fmt.Sprintf("try lock failed in %v sec, namespace: %s", viper.GetString(MongoAddressKey),
+			viper.GetString(MongoDatabaseKey), viper.GetString(MongoUsernameKey))
 		logr.Fatalf(timeoutMsg)
 		return nil, errors.New(timeoutMsg)
 	}
@@ -402,11 +402,13 @@ func (s *lcmService) ensureQueue(namespace string, logr *logger.LocLoggingEntry)
 	}
 
 	logr.Debugf("DeployTrainingJob to newTrainingJobQueue with queueName: s%", queueName)
-	queue, err := trainer.GetNewTrainingJobQueue(viper.GetString(mongoAddressKey),
-		viper.GetString(mongoDatabaseKey), viper.GetString(mongoUsernameKey),
-		viper.GetString(mongoPasswordKey), config.GetMongoCertLocation(), trainer.QueueName(namespace), trainer.LockName(namespace))
+	queue, err := trainer.GetNewTrainingJobQueue(viper.GetString(MongoAddressKey),
+		viper.GetString(MongoDatabaseKey), viper.GetString(MongoUsernameKey),
+		viper.GetString(MongoPasswordKey), viper.GetString(MongoAuthenticationDatabase),
+		config.GetMongoCertLocation(), trainer.QueueName(namespace), trainer.LockName(namespace))
 	if err != nil {
-		logr.WithError(err).Fatalf("Cannot create queue with %s %s %s", viper.GetString(mongoAddressKey), viper.GetString(mongoDatabaseKey), viper.GetString(mongoUsernameKey))
+		logr.WithError(err).Fatalf("Cannot create queue with %s %s %s", viper.GetString(MongoAddressKey),
+			viper.GetString(MongoDatabaseKey), viper.GetString(MongoUsernameKey))
 		return nil, err
 	}
 	s.queues[queueName] = &queueHandler{make(chan struct{}), queue, constants.Fault}
@@ -456,6 +458,7 @@ func (s *lcmService) deployJobToK8s(tr *trainer.TrainingRecord, logr *logger.Loc
 	tr.TrainingStatus.Status = grpc_trainer_v2.Status_PENDING
 	logr.Debugf("deployJobToK8s_de tr cpu: %v", tr.Training.Resources.Cpus)
 	logr.Debugf("deployJobToK8s, tr.TFosRequest: %v", tr.TFosRequest)
+	logr.Debugf("deployJobToK8s, tr.ProxyUser: %v", tr.ProxyUser)
 	repoErr := s.repo.Store(tr)
 	if repoErr != nil {
 		return gerrf(codes.Internal, repoErr.Error())
@@ -471,12 +474,36 @@ func (s *lcmService) deployJobToK8s(tr *trainer.TrainingRecord, logr *logger.Loc
 
 	// FIXME MLSS Change: v_1.4.1 changed name to PutIfKeyMissingError
 	logr.Debugf("deployJobToK8s tr.JobType: %v", tr.JobType)
-	if tr.JobType == "dist-tf" {
-		go s.newDeployTFJob(ctx, jobConfig, logr)
-	} else {
-		go s.newDeployDistributedTrainingJob(ctx, jobConfig, logr)
-	}
+
+	go s.deployJob(ctx, jobConfig, logr)
 	return nil
+}
+
+func (s *lcmService) deployJob(ctx context.Context, req *service.JobDeploymentRequest, logr *logger.LocLoggingEntry) {
+
+	//logr.Debugf("now starting to deploy learners for training job")
+	if err := NewMLFlowTraining(ctx, s.k8sClient, req, logr).Start(); err != nil {
+		//Deploying learner helpers has failed. So update status
+		handleDeploymentFailure(s, req.Name, req.TrainingId, req.UserId, req.JobNamespace, "learner deployment", logr)
+		return
+	}
+
+}
+
+func handleDeploymentFailure(s *lcmService, dlaasJobName string, tID string,
+	userID string, namesapce string, component string, logr *logger.LocLoggingEntry) {
+
+	logr.Errorf("updating status to FAILED")
+	if errUpd := updateJobStatus(tID, grpc_storage.Status_FAILED, userID, service.StatusMessages_INTERNAL_ERROR.String(), client.ErrCodeFailedDeploy, logr); errUpd != nil {
+		logr.WithError(errUpd).Errorf("after failed %s, error while calling Trainer service client update", component)
+	}
+
+	//Cleaning up resources out of an abundance of caution
+	logr.Errorf("training FAILED so going ahead and cleaning up resources")
+	if errKill := s.killDeployedJob(dlaasJobName, tID, userID, namesapce); errKill != nil {
+		logr.WithError(errKill).Errorf("after failed %s, problem calling KillDeployedJob for job ", component)
+	}
+
 }
 
 //Stops a currently executing training job
@@ -510,112 +537,6 @@ func (s *lcmService) startQueues() {
 	for queueName := range s.queues {
 		s.startQueue(queueName, logr)
 	}
-}
-
-//default deploy job function.
-func (s *lcmService) deployDistributedTrainingJob(ctx context.Context, req *service.JobDeploymentRequest, logr *logger.LocLoggingEntry) {
-
-	numLearners := int(req.GetResources().Learners)
-	useNativeDistribution := false //always use native since we don't support PS anymore
-
-	if numLearners < 1 {
-		numLearners = 1
-	}
-
-	logr.WithField("learners", numLearners).Debugf("starting deployment of training job in lcm")
-
-	// Initialize distributed training information in Zookeeper
-	if err := createEtcdNodes(s, req.Name, req.UserId, req.TrainingId, numLearners, req.Framework, logr); err != nil {
-		// failedToLaunchTrainingsCounter.With(reason, client.ErrCodeEtcdConnection).Add(1)
-		logr.WithError(err).Errorf("Failed to create etcd nodes necessary to deploy a training job")
-		handleDeploymentFailure(s, req.Name, req.TrainingId, req.UserId, req.JobNamespace, "etcd nodes creation", logr)
-		return //short circuit the code here, since the trainer was updated it knows the job was failed
-	}
-
-	logr.Debugf("now starting to deploy job monitor to monitor training job")
-	if err := deployJobMonitor(s, req, req.TrainingId, numLearners, req.Name, req.UserId, useNativeDistribution, logr); err != nil {
-		// failedToLaunchTrainingsCounter.With(reason, jmLaunchFailed).Add(1)
-		logr.WithError(err).Errorf("Failed to create job monitor for training job")
-		handleDeploymentFailure(s, req.Name, req.TrainingId, req.UserId, req.JobNamespace, "job monitor", logr)
-		return
-	}
-
-	logr.Debugf("now starting to deploy learners for training job")
-	if err := NewTraining(ctx, s.k8sClient, req, logr).Start(); err != nil {
-		//Deploying learner helpers has failed. So update status
-		// failedToLaunchTrainingsCounter.With(reason, learnerLaunchFailed).Add(1)
-		handleDeploymentFailure(s, req.Name, req.TrainingId, req.UserId, req.JobNamespace, "learner deployment", logr)
-		return
-	}
-}
-func (s *lcmService) newDeployDistributedTrainingJob(ctx context.Context, req *service.JobDeploymentRequest, logr *logger.LocLoggingEntry) {
-
-	numLearners := int(req.GetResources().Learners)
-	//useNativeDistribution := false //always use native since we don't support PS anymore
-
-	if numLearners < 1 {
-		numLearners = 1
-	}
-
-	logr.WithField("learners", numLearners).Debugf("starting deployment of training job in lcm")
-
-	logr.Debugf("now starting to deploy learners for training job")
-	//logr.Debugf("now starting to deploy learners for training job, req,EnvVars: %+v", req.EnvVars)
-	if err := NewLCMTraining(ctx, s.k8sClient, req, logr).Start(); err != nil {
-		//Deploying learner helpers has failed. So update status
-		failedToLaunchTrainingsCounter.With(reason, learnerLaunchFailed).Add(1)
-		handleDeploymentFailure(s, req.Name, req.TrainingId, req.UserId, req.JobNamespace, "learner deployment", logr)
-		return
-	}
-}
-
-// FIXME MLSS Change: deploy TFJob function
-func (s *lcmService) deployTFJob(ctx context.Context, req *service.JobDeploymentRequest, logr *logger.LocLoggingEntry) {
-
-	numLearners := int(req.GetResources().Learners)
-	useNativeDistribution := false //always use native since we don't support PS anymore
-
-	if numLearners < 1 {
-		numLearners = 1
-	}
-
-	logr.WithField("learners", numLearners).Debugf("deployTFJob, starting deployment of training job in lcm")
-
-	logr.Debugf("now starting to deploy job monitor to monitor training job")
-	if err := deployJobMonitor(s, req, req.TrainingId, numLearners, req.Name, req.UserId, useNativeDistribution, logr); err != nil {
-		// failedToLaunchTrainingsCounter.With(reason, jmLaunchFailed).Add(1)
-		logr.WithError(err).Errorf("Failed to create job monitor for training job")
-		handleDeploymentFailure(s, req.Name, req.TrainingId, req.UserId, req.JobNamespace, "job monitor", logr)
-		return
-	}
-
-	//logr.Debugf("now starting to deploy learners for training job, req,EnvVars: %+v", req.EnvVars)
-	if err := NewTraining(ctx, s.k8sClient, req, logr).Start(); err != nil {
-		//Deploying learner helpers has failed. So update status
-		// failedToLaunchTrainingsCounter.With(reason, learnerLaunchFailed).Add(1)
-		handleDeploymentFailure(s, req.Name, req.TrainingId, req.UserId, req.JobNamespace, "learner deployment", logr)
-		return
-	}
-
-}
-func (s *lcmService) newDeployTFJob(ctx context.Context, req *service.JobDeploymentRequest, logr *logger.LocLoggingEntry) {
-
-	numLearners := int(req.GetResources().Learners)
-	//useNativeDistribution := false //always use native since we don't support PS anymore
-
-	if numLearners < 1 {
-		numLearners = 1
-	}
-
-	logr.WithField("learners", numLearners).Debugf("deployTFJob, starting deployment of training job in lcm")
-
-	//logr.Debugf("now starting to deploy learners for training job")
-	if err := NewLCMTraining(ctx, s.k8sClient, req, logr).Start(); err != nil {
-		//Deploying learner helpers has failed. So update status
-		handleDeploymentFailure(s, req.Name, req.TrainingId, req.UserId, req.JobNamespace, "learner deployment", logr)
-		return
-	}
-
 }
 
 //Kills a currently executing training job and cleans up its zookeeper entries
@@ -1176,8 +1097,10 @@ func (s *lcmService) pullJobFromQueue(gpuType string) {
 		return
 	}
 
-	if trainingRecord.Deleted {
-		logr.Debugf("job %s was deleted", nextJobID)
+	if trainingRecord.Deleted ||
+		trainingRecord.TrainingStatus.Status == grpc_trainer_v2.Status_KILLING ||
+		trainingRecord.TrainingStatus.Status == grpc_trainer_v2.Status_CANCELLED {
+		logr.Debugf("job %s was deleted or cancel", nextJobID)
 		qHandler.Delete(nextJobID)
 		return
 	}
@@ -1400,6 +1323,11 @@ func updateTrainingJobPostLock(s *lcmService, req *grpc_trainer_v2.UpdateRequest
 func (s *lcmService) createJobConfig(tr *trainer.TrainingRecord) (*service.JobDeploymentRequest, error) {
 	logr := logger.LocLogger(logWith(tr.TrainingID, tr.UserID))
 
+	user := tr.UserID
+	if tr.ProxyUser != "" {
+		user = tr.ProxyUser
+	}
+
 	// training data/results - assume only one training input and output data at this point
 	trainingData := trainer.FindDatastore(tr.Training.InputData[0], tr.Datastores)
 	trainingResults := s.getOutputDatastore(tr.Training.OutputData, tr.Datastores)
@@ -1535,7 +1463,7 @@ func (s *lcmService) createJobConfig(tr *trainer.TrainingRecord) (*service.JobDe
 	envvars["GID"] = tr.GID
 	envvars["UID"] = tr.UID
 	envvars["GUARDIAN_TOKEN"] = tr.GuardianToken
-	envvars["USER_ID"] = tr.UserID
+	envvars["USER_ID"] = user
 	envvars["DLAAS_MLSSGID"] = viper.GetString(config.MLSSGroupId)
 	//envvars["EVENT_CHECKER"] = tr.EventChecker
 	//envvars["DEADLINE_CHECKER"] = tr.DeadlineChecker
@@ -1564,7 +1492,7 @@ func (s *lcmService) createJobConfig(tr *trainer.TrainingRecord) (*service.JobDe
 		Resources:             trainer.GetResourceRequirements(tr.Training),
 		EnvVars:               envvars,
 		Labels:                labels,
-		UserId:                tr.UserID,
+		UserId:                user,
 		TrainingId:            tr.TrainingID,
 		Framework:             tr.ModelDefinition.Framework.Name,
 		Version:               tr.ModelDefinition.Framework.Version,
@@ -1573,10 +1501,6 @@ func (s *lcmService) createJobConfig(tr *trainer.TrainingRecord) (*service.JobDe
 		JobNamespace:          tr.Namespace,
 		// FIXME MLSS Change: add DataStore & ModelDefinition & Training from tr to JobDeploymentRequest
 		DataStores: tr.Datastores,
-		//ModelDefinition: tr.ModelDefinition,
-		//Training:        tr.Training,
-		//TrainingStatus:  tr.TrainingStatus,
-		//TrainingRecord:  tr,
 		JobAlert:     tr.JobAlert,
 		PSs:          tr.PSs,
 		PSCPU:        tr.PSCPU,
@@ -1586,6 +1510,13 @@ func (s *lcmService) createJobConfig(tr *trainer.TrainingRecord) (*service.JobDe
 		DataPath:     tr.DataPath,
 		JobType:      tr.JobType,
 		TFosRequest:  tr.TFosRequest,
+		ProxyUser:    tr.ProxyUser,
+		DataSet:      tr.DataSet,
+		MfModel:      tr.MFModel,
+		Algorithm:    tr.Algorithm,
+		JobParams: tr.JobParams,
+		FitParams: tr.FitParams,
+		APIType: tr.APIType,
 	}
 
 	return job, nil
@@ -1690,6 +1621,17 @@ func GetMemoryValueWithUnits(withUnits string) (*float64, error) {
 	if e == nil {
 		return &f, nil
 	}
+	if strings.HasSuffix(withUnits, "k") {
+		//return strconv.ParseFloat(withUnits.substring(0, withUnits.length()-2)) * 1024 * 1024;
+		runes := []rune(withUnits)
+		float, e := strconv.ParseFloat(string(runes[0:len(runes)-1]), 64)
+		if e != nil {
+			return nil, e
+		} else {
+			i := float * 1024
+			return &i, nil
+		}
+	}
 	if strings.HasSuffix(withUnits, "Mi") {
 		//return strconv.ParseFloat(withUnits.substring(0, withUnits.length()-2)) * 1024 * 1024;
 		runes := []rune(withUnits)
@@ -1714,43 +1656,6 @@ func GetMemoryValueWithUnits(withUnits string) (*float64, error) {
 	}
 	return nil, e
 }
-
-//func (s *lcmService) getResources(tr *trainer.TrainingRecord, log *logger.LocLoggingEntry) (map[string]resource.Quantity, error) {
-//	namespace, nsErr := s.k8sClient.Core().Namespaces().Get(tr.Namespace, metav1.GetOptions{})
-//	if nsErr != nil {
-//		return nil, nsErr
-//	}
-//	namespaceAnnotations := namespace.ObjectMeta.GetAnnotations()
-//	log.Debugf("getResources for namespaceAnnotations: %v", namespaceAnnotations)
-//
-//	selector := namespaceAnnotations["scheduler.alpha.kubernetes.io/node-selector"]
-//	nodeList, nodeErr := s.k8sClient.Core().Nodes().List(metav1.ListOptions{
-//		LabelSelector : selector,
-//	})
-//	if nodeErr != nil {
-//		return nil, nodeErr
-//	}
-//	if nodeList == nil {
-//		return nil, errors.New("namespace is not yet tied to any node")
-//	}
-//	var resources = make(map[string]resource.Quantity)
-//	var memory resource.Quantity
-//	var cpu resource.Quantity
-//	var gpu resource.Quantity
-//	for _, node := range nodeList.Items {
-//		nodeMemory := node.Status.Allocatable["memory"]
-//		nodeCpu := node.Status.Allocatable["cpu"]
-//		nodeGpu := node.Status.Allocatable["nvidia.com/gpu"]
-//		memory.Add(nodeMemory)
-//		cpu.Add(nodeCpu)
-//		gpu.Add(nodeGpu)
-//	}
-//	resources["cpu"] = cpu
-//	resources["memory"] = memory
-//	resources["cpu"] = gpu
-//	log.Debugf("getResources for resources: %v", resources)
-//	return resources, nil
-//}
 
 // FIXME MLSS Change: v_1.4.1 getNodeList By labelSelector
 func (s *lcmService) getNodeList(tr *trainer.TrainingRecord, log *logger.LocLoggingEntry) (*v1.NodeList, error) {
@@ -1998,10 +1903,6 @@ func (s *lcmService) getRQList(logR *logger.LocLoggingEntry, namespace string) (
 	return quotaList, nil
 }
 
-func (s *lcmService) startJobMonitor() {
-
-}
-
 func (s *lcmService) resourceChecking(req *service.JobDeploymentRequest, tr *trainer.TrainingRecord, logr *logger.LocLoggingEntry) (bool, error) {
 	ns := req.JobNamespace
 
@@ -2060,54 +1961,65 @@ func (s *lcmService) checkQueueAndEnqueue(handler *queueHandler, queueName strin
 	return nil
 }
 
-// func (s *lcmService) SubmitLinkisJob(tr *trainer.TrainingRecord, logr *logger.LocLoggingEntry) error {
-// 	logrus.Infof("starting SubmitLinkisJob.")
 
-// 	//getLogger := logger.GetLogger()
-// 	//startTime := time.Now()
-// 	//getLogger.Debugf("postModel startTime: %v", startTime.String())
+//Kills a currently executing training job and cleans up its zookeeper entries
+func (s *lcmService) KillMLFlowJob(ctx context.Context, req *service.JobKillRequest) (*service.JobKillResponse, error) {
+	if req.JobType == "MLPipeline" {
+		return s.killMLPipelineJob(req)
+	}else if req.JobType == "dist-tf"{
+		return s.KillTrainingTFJob(ctx, req)
+	}else{ //Local
+		return s.killSingleJob(req)
+	}
+}
 
-// 	linkisAddress := os.Getenv("LINKIS_ADDRESS")
-// 	linkisTokenCode := os.Getenv("LINKIS_TOKEN_CODE")
-// 	logrus.Infof("LINKIS_ADDRESS: %v, LINKIS_TOKEN_CODE: %v", linkisAddress, linkisTokenCode)
 
-// 	var requestBase = models.LinkisRequestBase{
-// 		LinkisAddress:   linkisAddress,
-// 		LinkisTokenCode: linkisTokenCode,
-// 		UserId:          tr.UserID,
-// 	}
+func (s *lcmService) killSingleJob(req *service.JobKillRequest)  (*service.JobKillResponse, error) {
+	logr := logger.LocLogger(InitLogger(req.TrainingId, req.UserId))
+	propagation := metav1.DeletePropagationBackground
+	options := metav1.DeleteOptions{
+		PropagationPolicy: &propagation,
+	}
 
-// 	//submitting job to linkis via http
-// 	submitResult, err := linkisclientutils.Submit(requestBase, constants.TFOS, tr.TFosRequest)
+	logr.Debugf("Killing training job: %s, namespace: %s", req.Name, req.JobNamespace)
+	logr.Debugf(" Deleting Job '%s'", req.TrainingId)
 
-// 	//elapsed = time.Since(startTime)
-// 	//getLogger.Debugf("linkisclientutils.Submit endTime: %v", elapsed.String())
+	err := s.k8sClient.CoreV1().Services(req.JobNamespace).Delete(req.Name, &options)
+	if err != nil {
+		logr.Errorf("deleting service: %v  failed, %v", req.Name, err.Error())
+	}
+	err = s.k8sClient.BatchV1().Jobs(req.JobNamespace).Delete(req.Name, &options)
+	if err != nil {
+		logr.Errorf("deleting job: %v in l8s failed, %v", req.Name, err.Error())
+	}
+	return &service.JobKillResponse{}, nil
+}
 
-// 	if err != nil {
-// 		logrus.Errorf("linkisclientutils.Submit falied, %v", err.Error())
-// 	}
-// 	logr.Debugf("linkisclientutils.Submit result: %+v", submitResult)
 
-// 	tr.TrainingStatus.Status = grpc_trainer_v2.Status_PENDING
-// 	//logr.Debugf("SubmitLinkisJob, tr cpu: %v", tr.Training.Resources.Cpus)
-// 	//logr.Debugf("SubmitLinkisJob, tr.TFosRequest: %v", tr.TFosRequest)
+func(s *lcmService) killDistJob(req *service.JobKillRequest) (*service.JobKillResponse, error) {
 
-// 	//update tr's execId in mongo
-// 	execId := submitResult.Data.ExecID
-// 	tr.LinkisExecId = execId
+	return &service.JobKillResponse{}, nil
 
-// 	//FIXME: set ProcessStartTimestamp now,cause couldn't get time of linkis actual start running
-// 	tr.TrainingStatus.ProcessStartTimestamp = client.CurrentTimestampAsString()
+}
 
-// 	repoErr := s.repo.Store(tr)
+func (s *lcmService) killMLPipelineJob(req *service.JobKillRequest )  (*service.JobKillResponse, error) {
+	logr := logger.LocLogger(InitLogger(req.TrainingId, req.UserId))
+	propagation := metav1.DeletePropagationBackground
+	options := metav1.DeleteOptions{
+		PropagationPolicy: &propagation,
+	}
 
-// 	//elapsed = time.Since(startTime)
-// 	//getLogger.Debugf("s.repo.Store endTime: %v", elapsed.String())
+	logr.Debugf("Killing training job: %s, namespace: %s", req.TrainingId, req.JobNamespace)
+	logr.Debugf(" Deleting Job '%s'", req.TrainingId)
 
-// 	if repoErr != nil {
-// 		logrus.Errorf("Failed updating status of training %s in DB", tr.TrainingID)
-// 		return repoErr
-// 	}
+	err := s.k8sClient.CoreV1().Services(req.JobNamespace).Delete(req.TrainingId, &options)
+	if err != nil {
+		logr.Errorf("deleting service: %v  failed, %v", req.TrainingId, err.Error())
+	}
+	err = s.k8sClient.BatchV1().Jobs(req.JobNamespace).Delete(req.TrainingId, &options)
+	if err != nil {
+		logr.Errorf("deleting job: %v in l8s failed, %v", req.TrainingId, err.Error())
+	}
+	return &service.JobKillResponse{}, nil
 
-// 	return nil
-// }
+}

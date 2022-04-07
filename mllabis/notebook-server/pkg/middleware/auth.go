@@ -16,13 +16,14 @@
 package middleware
 
 import (
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"net/http"
 	"sort"
 	"webank/AIDE/notebook-server/pkg/commons/config"
 	cc "webank/AIDE/notebook-server/pkg/commons/controlcenter/client"
 	"webank/AIDE/notebook-server/pkg/commons/logger"
+
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -52,7 +53,7 @@ func NewAuthMiddleware(opts *AuthOptions) func(h http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			logger.Logger().Debugf("Enter into auth handler")
-			logger.Logger().Debugf("request: %+v", r)
+			//logger.Logger().Debugf("request: %+v", r)
 
 			// check if the request URI matched excluded request URIs
 			sort.Strings(opts.ExcludedURLs)
@@ -91,9 +92,12 @@ func NewAuthMiddleware(opts *AuthOptions) func(h http.Handler) http.Handler {
 			w.Header().Add("Access-Control-Allow-Origin", "*")
 
 			userID := r.Header.Get(CcAuthUser)
+			token := r.Header.Get(cc.CcAuthToken)
 			if userID == "" {
-				w.WriteHeader(401)
+				w.WriteHeader(403)
 				w.Header().Add("Content-Type", "application/json; charset=utf-8")
+				logger.Logger().Errorf("Missing or malformed MLSS-UserID header.")
+				logger.Logger().Infof("header test-lk: %+v, url: %+v", r.Header, *r.URL)
 				w.Write([]byte("{ \"message\" : \"Missing or malformed MLSS-UserID header.\"}"))
 				return
 			}
@@ -105,10 +109,18 @@ func NewAuthMiddleware(opts *AuthOptions) func(h http.Handler) http.Handler {
 			if authType == "" {
 				token := r.Header.Get(cc.CcAuthToken)
 				if token == "" {
-					w.WriteHeader(403)
-					w.Header().Add("Content-Type", "application/json; charset=utf-8")
-					w.Write([]byte("{ \"message\" : \"Missing or malformed MLSS-Auth-Type or MLSS-Token header.\"}"))
-					return
+					if r.Header.Get("Token") != "" {
+						token = r.Header.Get("Token")
+						logger.Logger().Infof("token:", token)
+						h.ServeHTTP(w, r)
+						return
+					} else {
+						w.WriteHeader(403)
+						w.Header().Add("Content-Type", "application/json; charset=utf-8")
+						logger.Logger().Errorf("Missing or malformed MLSS-Auth-Type or MLSS-Token header.")
+						w.Write([]byte("{ \"message\" : \"Missing or malformed MLSS-Auth-Type or MLSS-Token header.\"}"))
+						return
+					}
 				}
 				ccToken = token
 				authOptions[cc.CcAuthToken] = ccToken
@@ -159,17 +171,26 @@ func NewAuthMiddleware(opts *AuthOptions) func(h http.Handler) http.Handler {
 						return
 					}
 					authOptions[CcAuthAppToken] = appToken
+				}else if authType == "LDAP" {
+					authOptions[cc.CcAuthToken] = token
+					logger.Logger().Debugf("Auth Type is LDAP, token is:", token)
 				}
 
 			}
 
 			authOptions[CcAuthUser] = userID
+			//authOptions[cc.CcAuthToken] = ccToken
 			// TODO: Get cc url from config.
 			ccCleint := cc.GetCcClient(viper.GetString(config.CCAddress))
 			stateCode, token, isSA, err := ccCleint.AuthAccessCheck(&authOptions)
 			if err != nil || token == "" {
 				w.WriteHeader(stateCode)
 				w.Header().Add("Content-Type", "application/json; charset=utf-8")
+				logger.Logger().Errorf("Authorization check failed.")
+				logger.Logger().Errorf("Auth Type is LDAP", authType)
+				logger.Logger().Errorf("token is ", token)
+				logger.Logger().Errorf("error is ", err.Error)
+				logger.Logger().Errorf("cc address is ", viper.GetString(config.CCAddress))
 				w.Write([]byte("{ \"message\" : \"Authorization check failed.\"}"))
 				return
 			}
@@ -180,6 +201,7 @@ func NewAuthMiddleware(opts *AuthOptions) func(h http.Handler) http.Handler {
 			r.Header.Set(UserIDHeader, userID)
 			r.Header.Set(cc.CcAuthToken, ccToken)
 			r.Header.Set(cc.CcSuperadmin, ccIsSA)
+			logger.Logger().Infof("%s: %v, %v", UserIDHeader, userID, ccIsSA)
 			logger.Logger().Debugf("%s: %v, %v", UserIDHeader, userID, ccIsSA)
 
 			if logger.Logger().GetLevel() == log.DebugLevel {

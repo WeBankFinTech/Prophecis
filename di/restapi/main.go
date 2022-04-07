@@ -21,7 +21,7 @@ import (
 	"net/http"
 	"os"
 	"time"
-	datasource "webank/DI/commons/datasource/mysql"
+	"webank/DI/pkg/datasource/mysql"
 	"webank/DI/restapi/api_v1/server/rest_impl"
 
 	log "github.com/sirupsen/logrus"
@@ -65,7 +65,7 @@ func main() {
 	mux.HandleFunc("/health", rest_impl.GetHealth)
 
 	address := fmt.Sprintf(":%d", srv.Port)
-	log.Printf("Prophecis REST API v1 serving on %s", address)
+	log.Printf("DLaaS REST API v1 serving on %s", address)
 	err = graceful.RunWithErr(address, 10*time.Second, mux)
 	if err != nil {
 		log.Fatalln(err)
