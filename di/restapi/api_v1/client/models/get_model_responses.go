@@ -13,7 +13,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	"webank/DI/restapi/api_v1/restmodels"
+	restmodels "webank/DI/restapi/api_v1/restmodels"
 )
 
 // GetModelReader is a Reader for the GetModel structure.
@@ -24,21 +24,18 @@ type GetModelReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *GetModelReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewGetModelOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 401:
 		result := NewGetModelUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 404:
 		result := NewGetModelNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -65,7 +62,11 @@ type GetModelOK struct {
 }
 
 func (o *GetModelOK) Error() string {
-	return fmt.Sprintf("[GET /v1/models/{model_id}][%d] getModelOK  %+v", 200, o.Payload)
+	return fmt.Sprintf("[GET /di/v1/models/{model_id}][%d] getModelOK  %+v", 200, o.Payload)
+}
+
+func (o *GetModelOK) GetPayload() *restmodels.Model {
+	return o.Payload
 }
 
 func (o *GetModelOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -94,7 +95,11 @@ type GetModelUnauthorized struct {
 }
 
 func (o *GetModelUnauthorized) Error() string {
-	return fmt.Sprintf("[GET /v1/models/{model_id}][%d] getModelUnauthorized  %+v", 401, o.Payload)
+	return fmt.Sprintf("[GET /di/v1/models/{model_id}][%d] getModelUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *GetModelUnauthorized) GetPayload() *restmodels.Error {
+	return o.Payload
 }
 
 func (o *GetModelUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -123,7 +128,11 @@ type GetModelNotFound struct {
 }
 
 func (o *GetModelNotFound) Error() string {
-	return fmt.Sprintf("[GET /v1/models/{model_id}][%d] getModelNotFound  %+v", 404, o.Payload)
+	return fmt.Sprintf("[GET /di/v1/models/{model_id}][%d] getModelNotFound  %+v", 404, o.Payload)
+}
+
+func (o *GetModelNotFound) GetPayload() *restmodels.Error {
+	return o.Payload
 }
 
 func (o *GetModelNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

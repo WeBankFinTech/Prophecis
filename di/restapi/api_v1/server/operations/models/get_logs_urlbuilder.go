@@ -20,7 +20,7 @@ type GetLogsURL struct {
 
 	Follow    *bool
 	SinceTime *string
-	Version   string
+	Version   *string
 
 	_basePath string
 	// avoid unkeyed usage
@@ -79,7 +79,10 @@ func (o *GetLogsURL) Build() (*url.URL, error) {
 		qs.Set("since_time", sinceTimeQ)
 	}
 
-	versionQ := o.Version
+	var versionQ string
+	if o.Version != nil {
+		versionQ = *o.Version
+	}
 	if versionQ != "" {
 		qs.Set("version", versionQ)
 	}

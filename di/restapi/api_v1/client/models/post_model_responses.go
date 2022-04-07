@@ -13,7 +13,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	"webank/DI/restapi/api_v1/restmodels"
+	restmodels "webank/DI/restapi/api_v1/restmodels"
 )
 
 // PostModelReader is a Reader for the PostModel structure.
@@ -24,21 +24,18 @@ type PostModelReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *PostModelReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 201:
 		result := NewPostModelCreated()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 400:
 		result := NewPostModelBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 401:
 		result := NewPostModelUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -69,7 +66,11 @@ type PostModelCreated struct {
 }
 
 func (o *PostModelCreated) Error() string {
-	return fmt.Sprintf("[POST /v1/models][%d] postModelCreated  %+v", 201, o.Payload)
+	return fmt.Sprintf("[POST /di/v1/models][%d] postModelCreated  %+v", 201, o.Payload)
+}
+
+func (o *PostModelCreated) GetPayload() *restmodels.BasicNewModel {
+	return o.Payload
 }
 
 func (o *PostModelCreated) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -101,7 +102,11 @@ type PostModelBadRequest struct {
 }
 
 func (o *PostModelBadRequest) Error() string {
-	return fmt.Sprintf("[POST /v1/models][%d] postModelBadRequest  %+v", 400, o.Payload)
+	return fmt.Sprintf("[POST /di/v1/models][%d] postModelBadRequest  %+v", 400, o.Payload)
+}
+
+func (o *PostModelBadRequest) GetPayload() *restmodels.Error {
+	return o.Payload
 }
 
 func (o *PostModelBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -130,7 +135,11 @@ type PostModelUnauthorized struct {
 }
 
 func (o *PostModelUnauthorized) Error() string {
-	return fmt.Sprintf("[POST /v1/models][%d] postModelUnauthorized  %+v", 401, o.Payload)
+	return fmt.Sprintf("[POST /di/v1/models][%d] postModelUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PostModelUnauthorized) GetPayload() *restmodels.Error {
+	return o.Payload
 }
 
 func (o *PostModelUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

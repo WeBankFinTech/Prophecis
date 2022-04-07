@@ -34,40 +34,12 @@ import (
 	"webank/DI/commons/util"
 	"webank/DI/lcm/coord"
 
-	"golang.org/x/net/context"
-	//"webank/DI/trainer/client"
-	//"webank/DI/trainer/trainer/grpc_trainer_v2"
 	"webank/DI/storage/client"
+
+	"golang.org/x/net/context"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
-//creates all the znodes used by a training job before it is deployed
-func createEtcdNodes(lcm *lcmService, jobName string, userID string, trainingID string, numOfLearners int, framework string, logr *logger.LocLoggingEntry) error {
-	pathToValueMapping := map[string]string{
-		trainingID + "/" + zkNotes:                             "",
-		trainingID + "/" + zkUserID:                            userID,
-		trainingID + "/" + zkFramework:                         framework,
-		trainingID + "/" + zkLearners + "/" + zkTotLearners:    string(numOfLearners),
-		trainingID + "/" + zkJobName:                           jobName,
-		trainingID + "/" + zkLearners + "/" + zkLearnerLock:    "",
-		trainingID + "/" + zkLearners + "/" + zkLearnerCounter: "1",
-		trainingID + "/" + zkLearners + "/" + zkAliveLearners:  "0",
-		trainingID + "/" + zkGlobalCursor + "/" + zkGCState:    "0",
-	}
-
-	for path, val := range pathToValueMapping {
-		pathCreated, error := lcm.etcdClient.PutIfKeyMissing(path, val, logr)
-		if error != nil {
-			return error
-		}
-		if !pathCreated {
-			return fmt.Errorf("Failed to create the path %v , since it was already present", path)
-		}
-	}
-
-	return nil
-}
 
 //helper function to construct a job monitor name from job name
 func constructJMName(jobName string) string {
@@ -147,22 +119,6 @@ func getStaticVolume(logr *logger.LocLoggingEntry) string {
 		logr.Debugf("len(staticVolumes.Volumes) is zero, so can't allocate a volume!")
 	}
 	return ""
-}
-
-func handleDeploymentFailure(s *lcmService, dlaasJobName string, tID string,
-	userID string, namesapce string, component string, logr *logger.LocLoggingEntry) {
-
-	logr.Errorf("updating status to FAILED")
-	if errUpd := updateJobStatus(tID, grpc_storage.Status_FAILED, userID, service.StatusMessages_INTERNAL_ERROR.String(), client.ErrCodeFailedDeploy, logr); errUpd != nil {
-		logr.WithError(errUpd).Errorf("after failed %s, error while calling Trainer service client update", component)
-	}
-
-	//Cleaning up resources out of an abundance of caution
-	logr.Errorf("training FAILED so going ahead and cleaning up resources")
-	if errKill := s.killDeployedJob(dlaasJobName, tID, userID, namesapce); errKill != nil {
-		logr.WithError(errKill).Errorf("after failed %s, problem calling KillDeployedJob for job ", component)
-	}
-
 }
 
 func jobBasePath(trainingID string) string {

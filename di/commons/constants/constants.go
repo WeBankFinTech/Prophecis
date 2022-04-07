@@ -64,13 +64,13 @@ const (
 
 const TFOS = "tfos"
 
-// const BDAPSAFE_SS = "bdapsafe-ss"
-// const BDAP_SS = "bdap-ss"
-// const BDP_SS = "bdp-ss"
+const BDAPSAFE_SS = "bdapsafe-ss"
+const BDAP_SS = "bdap-ss"
+const BDP_SS = "bdp-ss"
 
-// const BDAP = "bdap"
-// const BDP = "bdp"
-// const SAFE = "safe"
+const BDAP = "bdap"
+const BDP = "bdp"
+const SAFE = "safe"
 
 const ENVIR = "envir"
 
@@ -79,11 +79,14 @@ const FLUENT_BIT_LOG_PATH string = "FLUENT_BIT_LOG_PATH"
 
 const JOBTYPE string = "jobType"
 const SINGLE string = "single"
+const DI_START_NODEPORT string = "DI_START_NODEPORT"
+const DI_END_NODEPORT string = "DI_END_NODEPORT"
 
-const MongoAddressKey = "mongo.address"
-const MongoDatabaseKey = "mongo.database"
-const MongoUsernameKey = "mongo.username"
-const MongoPasswordKey = "mongo.password"
+const MongoAddressKey = "MONGO_ADDRESS"
+const MongoDatabaseKey = "MONGO_DATABASE"
+const MongoUsernameKey = "MONGO_USERNAME"
+const MongoPasswordKey = "MONGO_PASSWORD"
+const MongoAuthenticationDatabase = "MONGO_Authentication_Database"
 
 const (
 	LOG_STORING_KEY       = "store_status"
