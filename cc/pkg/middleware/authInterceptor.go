@@ -24,25 +24,6 @@ import (
 
 func AuthInterceptor() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		//t := time.Now()
-		// Set example variable
-		//c.Set("pwd", "666")
-
-		//logger.Logger().Infof("AuthRequired RequestURI: %v", c.Request.RequestURI)
-
-		// before request
-
-		// after request
-		//latency := time.Since(t)
-		//log.Print(latency)
-
-		// access the status we are sending
-		//status := c.Writer.Status()
-		//log.Println(status)
-
-		//pwd, _ := c.Get("pwd")
-		//logger.Logger().Infof("AuthRequired pwd: %v", pwd)
-
 		if common.CheckPattern(constants.AuthInterceptor, c.Request.RequestURI) {
 			logger.Logger().Infof("check Auth in AuthInterceptor")
 		}

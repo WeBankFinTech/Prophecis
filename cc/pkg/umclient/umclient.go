@@ -118,13 +118,13 @@ func UMAuth(umStyle2URL string, appId string, appToken string) (*models.AuthResu
 
 	defer resp.Body.Close()
 
-	body, readErr := ioutil.ReadAll(resp.Body)
+	body, _ := ioutil.ReadAll(resp.Body)
 
 	str := string(body)
-
-	if readErr != readErr {
-		return nil, readErr
-	}
+	//
+	//if readErr != readErr {
+	//	return nil, readErr
+	//}
 
 	authRequest := &models.AuthResult{}
 

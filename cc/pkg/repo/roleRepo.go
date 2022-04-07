@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package repo
 
 import (
@@ -23,7 +24,7 @@ import (
 func GetRoles() ([]*models.Role, error) {
 	var roles []*models.Role
 	err := datasource.GetDB().Find(&roles, "enable_flag = ?", 1).Error
-	return roles,err
+	return roles, err
 }
 
 func AddRole(role models.Role) error {
@@ -45,7 +46,7 @@ func GetRoleById(id int64) (models.Role, error) {
 func GetDeleteRoleById(id int64) (models.Role, error) {
 	var role models.Role
 	err := datasource.GetDB().Find(&role, "id = ? AND enable_flag = ?", id, 0).Error
-	return role,err
+	return role, err
 }
 
 func GetRoleByName(name string) (models.Role, error) {

@@ -19,7 +19,7 @@ type Group struct {
 	ClusterName string `json:"clusterName,omitempty"`
 
 	// the departmentId of group
-	DepartmentID int64 `json:"departmentId,omitempty"`
+	DepartmentID string `json:"departmentId,omitempty"`
 
 	// the departmentId of group
 	DepartmentName string `json:"departmentName,omitempty"`

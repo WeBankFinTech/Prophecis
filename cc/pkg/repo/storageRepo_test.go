@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package repo
 
 import (
 	"fmt"
-	"github.com/jinzhu/gorm"
-	"mlss-controlcenter-go/pkg/common"
 	"mlss-controlcenter-go/pkg/logger"
 	"mlss-controlcenter-go/pkg/models"
 	"testing"
+
+	"github.com/jinzhu/gorm"
 )
 
 func TestGetDeleteStorageByPath(t *testing.T) {
@@ -30,13 +31,12 @@ func TestGetDeleteStorageByPath(t *testing.T) {
 		return "t_" + defaultTableName
 	}
 
-	dbUrl := fmt.Sprintf("%v:%v@(%v:%v)/%v?charset=utf8&parseTime=True&loc=Local",
-		common.GetAppConfig().Application.Datasource.Username,
-		common.GetAppConfig().Application.Datasource.Password,
-		common.GetAppConfig().Application.Datasource.Ip,
-		common.GetAppConfig().Application.Datasource.Port,
-		common.GetAppConfig().Application.Datasource.Db,
-	)
+	dbUrl := fmt.Sprintf("%v:%v@(%v:%v)/%v?charset=utf8&parseTime=True&loc=Local") // common.GetAppConfig().Application.Datasource.Username,
+	// common.GetAppConfig().Application.Datasource.Password,
+	// common.GetAppConfig().Application.Datasource.Ip,
+	// common.GetAppConfig().Application.Datasource.Port,
+	// common.GetAppConfig().Application.Datasource.Db,
+
 	log.Infof("mlss-db url: %v", dbUrl)
 
 	db, err := gorm.Open("mysql", dbUrl)

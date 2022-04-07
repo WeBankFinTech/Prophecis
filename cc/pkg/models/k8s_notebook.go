@@ -21,7 +21,7 @@ package models
 
 import (
 	"github.com/kubernetes-client/go/kubernetes/client"
-	"k8s.io/api/apps/v1"
+	v1 "k8s.io/api/apps/v1"
 )
 
 type K8sNotebook struct {
