@@ -90,12 +90,6 @@
 </template>
 <script type="text/ecmascript-6">
 export default {
-  props: {
-    userId: {
-      type: String,
-      default: ''
-    }
-  },
   data () {
     return {
       userName: '',
@@ -117,6 +111,7 @@ export default {
   },
   mounted () {
     this.userName = this.$route.query.userName
+    this.userId = Number(this.$route.params.userId)
     this.getListData()
     this.getGroupOption()
     this.getRoleOption()
@@ -126,7 +121,7 @@ export default {
       return this.modifyGroup ? this.$t('user.modifyGroup') : this.$t('user.newGroup')
     },
     getUrl () {
-      return `/cc/${this.FesEnv.ccApiVersion}/groups/userGroup/user/${this.userId}`
+      return `/cc/${this.FesEnv.ccApiVersion}/groups/userGroup/user/${Number(this.$route.params.userId)}`
     },
     ruleValidate () {
       // 切换语言表单报错重置表单
@@ -142,6 +137,23 @@ export default {
     }
   },
   methods: {
+    // formatResList (res) {
+    //   if (Array.isArray(res)) {
+    //     return res
+    //   }
+    //   if (res.hasOwnProperty('models') && Array.isArray(res.models)) {
+    //     return res.models
+    //   }
+    //   if (res.hasOwnProperty('list') && Array.isArray(res.list)) {
+    //     return res.list
+    //   }
+    //   return []
+    // },
+    // getGroupOption () {
+    //   this.FesApi.fetch(`/cc/${this.FesEnv.ccApiVersion}/groups`, 'get').then(rst => {
+    //     this.groupOptionList = this.formatResList(rst)
+    //   })
+    // },
     getRoleOption () {
       this.FesApi.fetch(`/cc/${this.FesEnv.ccApiVersion}/roles`, 'get').then(rst => {
         this.roleOptionList = this.formatResList(rst)
@@ -193,7 +205,7 @@ export default {
           this.form.groupId = this.form.groupVal.substring(0, this.form.groupVal.indexOf('-'))
           let param = { ...this.form }
           param.username = this.userName
-          param.userId = parseInt(this.userId)
+          param.userId = this.userId
           delete param.groupVal
           !this.modifyGroup && delete param.username
           !this.modifyGroup && delete param.id

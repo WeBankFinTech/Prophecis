@@ -65,14 +65,6 @@ export default {
       }
       return param
     },
-    // hadoop 函数
-    hdpTaskBaseObj () {
-      return {
-        codeSettings: 'codeFile',
-        HDFSPath: '',
-        fileName: ''
-      }
-    },
     hdpAddExecutorsTask (objKey) {
       const baseObj = this.hdpTaskBaseObj()
       const leng = this.form[objKey].length
@@ -144,7 +136,7 @@ export default {
         job_type: 'tfos',
         code_selector: 'storagePath',
         framework: {
-          name: 'uat.sf.dockerhub.stgwebank/wedatasphere/prophecis',
+          name: 'uat.sf.dockerhub.stgwebank/webank/mlss-di',
           version: 'tfosexecutor-1.6.0'
         },
         evaluation_metrics: {
@@ -189,88 +181,6 @@ export default {
         isValid = valid
       })
       return isValid
-    },
-    validateFormChangeTab (keyArr, errObj, activeName) { // keyArr tab对应表单下所有字段，errObj 校验不通过返回的不通过字段，activeName 当前tab index
-      let tabActiveArr = ['0', '1', '2'] // tab index总数组成数组
-      let currentTab = false // 判断是否当前tab有字段未填
-      const _this = this
-      let isEmit = false // 是否切换过tab
-      judgmentTba(keyArr[activeName], activeName)
-      if (!currentTab) {
-        tabActiveArr.splice(activeName, 1) // 如果不是当前tab表单字段不通过则循环其他tab字段
-        for (let index of tabActiveArr) {
-          if (!isEmit) {
-            judgmentTba(keyArr[index], index)
-          }
-        }
-      }
-      function judgmentTba (formLabel, index) { // formLabel-> tab下表单字段; index-> formLabel对应哪个tab index
-        for (let item of formLabel) {
-          if (errObj[item]) {
-            if (index !== activeName) {
-              _this.$emit('changeTab', index)
-              isEmit = true
-            } else {
-              currentTab = true
-            }
-            return
-          }
-        }
-      }
-    },
-    mfflowBasicData () {
-      return {
-        method: '/api/rest_j/v1/entrance/execute',
-        params: {
-          ariable: {
-            k1: 'v1'
-          },
-          configuration: {
-            special: {
-              k2: 'v2'
-            },
-            runtime: {
-              'k3': 'v3'
-            },
-            startup: {
-              k4: 'v4'
-            }
-          }
-        },
-        executeApplicationName: 'spark',
-        runType: 'sql',
-        source: {
-          scriptPath: '/home/Linkis/Linkis.sql'
-        }
-      }
-    },
-    handleOriginNodeData (val, initForm) {
-      this.currentNode = val
-      if (this.currentNode.jobContent && this.currentNode.jobContent.ManiFest) {
-        const form = this.currentNode.jobContent.ManiFest
-        // let newFormData = this.basicInfoProcess(form)
-        // this.handelTfosCopy(newFormData)
-        // Object.assign(this.form, newFormData)
-        if (form.name) {
-          if (form.job_alert) {
-            this.alarmData = form.job_alert
-          }
-          switch (this.currentNode.type) {
-            case 'linkis.appjoint.mlflow.gpu':
-              this.handleGpuNodeData(form)
-              break
-            case 'linkis.appjoint.mlflow.hadoop':
-              this.handleHadoopNodeData(form)
-              break
-          }
-        }
-      } else {
-        this.form = JSON.parse(JSON.stringify(initForm))
-        this.form.name = this.currentNode.title
-        setTimeout(() => {
-          this.$refs.formValidate.clearValidate()
-        }, 10)
-      }
     }
   }
 }

@@ -15,7 +15,6 @@ export default {
         modelsItem.trainingResults = item.data_stores[1].connection.bucket
         // modelsItem.data_stores = item.data_stores
         modelsItem.path = item.data_stores[1].connection.path
-        modelsItem.data_stores = item.data_stores
         // data_stores 如果存在第三个对象 执行代码为共享目录
         if (item.data_stores[2]) {
           modelsItem.codeSettings = 'storagePath'
@@ -48,6 +47,16 @@ export default {
         } else {
           modelsItem[key] = trdata[key]
         }
+      }
+      if (trdata.proxy_user && this.$refs.gpuDialog && this.$refs.gpuDialog.proxyUserOption) {
+        const proxyUserOption = this.$refs.gpuDialog.proxyUserOption
+        for (let item of proxyUserOption) {
+          if (item.name === trdata.proxy_user) {
+            modelsItem.proxy_user = trdata.proxy_user
+            break
+          }
+        }
+        modelsItem.haveProxy = true
       }
     },
     // hadoop数据提取
@@ -102,6 +111,8 @@ export default {
         if (alertObj.deadline && alertObj.deadline[i]) {
           obj.alarmType.push('2')
           obj.fixTime = alertObj.deadline[i]
+          obj.fixTime.deadlineChecker = obj.fixTime.deadline_checker
+          delete obj.fixTime.deadline_checker
         }
         if (alertObj.overtime && alertObj.overtime[i]) {
           obj.alarmType.push('3')
@@ -111,34 +122,6 @@ export default {
       }
       console.log('jobAlert', jobAlert)
       return jobAlert
-    },
-    handelTfosCopy (trData) {
-      const tfosKey = ['pyfile', 'archives']
-      for (let item of tfosKey) {
-        this.handleHadoopCopy(item, trData)
-      }
-    },
-    handleHadoopCopy (moduleKey, trData) {
-      const taskBaseObj = {
-        codeSettings: 'HDFSPath',
-        HDFSPath: '',
-        fileName: ''
-      }
-      let moduleArr = []
-      if (trData[moduleKey] && trData[moduleKey].length > 0) {
-        for (let j = 0; j < trData[moduleKey].length; j++) {
-          if (j > 0) {
-            this.$refs.hadoopDialog.hdpAddExecutorsValidate(moduleKey, j) // 数据文件设置表单校验规则动态增加
-          }
-          let item = { ...taskBaseObj }
-          item.HDFSPath = trData[moduleKey][j].hdfs
-          moduleArr.push(item)
-        }
-      } else {
-        moduleArr.push({ ...taskBaseObj })
-      }
-      trData[moduleKey] = moduleArr
-      // this.$refs.hadoopDialog.form[moduleKey] = moduleArr
     }
   }
 }
