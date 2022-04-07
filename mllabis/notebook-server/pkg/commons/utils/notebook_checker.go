@@ -34,9 +34,9 @@ const (
 	LimitsCpu            = "limits.cpu"
 	LimitsMemory         = "limits.memory"
 	RequestsNvidiaComGpu = "requests.nvidia.com/gpu"
-	BDAP                 = "bdap"
-	BDAPSAFE             = "bdapsafe"
-	BDP                  = "bdp"
+	//BDAP                 = "bdap"
+	//BDAPSAFE             = "bdapsafe"
+	//BDP                  = "bdp"
 	Standard             = "Standard"
 	Custom               = "Custom"
 	New                  = "New"
@@ -177,10 +177,10 @@ func CheckPatchNotebook(notebook *models.PatchNotebookRequest, namespace string,
 		return errors.New("memory can not greater than the limit")
 	}
 
-	split := strings.Split(namespace, "-")
-	if BDAP != split[2] && BDP != split[2] {
-		return errors.New("cluster name must be BDAP or BDP")
-	}
+	//split := strings.Split(namespace, "-")
+	//if BDAP != split[2] && BDP != split[2] {
+	//	return errors.New("cluster name must be BDAP or BDP")
+	//}
 	////        9.addNotebook时,imageType != null,可选Standard或Custom;
 	logger.Logger().Infof("notebook.Image: %v, %v", notebook.ImageName, notebook.ImageType)
 	if notebook.ImageName == "" || (notebook.ImageType != Custom && notebook.ImageType != Standard) {
@@ -327,10 +327,10 @@ func CheckNotebook(params operations.PostNamespacedNotebookParams) error {
 	//String[] split = namespace.split("-");
 	//if (!BDPConstants.ClusterName.BDAP.equals(split[2]))
 	//throw new BDPException("cluster name must be BDAP");
-	split := strings.Split(*namespace, "-")
-	if BDAP != split[2] && BDP != split[2] {
-		return errors.New("cluster name must be BDAP or BDP")
-	}
+	//split := strings.Split(*namespace, "-")
+	//if BDAP != split[2] && BDP != split[2] {
+	//	return errors.New("cluster name must be BDAP or BDP")
+	//}
 	////        9.addNotebook时,imageType != null,可选Standard或Custom;
 	//if (notebook.getImage() == null || !EnumUtils.isValidEnum(BDPConstants.imageType.class, notebook.getImage().getImageType()))
 	//throw new BDPException("imageType must be Standard or Custom");

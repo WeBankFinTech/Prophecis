@@ -2,10 +2,8 @@ package mongo
 
 import (
 	"gopkg.in/mgo.v2/bson"
-	stringsUtil "strings"
 	"webank/AIDE/notebook-server/pkg/commons/logger"
 	"webank/AIDE/notebook-server/pkg/commons/utils"
-	"webank/AIDE/notebook-server/pkg/models"
 )
 
 func SearchNoteBook(query interface{}) ([]utils.NotebookInMongo, error) {
@@ -153,26 +151,26 @@ func UpdateNotebookById(id string, m bson.M) error {
 	return err
 }
 
-func getNoteBookByClusterName(clusterName string, res []*models.Notebook) []*models.Notebook {
-	clusterResult := make([]*models.Notebook, 0)
-	if len(res) > 0 {
-		if clusterName != "" {
-			for _, v := range res {
-				if clusterName == utils.BDP || clusterName == utils.BDAP {
-					if stringsUtil.Split(v.Namespace, "-")[2] == clusterName && !stringsUtil.Contains(stringsUtil.Split(v.Namespace, "-")[6], "safe") {
-						clusterResult = append(clusterResult, v)
-					}
-				}
-				if clusterName == utils.BDAPSAFE {
-					if stringsUtil.Split(v.Namespace, "-")[2] == utils.BDAP && stringsUtil.Contains(stringsUtil.Split(v.Namespace, "-")[6], "safe") {
-						clusterResult = append(clusterResult, v)
-					}
-				}
-			}
-			//res = clusterResult
-		} else {
-			clusterResult = res
-		}
-	}
-	return clusterResult
-}
+//func getNoteBookByClusterName(clusterName string, res []*models.Notebook) []*models.Notebook {
+//	clusterResult := make([]*models.Notebook, 0)
+//	if len(res) > 0 {
+//		if clusterName != "" {
+//			for _, v := range res {
+//				if clusterName == utils.BDP || clusterName == utils.BDAP {
+//					if stringsUtil.Split(v.Namespace, "-")[2] == clusterName && !stringsUtil.Contains(stringsUtil.Split(v.Namespace, "-")[6], "safe") {
+//						clusterResult = append(clusterResult, v)
+//					}
+//				}
+//				if clusterName == utils.BDAPSAFE {
+//					if stringsUtil.Split(v.Namespace, "-")[2] == utils.BDAP && stringsUtil.Contains(stringsUtil.Split(v.Namespace, "-")[6], "safe") {
+//						clusterResult = append(clusterResult, v)
+//					}
+//				}
+//			}
+//			//res = clusterResult
+//		} else {
+//			clusterResult = res
+//		}
+//	}
+//	return clusterResult
+//}
