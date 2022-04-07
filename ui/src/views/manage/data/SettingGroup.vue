@@ -62,7 +62,7 @@
             <el-option v-for="item in groupOptionList"
                        :label="item.name"
                        :key="item.id"
-                       :value="item.id">
+                       :value="item.id+'~'+item.groupType">
             </el-option>
           </el-select>
         </el-form-item>
@@ -144,6 +144,7 @@ export default {
       this.modify = true
       setTimeout(() => {
         Object.assign(this.form, trData)
+        this.form.groupId = trData.groupId + '~' + trData.groupType
       }, 0)
     },
     deleteItem (trData) {
@@ -156,6 +157,10 @@ export default {
           this.setBtnDisabeld()
           let method = this.modify ? 'put' : 'post'
           let param = { ...this.form }
+          const groupParam = param.groupId.split('~')
+          param.groupId = +groupParam[0]
+          param.groupType = groupParam[1]
+          param.type = groupParam[1]
           param.path = this.path
           param.storageId = parseInt(this.storageId)
           this.FesApi.fetch(`/cc/${this.FesEnv.ccApiVersion}/groups/storages`, param, method).then(() => {

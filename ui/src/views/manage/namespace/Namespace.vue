@@ -12,13 +12,18 @@
               border
               :empty-text="$t('common.noData')">
       <el-table-column prop="namespace"
+                       :show-overflow-tooltip="true"
                        :label="$t('ns.nameSpaceName')" />
       <el-table-column prop="isActive"
+                       min-width="80px"
+                       :show-overflow-tooltip="true"
                        :label="$t('user.isActive')"
                        :formatter="translationActive" />
       <el-table-column prop="remarks"
+                       :show-overflow-tooltip="true"
                        :label="$t('DI.description')" />
-      <el-table-column :label="$t('common.operation')">
+      <el-table-column :label="$t('common.operation')"
+                       width="80px">
         <template slot-scope="scope">
           <el-dropdown size="medium"
                        @command="handleCommand">
@@ -180,8 +185,10 @@
                 border
                 :empty-text="$t('common.noData')">
         <el-table-column prop="nameSpace"
+                         :show-overflow-tooltip="true"
                          :label="$t('ns.attributesName')" />
         <el-table-column prop="additionalProp"
+                         :show-overflow-tooltip="true"
                          :label="$t('ns.attributesValue')" />
       </el-table>
     </el-dialog>
@@ -285,7 +292,8 @@ export default {
         if (trData.hard) {
           this.resource.cpu = trData.hard['limits.cpu'] + ''
           this.resource.gpu = trData.hard['requests.nvidia.com/gpu'] + ''
-          this.resource.memoryAmount = parseFloat(trData.hard['limits.memory']) + ''
+          const memory = trData.hard['limits.memory']
+          this.resource.memoryAmount = memory.indexOf('Gi') > -1 ? parseInt(trData.hard['limits.memory']) * 1024 + '' : parseInt(trData.hard['limits.memory']) + ''
         }
       })
     },
