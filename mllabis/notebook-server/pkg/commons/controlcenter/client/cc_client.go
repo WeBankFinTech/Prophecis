@@ -46,6 +46,15 @@ type UserResponse struct {
 	Remarks   string `json:"remarks"`
 }
 
+type ProxyUserResponse struct {
+	Name      string `json:"name"`
+	GID       int    `json:"gid"`
+	UID       int    `json:"uid"`
+	Token     string  `json:"token"`
+	Path      string `json:"path"`
+	Remarks   string `json:"remarks"`
+}
+
 const CcAuthToken = "MLSS-Token"
 
 const CcSuperadmin = "MLSS-Superadmin"
@@ -90,8 +99,8 @@ func (cc *CcClient) AuthAccessCheck(authOptions *map[string]string) (int, string
 
 	req, err := http.NewRequest("GET", apiUrl, strings.NewReader(""))
 	if err != nil {
-		logger.Logger().Debug("Create AuthAccessCheck Request Failed !")
-		logger.Logger().Debug(err.Error())
+		logger.Logger().Errorf("Create AuthAccessCheck Request Failed !")
+		logger.Logger().Errorf(err.Error())
 		return 500, "", "", err
 	}
 	for key, value := range *authOptions {
@@ -99,8 +108,8 @@ func (cc *CcClient) AuthAccessCheck(authOptions *map[string]string) (int, string
 	}
 	resp, err := client.httpClient.Do(req)
 	if err != nil {
-		logger.Logger().Debug("Do AuthAccessCheck Request Failed !")
-		logger.Logger().Debug(err.Error())
+		logger.Logger().Errorf("Do AuthAccessCheck Request Failed !")
+		logger.Logger().Errorf(err.Error())
 		return 500, "", "", err
 	}
 	defer resp.Body.Close()
@@ -113,8 +122,8 @@ func (cc *CcClient) AuthAccessCheck(authOptions *map[string]string) (int, string
 		return 401, "", "", *new(error)
 	}
 	if statusCode > 300 || token == "" {
-		logger.Logger().Debugf("Auth Access Check Request Failed from cc, StatusCode: %v, Token: %v", statusCode, token)
-		logger.Logger().Debugf("Message: %v", resp.Body)
+		logger.Logger().Errorf("Auth Access Check Request Failed from cc, StatusCode: %v, Token: %v", statusCode, token)
+		logger.Logger().Errorf("Message: %v", resp.Body)
 		return 500, "", "", *new(error)
 	}
 	return statusCode, token, isSA, nil
@@ -196,6 +205,26 @@ func (cc *CcClient) GetGUIDFromUserId(token string, userId string) (*string, *st
 	return &gid, &uid, &u.Token, nil
 }
 
+func (cc *CcClient) GetProxyUserGUIDFromUser(token string, userId string, name string) (*string, *string, *string, error) {
+	apiUrl := cc.ccUrl + fmt.Sprintf("/cc/v1/proxyUser/%v/user/%v", userId, name)
+	body, err := cc.accessCheckFromCc(token, apiUrl)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	var u = new(ProxyUserResponse)
+	//json.Unmarshal(body, &u)
+	err = models.GetResultData(body, &u)
+	if err != nil {
+		logger.Logger().Errorf("parse resultMap Unmarshal failed. %v", err.Error())
+		return nil, nil, nil,err
+	}
+	logger.Logger().Infof("response=%+v, GID=%v, UID=%v", u, u.GID, u.UID)
+
+	gid := strconv.Itoa(u.GID)
+	uid := strconv.Itoa(u.UID)
+
+	return &gid, &uid, &u.Token, nil
+}
 func (cc *CcClient) AdminUserCheck(token string, adminUserId string, userId string) error {
 	apiUrl := cc.ccUrl + fmt.Sprintf("/cc/v1/auth/access/users/%v/users/%v", adminUserId, userId)
 	_, err := cc.accessCheckFromCc(token, apiUrl)

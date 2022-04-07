@@ -1,0 +1,9 @@
+DBConfig:
+  server: 127.0.0.1
+  database: database
+  username: root
+  password: password
+  port: 30888
+ServerConfig:
+  namespace: mlss-dev
+  port: 123

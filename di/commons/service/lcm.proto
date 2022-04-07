@@ -24,6 +24,7 @@ service LifecycleManager {
   rpc DeployTrainingJob (JobDeploymentRequest) returns (JobDeploymentResponse) {}
   rpc KillTrainingJob (JobKillRequest) returns (JobKillResponse) {}
   rpc HaltTrainingJob (JobHaltRequest) returns (JobHaltResponse) {}
+  rpc KillMLFlowJob (JobKillRequest) returns (JobKillResponse) {}
 }
 
 
@@ -96,7 +97,15 @@ message JobDeploymentRequest {
   string exp_name = 27;
   string file_name = 28;
   string file_path = 29;
+  string proxy_user = 30;    
+  string job_params = 31;
+  grpc_trainer_v2.DataSet data_set = 32;
+  grpc_trainer_v2.MFModel mf_model = 33;
+  string algorithm = 34;
+  string fit_params = 35;
+  string API_type = 36;
 }
+
 
 message ImageLocation {
     string registry = 1; // the server name for the docker registry
@@ -116,6 +125,7 @@ message JobKillRequest {
   string user_id = 3;
   // FIXME MLSS Change: for kill job on specific namespace
   string job_namespace = 4;
+  string job_type = 5;
 }
 
 message JobKillResponse {

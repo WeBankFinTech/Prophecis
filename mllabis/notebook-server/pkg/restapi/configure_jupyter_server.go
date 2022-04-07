@@ -19,18 +19,20 @@ package restapi
 
 import (
 	"crypto/tls"
+	"net/http"
+	"webank/AIDE/notebook-server/pkg/commons/logger"
+	mw "webank/AIDE/notebook-server/pkg/middleware"
+	"webank/AIDE/notebook-server/pkg/restapi/operations"
+
 	"github.com/dre1080/recover"
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/middleware"
 	log "github.com/sirupsen/logrus"
-	"net/http"
-	"webank/AIDE/notebook-server/pkg/commons/logger"
-	mw "webank/AIDE/notebook-server/pkg/middleware"
-	"webank/AIDE/notebook-server/pkg/restapi/operations"
 )
 
-//go:generate swagger generate server --target ../../notebook-server --name JupyterServer --spec ../../../../../../../swagger.yaml
+//cd notebook-server
+//go:generate swagger generate server --target .\pkg\ --name JupyterServer --spec .\pkg\swagger\swagger.yaml --exclude-main
 
 func configureFlags(api *operations.JupyterServerAPI) {
 	// api.CommandLineOptionsGroups = []swag.CommandLineOptionsGroup{ ... }
@@ -51,8 +53,8 @@ func configureAPI(api *operations.JupyterServerAPI) http.Handler {
 
 	api.JSONProducer = runtime.JSONProducer()
 
-	api.DeleteNamespacedNotebookHandler = operations.DeleteNamespacedNotebookHandlerFunc(func(params operations.DeleteNamespacedNotebookParams) middleware.Responder {
-		return deleteNamespacedNotebook(params)
+	api.DeleteNotebookByIDHandler = operations.DeleteNotebookByIDHandlerFunc(func(params operations.DeleteNotebookByIDParams) middleware.Responder {
+		return deleteNotebookById(params)
 	})
 
 	api.GetNamespacedNotebooksHandler = operations.GetNamespacedNotebooksHandlerFunc(func(params operations.GetNamespacedNotebooksParams) middleware.Responder {
@@ -80,6 +82,25 @@ func configureAPI(api *operations.JupyterServerAPI) http.Handler {
 	api.PatchNamespacedNotebookHandler = operations.PatchNamespacedNotebookHandlerFunc(func(params operations.PatchNamespacedNotebookParams) middleware.Responder {
 		return patchNamespacedNotebook(params)
 	})
+	api.GetNotebookUserHandler = operations.GetNotebookUserHandlerFunc(func(params operations.GetNotebookUserParams) middleware.Responder {
+		return GetNotebookUser(params)
+	})
+	api.GetNamespacedNotebookStatusHandler = operations.GetNamespacedNotebookStatusHandlerFunc(
+		func(params operations.GetNamespacedNotebookStatusParams) middleware.Responder {
+			return GetNamespacedNotebookStatus(params)
+		})
+	api.GetNamespacedNotebookLogHandler = operations.GetNamespacedNotebookLogHandlerFunc(
+		func(params operations.GetNamespacedNotebookLogParams) middleware.Responder {
+			return GetNamespacedNotebookLog(params)
+		})
+	api.StopNotebookByIDHandler = operations.StopNotebookByIDHandlerFunc(
+		func(params operations.StopNotebookByIDParams)  middleware.Responder {
+			return StopNamespacedNotebook(params)
+		})
+	api.StartNotebookByIDHandler= operations.StartNotebookByIDHandlerFunc(
+		func(params operations.StartNotebookByIDParams)  middleware.Responder {
+			return StartNamespacedNotebook(params)
+		})
 
 	api.ServerShutdown = func() {}
 

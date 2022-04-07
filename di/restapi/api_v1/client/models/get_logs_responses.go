@@ -13,7 +13,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	"webank/DI/restapi/api_v1/restmodels"
+	restmodels "webank/DI/restapi/api_v1/restmodels"
 )
 
 // GetLogsReader is a Reader for the GetLogs structure.
@@ -25,21 +25,18 @@ type GetLogsReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *GetLogsReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewGetLogsOK(o.writer)
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 401:
 		result := NewGetLogsUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 404:
 		result := NewGetLogsNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -68,7 +65,11 @@ type GetLogsOK struct {
 }
 
 func (o *GetLogsOK) Error() string {
-	return fmt.Sprintf("[GET /v1/models/{model_id}/logs][%d] getLogsOK  %+v", 200, o.Payload)
+	return fmt.Sprintf("[GET /di/v1/models/{model_id}/logs][%d] getLogsOK  %+v", 200, o.Payload)
+}
+
+func (o *GetLogsOK) GetPayload() io.Writer {
+	return o.Payload
 }
 
 func (o *GetLogsOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -95,7 +96,11 @@ type GetLogsUnauthorized struct {
 }
 
 func (o *GetLogsUnauthorized) Error() string {
-	return fmt.Sprintf("[GET /v1/models/{model_id}/logs][%d] getLogsUnauthorized  %+v", 401, o.Payload)
+	return fmt.Sprintf("[GET /di/v1/models/{model_id}/logs][%d] getLogsUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *GetLogsUnauthorized) GetPayload() *restmodels.Error {
+	return o.Payload
 }
 
 func (o *GetLogsUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -124,7 +129,11 @@ type GetLogsNotFound struct {
 }
 
 func (o *GetLogsNotFound) Error() string {
-	return fmt.Sprintf("[GET /v1/models/{model_id}/logs][%d] getLogsNotFound  %+v", 404, o.Payload)
+	return fmt.Sprintf("[GET /di/v1/models/{model_id}/logs][%d] getLogsNotFound  %+v", 404, o.Payload)
+}
+
+func (o *GetLogsNotFound) GetPayload() *restmodels.Error {
+	return o.Payload
 }
 
 func (o *GetLogsNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

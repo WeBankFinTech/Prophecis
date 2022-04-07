@@ -34,7 +34,7 @@ func ModelIDCompletion(c *cli.Context) {
 		return
 	}
 
-	params := models.NewListModelsParams().
+	params := models.NewListModelsParams().  //todo
 		WithTimeout(defaultOpTimeout)
 
 	modelz, err := client.Models.ListModels(params, BasicAuth())

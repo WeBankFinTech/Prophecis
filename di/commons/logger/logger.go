@@ -60,6 +60,7 @@ const (
 	LogkeyRestAPIService       = "rest-api"
 	LogkeyStorageService       = "storage-service"
 	LogkeyTrainerService       = "trainer-service"
+	LogkeyStorerService        = "storer-service"
 	LogkeyVolumeManagerService = "volume-manager-service"
 
 	LogkeyJobMonitor = "jobmonitor"
@@ -225,23 +226,23 @@ func Config() {
 
 		loggingType := viper.GetString(config.LoggingType)
 		switch loggingType {
-		case config.LoggingTypeJson:
-			log.SetFormatter(&log.JSONFormatter{})
-		case config.LoggingTypeText:
-			log.SetFormatter(&log.TextFormatter{})
-		default: // any other env will use local settings (assuming outside SL)
-			env := viper.GetString(config.EnvKey)
-
-			switch env {
-			case config.DevelopmentEnv:
+			case config.LoggingTypeJson:
 				log.SetFormatter(&log.JSONFormatter{})
-			case config.StagingEnv:
-				log.SetFormatter(&log.JSONFormatter{})
-			case config.ProductionEnv:
-				log.SetFormatter(&log.JSONFormatter{})
+			case config.LoggingTypeText:
+				log.SetFormatter(&log.TextFormatter{})
 			default: // any other env will use local settings (assuming outside SL)
+				//env := viper.GetString(config.EnvKey)
 				log.SetFormatter(&log.JSONFormatter{})
-			}
+			//switch env {
+			//	case config.DevelopmentEnv:
+			//		log.SetFormatter(&log.JSONFormatter{})
+			//	case config.StagingEnv:
+			//		log.SetFormatter(&log.JSONFormatter{})
+			//	case config.ProductionEnv:
+			//		log.SetFormatter(&log.JSONFormatter{})
+			//	default: // any other env will use local settings (assuming outside SL)
+			//		log.SetFormatter(&log.JSONFormatter{})
+			//	}
 		}
 
 		viper.SetDefault(LogCategoryGetTrainingLogStream, LogCategoryGetTrainingLogStreamDefaultValue)

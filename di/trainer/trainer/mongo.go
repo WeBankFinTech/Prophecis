@@ -37,7 +37,8 @@ const (
 // ConnectMongo connects to a mongo database collection, using the provided username, password, and certificate file
 // It returns a pointer to the session and collection objects, or an error if the connection attempt fails.
 // TODO: This function could potentially be moved to a central utility package
-func ConnectMongo(mongoURI string, database string, username string, password string, cert string) (*mgo.Session, error) {
+func ConnectMongo(mongoURI string, database string, username string, password string, authenticationDatabase string,
+	cert string) (*mgo.Session, error) {
 
 	// See here about the SSL weirdness: https://help.compose.com/docs/connecting-to-mongodb#go--golang-mongodb-and-compose
 	uri := strings.TrimSuffix(mongoURI, sslSuffix)
@@ -48,7 +49,7 @@ func ConnectMongo(mongoURI string, database string, username string, password st
 	}
 	dialInfo.FailFast = true
 	dialInfo.Timeout = 10 * time.Second
-
+	dialInfo.Source = authenticationDatabase
 	// only do ssl if we have the suffix
 	if strings.HasSuffix(mongoURI, sslSuffix) {
 		log.Debugf("Using TLS for mongo ...")

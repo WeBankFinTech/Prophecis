@@ -109,6 +109,10 @@ func (c *DlaasPlugin) Run(context plugin.PluginContext, args []string) {
 			}
 
 			// FIXME QuietPanic does not exist
+			//if err != terminal.QuietPanic {
+			//	fmt.Printf("%v\n", err)
+			//}
+
 			os.Exit(1)
 		}
 	}()
@@ -138,6 +142,9 @@ func (c *DlaasPlugin) Run(context plugin.PluginContext, args []string) {
 		metadata.Loglines: func(c *cli.Context) error {
 			return cmd.NewLoglinesCmd(ui, context).Run(c)
 		},
+		//metadata.Emetrics: func(c *cli.Context) error {
+		//	return cmd.NewEmetricsCmd(ui, context).Run(c)
+		//},
 		metadata.Halt: func(c *cli.Context) error {
 			return cmd.NewHaltCmd(ui, context).Run(c)
 		},
@@ -154,6 +161,7 @@ func (c *DlaasPlugin) Run(context plugin.PluginContext, args []string) {
 		metadata.Download:    cmd.DownloadCmdCompletion,
 		metadata.Logs:        cmd.TrainingLogsCompletion,
 		metadata.Loglines:    cmd.LoglinesCompletion,
+		metadata.Emetrics:    cmd.EMetricsCompletion,
 		metadata.Halt:        cmd.ModelIDCompletion,
 	}
 

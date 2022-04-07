@@ -24,21 +24,18 @@ type GetDashboardsReader struct {
 // ReadResponse reads a server response into the received o.
 func (o *GetDashboardsReader) ReadResponse(response runtime.ClientResponse, consumer runtime.Consumer) (interface{}, error) {
 	switch response.Code() {
-
 	case 200:
 		result := NewGetDashboardsOK()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return result, nil
-
 	case 403:
 		result := NewGetDashboardsForbidden()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-
 	case 404:
 		result := NewGetDashboardsNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -65,7 +62,11 @@ type GetDashboardsOK struct {
 }
 
 func (o *GetDashboardsOK) Error() string {
-	return fmt.Sprintf("[GET /v1/dashboards][%d] getDashboardsOK  %+v", 200, o.Payload)
+	return fmt.Sprintf("[GET /di/v1/dashboards][%d] getDashboardsOK  %+v", 200, o.Payload)
+}
+
+func (o *GetDashboardsOK) GetPayload() *restmodels.GetDashboardsResponse {
+	return o.Payload
 }
 
 func (o *GetDashboardsOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -94,7 +95,11 @@ type GetDashboardsForbidden struct {
 }
 
 func (o *GetDashboardsForbidden) Error() string {
-	return fmt.Sprintf("[GET /v1/dashboards][%d] getDashboardsForbidden  %+v", 403, o.Payload)
+	return fmt.Sprintf("[GET /di/v1/dashboards][%d] getDashboardsForbidden  %+v", 403, o.Payload)
+}
+
+func (o *GetDashboardsForbidden) GetPayload() *restmodels.Error {
+	return o.Payload
 }
 
 func (o *GetDashboardsForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -123,7 +128,11 @@ type GetDashboardsNotFound struct {
 }
 
 func (o *GetDashboardsNotFound) Error() string {
-	return fmt.Sprintf("[GET /v1/dashboards][%d] getDashboardsNotFound  %+v", 404, o.Payload)
+	return fmt.Sprintf("[GET /di/v1/dashboards][%d] getDashboardsNotFound  %+v", 404, o.Payload)
+}
+
+func (o *GetDashboardsNotFound) GetPayload() *restmodels.Error {
+	return o.Payload
 }
 
 func (o *GetDashboardsNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {

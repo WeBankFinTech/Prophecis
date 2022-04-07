@@ -4,7 +4,7 @@ USER root
 
 ADD bin/main /
 ADD certs/* /etc/ssl/dlaas/
-COPY charts/ /charts/
+#COPY charts/ /charts/
 RUN chmod 755 /main
 
 WORKDIR /

@@ -61,28 +61,28 @@ func (o *GetUserNotebooksURL) Build() (*url.URL, error) {
 
 	qs := make(url.Values)
 
-	var clusterName string
+	var clusterNameQ string
 	if o.ClusterName != nil {
-		clusterName = *o.ClusterName
+		clusterNameQ = *o.ClusterName
 	}
-	if clusterName != "" {
-		qs.Set("clusterName", clusterName)
+	if clusterNameQ != "" {
+		qs.Set("clusterName", clusterNameQ)
 	}
 
-	var page string
+	var pageQ string
 	if o.Page != nil {
-		page = *o.Page
+		pageQ = *o.Page
 	}
-	if page != "" {
-		qs.Set("page", page)
+	if pageQ != "" {
+		qs.Set("page", pageQ)
 	}
 
-	var size string
+	var sizeQ string
 	if o.Size != nil {
-		size = *o.Size
+		sizeQ = *o.Size
 	}
-	if size != "" {
-		qs.Set("size", size)
+	if sizeQ != "" {
+		qs.Set("size", sizeQ)
 	}
 
 	_result.RawQuery = qs.Encode()

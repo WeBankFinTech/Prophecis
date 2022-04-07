@@ -14,7 +14,7 @@ import (
 
 // PatchNamespacedNotebookURL generates an URL for the patch namespaced notebook operation
 type PatchNamespacedNotebookURL struct {
-	Namespace string
+	ID string
 
 	_basePath string
 	// avoid unkeyed usage
@@ -40,13 +40,13 @@ func (o *PatchNamespacedNotebookURL) SetBasePath(bp string) {
 func (o *PatchNamespacedNotebookURL) Build() (*url.URL, error) {
 	var _result url.URL
 
-	var _path = "/aide/v1/namespaces/{namespace}/notebooks"
+	var _path = "/aide/v1/notebooks/{id}"
 
-	namespace := o.Namespace
-	if namespace != "" {
-		_path = strings.Replace(_path, "{namespace}", namespace, -1)
+	id := o.ID
+	if id != "" {
+		_path = strings.Replace(_path, "{id}", id, -1)
 	} else {
-		return nil, errors.New("namespace is required on PatchNamespacedNotebookURL")
+		return nil, errors.New("id is required on PatchNamespacedNotebookURL")
 	}
 
 	_basePath := o._basePath
