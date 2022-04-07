@@ -48,6 +48,9 @@
               <el-dropdown-item :command="beforeHandleCommand('settingGroup',scope.row)">
                 {{$t('user.userGroupSettings')}}
               </el-dropdown-item>
+              <el-dropdown-item :command="beforeHandleCommand('settingProxy',scope.row)">
+                {{$t('user.proxyUserSetting')}}
+              </el-dropdown-item>
             </el-dropdown-menu>
           </el-dropdown>
         </template>
@@ -238,8 +241,7 @@ export default {
       this.$router.push({
         name: 'settingUserGroup',
         params: {
-          userName: trData.name,
-          userId: trData.id + ''
+          userId: trData.id
         },
         query: {
           userName: trData.name
@@ -266,6 +268,15 @@ export default {
             this.toast()
             this.dialogVisible = false
           })
+        }
+      })
+    },
+    settingProxy (trData) {
+      this.$router.push({
+        name: 'settingUserProxy',
+        query: {
+          username: trData.name,
+          userId: trData.id
         }
       })
     }

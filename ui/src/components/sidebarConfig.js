@@ -7,14 +7,52 @@ export default {
       icon: 'icon-shouye'
     },
     {
-      index: '/DI',
-      title: 'trainingJob',
-      icon: 'icon-moxingshu'
+      index: 'modelTraining',
+      title: 'DI.distributedModeling',
+      icon: 'icon-moxingshu',
+      subs: [
+        {
+          index: '/experiment',
+          title: 'home.experimentList'
+        },
+        {
+          index: '/expExeRecord',
+          title: 'home.expExecutRecord'
+        },
+        {
+          index: '/jobExeRecord',
+          title: 'home.taskExecutRecord'
+        }
+      ]
     },
     {
       index: '/AIDE',
       title: 'Notebook',
       icon: 'icon-jichengkaifa'
+    },
+    {
+      index: 'model',
+      title: 'serviceList.modelFactory',
+      icon: 'icon-moxingku',
+      subs: [
+        {
+          index: '/model/modelList',
+          title: 'modelList.modelList'
+        },
+        {
+          index: '/model/image',
+          title: 'image.imageList'
+        },
+        {
+          index: '/model/serviceList',
+          title: 'serviceList.modelService'
+        },
+        {
+          index: '/model/report',
+          title: 'report.reportList',
+          icon: 'icon-jichengkaifa'
+        }
+      ]
     },
     {
       index: 'manage',

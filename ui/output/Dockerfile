@@ -1,5 +1,5 @@
 #FROM dev.sf.dockerhub.stgwebank/webank/mlss-di:nginx-1.10-auth-request
-FROM nginx:latest
+FROM uat.sf.dockerhub.stgwebank/webank/mlss-di:nginx-1.19.6
 ADD output/css /var/www/html/css/
 ADD output/fonts /var/www/html/fonts/
 ADD output/img /var/www/html/img/

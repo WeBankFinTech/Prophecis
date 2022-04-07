@@ -1,16 +1,38 @@
 <template>
-  <div key="codeFile" class="upload-box">
-    <span v-if="fileName" class="file-name" :style="'margin-left:' +marginLeft+'px;'">
+  <div key="codeFile"
+       class="upload-box">
+    <span v-if="fileName"
+          class="file-name"
+          :style="'margin-left:' +marginLeft+'px;'">
       {{ fileName }}
-      <i class="el-icon-close delete-file" @click="deleteFile()" />
+      <i class="el-icon-close delete-file"
+         v-if="!readonly"
+         @click="deleteFile()" />
     </span>
-    <el-upload v-if="baseUrl" ref="upload" :action="uploadUrl" :disabled="loading" :headers="header" :on-success="uploadFile" :data="param" class="upload" :before-upload="beforeUpload" :on-error="errrUpload">
-      <el-button type="primary" :loading="loading">
+    <el-upload v-if="baseUrl"
+               ref="upload"
+               :action="uploadUrl"
+               :disabled="loading || readonly"
+               :headers="header"
+               :on-success="uploadFile"
+               :data="param"
+               class="upload"
+               :before-upload="beforeUpload"
+               :on-error="errrUpload">
+      <el-button type="primary"
+                 :loading="loading">
         {{ $t('DI.manualUpload') }}
       </el-button>
     </el-upload>
-    <el-upload v-else action="#" :disabled="loading" :http-request="uploadFile" class="upload" :before-upload="beforeUpload" :on-error="errrUpload">
-      <el-button type="primary" :loading="loading">
+    <el-upload v-else
+               action="#"
+               :disabled="loading|| readonly"
+               :http-request="uploadFile"
+               class="upload"
+               :before-upload="beforeUpload"
+               :on-error="errrUpload">
+      <el-button type="primary"
+                 :loading="loading">
         {{ $t('DI.manualUpload') }}
       </el-button>
     </el-upload>
@@ -52,6 +74,16 @@ export default {
     transferParam: {
       type: Boolean,
       default: false
+    },
+    params: {
+      type: Object,
+      default: function () {
+        return {}
+      }
+    },
+    readonly: {
+      type: Boolean,
+      default: false
     }
   },
   data () {
@@ -60,10 +92,16 @@ export default {
       loading: false,
       uploadUrl: this.baseUrl,
       header: {
-        'Mlss-Userid': localStorage.getItem('userId'),
-        'Authorization': 'Basic dGVkOndlbGNvbWUx'
+        'Mlss-Userid': localStorage.getItem('userId')
       },
-      param: {
+      param: {}
+    }
+  },
+  watch: {
+    params (val) {
+      if (val.modelType) {
+        this.fileName = ''
+        this.$emit('deleteFile', this.fileKey)
       }
     }
   },
@@ -106,7 +144,6 @@ export default {
       } else {
         fileCheck = true
       }
-
       const isLt512M = file.size / 1024 / 1024 < this.fileSize
       let limit = this.fileName === ''
       if (!isLt512M) {
@@ -119,12 +156,15 @@ export default {
       if (fileCheck && isLt512M && isLt512M) {
         if (this.transferParam) { // 是否需要传文件名
           this.param.fileName = file.name
+          Object.assign(this.param, this.params)
         }
         this.loading = true
       }
       return fileCheck && isLt512M
     },
-    errrUpload () {
+    errrUpload (error) {
+      const msg = JSON.parse(error.message)
+      this.$message.error(msg)
       this.loading = false
     }
   }

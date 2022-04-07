@@ -1,0 +1,16 @@
+/*!
+ * Copyright 2020 WeBank
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */.page-process[data-v-781099fa]{width:100%;background-color:#f7f7f7}.page-process .bread-crumb[data-v-781099fa]{margin:5px}.process-tabs[data-v-781099fa]{position:relative;height:100%;overflow:hidden}.process-tabs.no-tab .process-tab[data-v-781099fa]{display:none}.process-tabs.no-tab .process-container[data-v-781099fa]{height:100%}.process-tabs .process-tab[data-v-781099fa]{display:-webkit-box;display:-ms-flexbox;display:flex;-webkit-box-orient:horizontal;-webkit-box-direction:normal;-ms-flex-direction:row;flex-direction:row;-ms-flex-wrap:nowrap;flex-wrap:nowrap;-webkit-box-pack:start;-ms-flex-pack:start;justify-content:flex-start;-webkit-box-align:start;-ms-flex-align:start;align-items:flex-start;height:32px;padding:0 20px;-webkit-box-sizing:border-box;box-sizing:border-box;border-top:1px solid #e3e8ee}.process-tabs .process-tab .process-tab-item[data-v-781099fa]{position:relative;height:30px;line-height:30px;padding:0 20px;border-right:1px solid #e3e8ee;background:#f7f7f7;color:#17233d;cursor:pointer;min-width:100px;max-width:200px;overflow:hidden;text-align:center}.process-tabs .process-tab .process-tab-item[data-v-781099fa]:first-child{border-left:1px solid #e3e8ee}.process-tabs .process-tab .process-tab-item.active[data-v-781099fa]{margin-top:-1px;height:32px;line-height:31px;background:#eff4f9;color:#3387ff}.process-tabs .process-tab .process-tab-item.active[data-v-781099fa]:before{content:"";position:absolute;top:-1px;left:0;right:0;height:3px;background:#3387ff}.process-tabs .process-tab .process-tab-item .process-tab-name[data-v-781099fa]{width:100%;font-size:12px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;padding-right:5px;padding-left:5px}.process-tabs .process-tab .process-tab-item .ivu-icon[data-v-781099fa],.process-tabs .process-tab .process-tab-item .process-tab-unsave-icon[data-v-781099fa]{position:absolute;right:10px;top:10px}.process-tabs .process-tab .process-tab-item .tab-icon[data-v-781099fa]{position:absolute;left:7px;top:8px;width:15px;height:15px}.process-tabs .process-tab .process-tab-item .flow[data-v-781099fa]{width:12px;height:12px}.process-tabs .process-tab .process-tab-item .hivesql[data-v-781099fa]{width:16px;height:16px}.process-tabs .process-tab .process-tab-item .display[data-v-781099fa]{width:13px;height:13px}.process-tabs .process-tab .process-tab-item .dashboard[data-v-781099fa]{width:14px;height:14px}.process-tabs .process-container[data-v-781099fa]{height:calc(100% - 45px)}

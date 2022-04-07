@@ -13,11 +13,13 @@
               style="width: 100%"
               :empty-text="$t('common.noData')">
       <el-table-column prop="path"
+                       :show-overflow-tooltip="true"
                        :label="$t('data.dataStorePath')" />
       <el-table-column prop="isActive"
                        :label="$t('user.isActive')"
                        :formatter="translationActive" />
       <el-table-column prop="remarks"
+                       :show-overflow-tooltip="true"
                        :label="$t('DI.description')" />
       <el-table-column :label="$t('common.operation')">
         <template slot-scope="scope">

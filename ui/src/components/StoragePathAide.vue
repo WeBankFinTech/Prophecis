@@ -128,9 +128,6 @@ export default {
       } else {
         url = `/aide/${this.FesEnv.aideApiVersion}/user/${this.userId}/notebooks`
       }
-      if (this.FesEnv.filterUiServer) {
-        url = util.setUiServerUrl(url, this.FesEnv.uiServer)
-      }
       let header = {
         method: 'get'
       }

@@ -1,31 +1,50 @@
 <template>
-  <el-dialog :title="this.$t('DI.createTraining')" :visible.sync="dialogVisible" @close="clearDialogForm" custom-class="dialog-style" :close-on-click-modal="false" width="1240px">
-    <step :step="currentStep" :step-list="stepList" />
-    <el-form ref="formValidate" :model="form" :rules="ruleValidate" class="add-form" label-width="190px">
-      <div v-if="currentStep===0" key="step0">
+  <el-dialog :title="this.$t('DI.createTraining')"
+             :visible.sync="dialogVisible"
+             @close="clearDialogForm"
+             custom-class="dialog-style"
+             :close-on-click-modal="false"
+             width="1240px">
+    <step :step="currentStep"
+          :step-list="stepList" />
+    <el-form ref="formValidate"
+             :model="form"
+             :rules="ruleValidate"
+             class="add-form"
+             label-width="190px">
+      <div v-if="currentStep===0"
+           key="step0">
         <div class="subtitle">
           {{ $t('DI.basicSettings') }}
         </div>
         <el-row>
           <el-col :span="24">
-            <el-form-item :label="$t('DI.trainingjobName')" prop="name">
-              <el-input v-model="form.name" maxlength="225" :placeholder="$t('DI.trainingjobNamePro')" />
+            <el-form-item :label="$t('DI.trainingjobName')"
+                          prop="name">
+              <el-input v-model="form.name"
+                        maxlength="225"
+                        :placeholder="$t('DI.trainingjobNamePro')" />
             </el-form-item>
           </el-col>
         </el-row>
         <el-row>
-          <el-form-item :label="$t('DI.description')" prop="description">
-            <el-input v-model="form.description" type="textarea" :placeholder="$t('DI.jobDescriptionPro')" />
+          <el-form-item :label="$t('DI.description')"
+                        prop="description">
+            <el-input v-model="form.description"
+                      type="textarea"
+                      :placeholder="$t('DI.jobDescriptionPro')" />
           </el-form-item>
         </el-row>
       </div>
-      <div v-if="currentStep===1" key="step1">
+      <div v-if="currentStep===1"
+           key="step1">
         <div class="subtitle">
           {{ $t('DI.imageSettings') }}
         </div>
         <el-row>
           <el-col :span="12">
-            <el-form-item :label="$t('DI.imageType')" prop="imageType">
+            <el-form-item :label="$t('DI.imageType')"
+                          prop="imageType">
               <el-radio-group v-model="form.imageType">
                 <el-radio label="Standard">
                   {{ $t('DI.standard') }}
@@ -38,38 +57,60 @@
           </el-col>
         </el-row>
         <el-row>
-          <el-form-item v-if="form.imageType === 'Custom'" key="imageInput" :label="$t('DI.imageSelection')" prop="imageInput">
+          <el-form-item v-if="form.imageType === 'Custom'"
+                        key="imageInput"
+                        :label="$t('DI.imageSelection')"
+                        prop="imageInput">
             <span>&nbsp;{{ defineImage }}&nbsp;&nbsp;</span>
-            <el-input v-model="form.imageInput" :placeholder="$t('DI.imageInputPro')" />
+            <el-input v-model="form.imageInput"
+                      :placeholder="$t('DI.imageInputPro')" />
           </el-form-item>
-          <el-form-item v-else key="imageOption" :label="$t('DI.imageSelection')" prop="imageOption">
+          <el-form-item v-else
+                        key="imageOption"
+                        :label="$t('DI.imageSelection')"
+                        prop="imageOption">
             <span>&nbsp;{{ defineImage }}&nbsp;&nbsp;</span>
-            <el-select v-model="form.imageOption" :placeholder="$t('DI.imagePro')">
-              <el-option v-for="(item,index) in imageOptionList" :label="item" :key="index" :value="item">
+            <el-select v-model="form.imageOption"
+                       :placeholder="$t('DI.imagePro')">
+              <el-option v-for="(item,index) in imageOptionList"
+                         :label="item"
+                         :key="index"
+                         :value="item">
               </el-option>
             </el-select>
           </el-form-item>
         </el-row>
       </div>
-      <div v-if="currentStep===2" key="step2">
+      <div v-if="currentStep===2"
+           key="step2">
         <div class="subtitle">
           {{ $t('DI.computingResource') }}
         </div>
         <el-row>
           <el-col :span="12">
-            <el-form-item :label="$t('DI.jobType')" prop="job_type">
-              <el-select v-model="form.job_type" :placeholder="$t('DI.jobTypePro')">
-                <el-option :label="$t('DI.Single')" value="Local">
+            <el-form-item :label="$t('DI.jobType')"
+                          prop="job_type">
+              <el-select v-model="form.job_type"
+                         :placeholder="$t('DI.jobTypePro')">
+                <el-option :label="$t('DI.Single')"
+                           value="Local">
                 </el-option>
-                <el-option :label="$t('DI.distributed')" value="dist-tf">
+                <el-option :label="$t('DI.distributed')"
+                           value="dist-tf">
                 </el-option>
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item :label="$t('ns.nameSpace')" prop="namespace">
-              <el-select v-model="form.namespace" filterable :placeholder="$t('ns.nameSpacePro')">
-                <el-option v-for="item in spaceOptionList" :label="item" :key="item" :value="item">
+            <el-form-item :label="$t('ns.nameSpace')"
+                          prop="namespace">
+              <el-select v-model="form.namespace"
+                         filterable
+                         :placeholder="$t('ns.nameSpacePro')">
+                <el-option v-for="item in spaceOptionList"
+                           :label="item"
+                           :key="item"
+                           :value="item">
                 </el-option>
               </el-select>
             </el-form-item>
@@ -77,15 +118,19 @@
         </el-row>
         <el-row>
           <el-col :span="12">
-            <el-form-item :label="$t('DI.cpu')" prop="cpus">
-              <el-input v-model="form.cpus" :placeholder="$t('DI.CPUPro')">
+            <el-form-item :label="$t('DI.cpu')"
+                          prop="cpus">
+              <el-input v-model="form.cpus"
+                        :placeholder="$t('DI.CPUPro')">
                 <span slot="append">Core</span>
               </el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item :label="$t('DI.gpu')" prop="gpus">
-              <el-input v-model="form.gpus" :placeholder="$t('DI.GPUPro')">
+            <el-form-item :label="$t('DI.gpu')"
+                          prop="gpus">
+              <el-input v-model="form.gpus"
+                        :placeholder="$t('DI.GPUPro')">
                 <span slot="append">{{ $t('DI.block') }}</span>
               </el-input>
             </el-form-item>
@@ -93,28 +138,37 @@
         </el-row>
         <el-row>
           <el-col :span="12">
-            <el-form-item :label="$t('DI.memory')" prop="memory">
-              <el-input v-model="form.memory" :placeholder="$t('DI.memoryPro')">
+            <el-form-item :label="$t('DI.memory')"
+                          prop="memory">
+              <el-input v-model="form.memory"
+                        :placeholder="$t('DI.memoryPro')">
                 <span slot="append">Gb</span>
               </el-input>
             </el-form-item>
           </el-col>
-          <el-col :span="12" v-if="form.job_type==='dist-tf'">
-            <el-form-item :label="$t('DI.learners')" prop="learners">
-              <el-input v-model="form.learners" :placeholder="$t('DI.learnersPro')" />
+          <el-col :span="12"
+                  v-if="form.job_type==='dist-tf'">
+            <el-form-item :label="$t('DI.learners')"
+                          prop="learners">
+              <el-input v-model="form.learners"
+                        :placeholder="$t('DI.learnersPro')" />
             </el-form-item>
           </el-col>
         </el-row>
         <div v-if="form.job_type==='dist-tf'">
           <el-row>
             <el-col :span="12">
-              <el-form-item :label="$t('DI.pss')" prop="pss">
-                <el-input v-model="form.pss" :placeholder="$t('DI.pssPro')" />
+              <el-form-item :label="$t('DI.pss')"
+                            prop="pss">
+                <el-input v-model="form.pss"
+                          :placeholder="$t('DI.pssPro')" />
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item :label="$t('DI.ps_cpu')" prop="ps_cpu">
-                <el-input v-model="form.ps_cpu" :placeholder="$t('DI.ps_cpuPro')">
+              <el-form-item :label="$t('DI.ps_cpu')"
+                            prop="ps_cpu">
+                <el-input v-model="form.ps_cpu"
+                          :placeholder="$t('DI.ps_cpuPro')">
                   <span slot="append">Core</span>
                 </el-input>
               </el-form-item>
@@ -122,8 +176,10 @@
           </el-row>
           <el-row>
             <el-col :span="12">
-              <el-form-item :label="$t('DI.ps_memory')" prop="ps_memory">
-                <el-input v-model="form.ps_memory" :placeholder="$t('DI.ps_memoryPro')">
+              <el-form-item :label="$t('DI.ps_memory')"
+                            prop="ps_memory">
+                <el-input v-model="form.ps_memory"
+                          :placeholder="$t('DI.ps_memoryPro')">
                   <span slot="append">Gi</span>
                 </el-input>
               </el-form-item>
@@ -131,7 +187,8 @@
           </el-row>
           <el-row>
             <el-col :span="24">
-              <el-form-item :label="$t('DI.ps_imageType')" prop="ps_imageType">
+              <el-form-item :label="$t('DI.ps_imageType')"
+                            prop="ps_imageType">
                 <el-radio-group v-model="form.ps_imageType">
                   <el-radio label="Standard">
                     {{ $t('DI.standard') }}
@@ -141,14 +198,25 @@
                   </el-radio>
                 </el-radio-group>
               </el-form-item>
-              <el-form-item v-if="form.ps_imageType==='Custom'" key="psImageInput" :label="$t('DI.ps_image')" prop="ps_imageInput">
+              <el-form-item v-if="form.ps_imageType==='Custom'"
+                            key="psImageInput"
+                            :label="$t('DI.ps_image')"
+                            prop="ps_imageInput">
                 <span>&nbsp;{{ defineImage }}&nbsp;&nbsp;</span>
-                <el-input v-model="form.ps_imageInput" :placeholder="$t('DI.imageInputPro')" />
+                <el-input v-model="form.ps_imageInput"
+                          :placeholder="$t('DI.imageInputPro')" />
               </el-form-item>
-              <el-form-item v-else key="psImageSelect" :label="$t('DI.ps_image')" prop="ps_image">
+              <el-form-item v-else
+                            key="psImageSelect"
+                            :label="$t('DI.ps_image')"
+                            prop="ps_image">
                 <span>&nbsp;{{ defineImage }}&nbsp;&nbsp;</span>
-                <el-select v-model="form.ps_image" :placeholder="$t('DI.imagePro')">
-                  <el-option v-for="(item,index) in imageOptionList" :label="item" :key="index" :value="item">
+                <el-select v-model="form.ps_image"
+                           :placeholder="$t('DI.imagePro')">
+                  <el-option v-for="(item,index) in imageOptionList"
+                             :label="item"
+                             :key="index"
+                             :value="item">
                   </el-option>
                 </el-select>
               </el-form-item>
@@ -156,61 +224,101 @@
           </el-row>
         </div>
       </div>
-      <div v-if="currentStep===3" key="step3">
+      <div v-if="currentStep===3"
+           key="step3">
         <div class="subtitle">
           {{ $t('DI.trainingDirectory') }}
         </div>
         <el-row>
-          <el-form-item :label="$t('DI.trainingDataStore')" prop="path">
-            <el-select v-model="form.path" filterable :placeholder="$t('DI.trainingDataStorePro')">
-              <el-option v-for="(item,index) in localPathList" :label="item" :key="index" :value="item">
+          <el-form-item :label="$t('DI.trainingDataStore')"
+                        prop="path">
+            <el-select v-model="form.path"
+                       filterable
+                       :placeholder="$t('DI.trainingDataStorePro')">
+              <el-option v-for="(item,index) in localPathList"
+                         :label="item"
+                         :key="index"
+                         :value="item">
               </el-option>
             </el-select>
           </el-form-item>
-          <el-form-item :label="$t('DI.trainingData')" prop="trainingData">
-            <el-input v-model="form.trainingData" :placeholder="$t('DI.dataSubdirectoryPro')" />
+          <el-form-item :label="$t('DI.trainingData')"
+                        prop="trainingData">
+            <el-input v-model="form.trainingData"
+                      :placeholder="$t('DI.dataSubdirectoryPro')" />
           </el-form-item>
-          <el-form-item :label="$t('DI.trainingResult')" prop="trainingResults">
-            <el-input v-model="form.trainingResults" :placeholder="$t('DI.resultSubdirectoryPro')" />
+          <el-form-item :label="$t('DI.trainingResult')"
+                        prop="trainingResults">
+            <el-input v-model="form.trainingResults"
+                      :placeholder="$t('DI.resultSubdirectoryPro')" />
           </el-form-item>
         </el-row>
       </div>
-      <div v-if="currentStep===4" key="step4">
+      <div v-if="currentStep===4"
+           key="step4">
         <div class="subtitle">
           {{ $t('DI.jobExecution') }}
         </div>
         <el-row>
-          <el-form-item :label="$t('DI.entrance')" prop="command">
-            <el-input v-model="form.command" :rows="4" type="textarea" :placeholder="$t('DI.entrancePro')" />
+          <el-form-item :label="$t('DI.entrance')"
+                        prop="command">
+            <el-input v-model="form.command"
+                      :rows="4"
+                      type="textarea"
+                      :placeholder="$t('DI.entrancePro')" />
           </el-form-item>
         </el-row>
         <el-row>
-          <el-form-item :label="$t('DI.executeCodeSettings')" prop="codeSettings">
-            <el-select v-model="form.codeSettings" :placeholder="$t('DI.executeCodeSettingsPro')">
-              <el-option :label="$t('DI.manualUpload')" value="codeFile">
+          <el-form-item :label="$t('DI.executeCodeSettings')"
+                        prop="codeSettings">
+            <el-select v-model="form.codeSettings"
+                       :placeholder="$t('DI.executeCodeSettingsPro')">
+              <el-option :label="$t('DI.manualUpload')"
+                         value="codeFile">
               </el-option>
-              <el-option :label="$t('DI.shareDirectory')" value="storagePath">
+              <el-option :label="$t('DI.shareDirectory')"
+                         value="storagePath">
               </el-option>
             </el-select>
           </el-form-item>
-          <div v-if="form.codeSettings==='codeFile'" key="codeFile" class="upload-box">
-            <upload :marginLeft="190" :baseUrl="baseUrl" :code-file="fileName" @deleteFile="deleteFile" @uploadFile="uploadFile"></upload>
+          <div v-if="form.codeSettings==='codeFile'"
+               key="codeFile"
+               class="upload-box">
+            <upload :marginLeft="190"
+                    :baseUrl="baseUrl"
+                    :code-file="fileName"
+                    @deleteFile="deleteFile"
+                    @uploadFile="uploadFile"></upload>
           </div>
-          <el-form-item v-else key="storagePath" :label="$t('DI.shareDirectory')" prop="diStoragePath">
-            <el-input v-model="form.diStoragePath" :placeholder="$t('DI.shareDirectoryPro')" />
+          <el-form-item v-else
+                        key="storagePath"
+                        :label="$t('DI.shareDirectory')"
+                        prop="diStoragePath">
+            <el-input v-model="form.diStoragePath"
+                      :placeholder="$t('DI.shareDirectoryPro')" />
           </el-form-item>
-          <storage-path-aide v-if="form.codeSettings==='storagePath'" :root-path="form.path" :storage-path="form.diStoragePath"></storage-path-aide>
+          <storage-path-aide v-if="form.codeSettings==='storagePath'"
+                             :root-path="form.path"
+                             :storage-path="form.diStoragePath"></storage-path-aide>
         </el-row>
       </div>
     </el-form>
-    <span slot="footer" class="dialog-footer">
-      <el-button v-if="currentStep>0" type="primary" @click="lastStep">
+    <span slot="footer"
+          class="dialog-footer">
+      <el-button v-if="currentStep>0"
+                 type="primary"
+                 @click="lastStep">
         {{ $t('common.lastStep') }}
       </el-button>
-      <el-button v-if="currentStep<4" type="primary" @click="nextStep">
+      <el-button v-if="currentStep<4"
+                 type="primary"
+                 @click="nextStep">
         {{ $t('common.nextStep') }}
       </el-button>
-      <el-button v-if="currentStep===4" type="primary" :disabled="disabled" @click="subInfo">
+      <el-button v-if="currentStep===4"
+                 type="primary"
+                 :disabled="disabled"
+                 @click="subInfo">
         {{ $t('common.save') }}
       </el-button>
       <el-button @click="dialogVisible=false">
@@ -428,11 +536,7 @@ export default {
             }
           }).then(() => {
             this.toast()
-            if (this.FesEnv.uiServer === 'bdap-ui' && this.$route.path !== '/jobExeRecord') {
-              this.$router.push('/jobExeRecord')
-            } else {
-              this.$parent.getListData()
-            }
+            this.$parent.getListData()
             this.dialogVisible = false
             this.disabled = false
           }, () => {
