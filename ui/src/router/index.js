@@ -8,6 +8,12 @@ const routes = [
     redirect: { name: 'home' }
   },
   {
+    path: '/mlFlow',
+    name: 'mlFlow',
+    component: () =>
+      import('../views/flow/process/formDssFlow.vue')
+  },
+  {
     path: '/noAccess',
     name: 'noAccess',
     component: () =>
@@ -44,24 +50,66 @@ const routes = [
         import('../views/Home.vue')
     },
     {
-      path: '/DI',
-      name: 'DI',
+      path: '/experiment',
+      name: 'experiment',
+      meta: {
+        login: true,
+        groupName: 'modelTraining'
+      },
+      component: () =>
+        import('../views/experiment/index.vue')
+    },
+    {
+      path: '/experiment/flow',
+      name: 'experimentFlow',
+      meta: {
+        login: true,
+        title: 'flow.workflow',
+        groupName: 'modelTraining'
+      },
+      component: () =>
+        import('../views/flow/workflow.vue')
+    },
+    {
+      path: '/experiment/addRecord/:mlflow_exp_id',
+      name: 'addExperimentRecord',
       meta: {
         login: true
       },
       component: () =>
-        import('../views/DI/index.vue')
+        import('../views/experiment/addRecord.vue')
     },
     {
-      path: '/DI/log',
-      name: 'DILogDetail',
+      path: '/expExeRecord',
+      name: 'expExeRecord',
       meta: {
         login: true,
-        groupName: 'DI',
-        title: 'DI.viewlog'
+        groupName: 'modelTraining'
       },
       component: () =>
-        import('../views/DI/DetailLog.vue')
+        import('../views/expExeRecord/index.vue')
+    },
+    {
+      path: '/jobExeRecord',
+      name: 'jobExeRecord',
+      meta: {
+        login: true,
+        groupName: 'modelTraining'
+      },
+      component: () =>
+        import('../views/jobExeRecord/index.vue')
+    },
+    {
+      path: '/jobExeRecord/:modelId',
+      name: 'jobExeRecordDetail',
+      meta: {
+        login: true,
+        groupName: 'modelTraining',
+        title: 'DI.viewlog'
+      },
+      props: true,
+      component: () =>
+        import('../views/jobExeRecord/DetailLog')
     },
     {
       path: '/AIDE',
@@ -71,6 +119,79 @@ const routes = [
       },
       component: () =>
         import('../views/AIDE/index.vue')
+    },
+    {
+      path: '/model/modelList',
+      name: 'modelList',
+      meta: {
+        login: true,
+        groupName: 'model'
+      },
+      component: () =>
+        import('../views/modelFactory/model/modelList.vue')
+    },
+    {
+      path: '/model/versionList/:modelId',
+      name: 'modelVersionList',
+      meta: {
+        login: true,
+        groupName: 'model',
+        title: 'modelList.versionList'
+      },
+      component: () =>
+        import('../views/modelFactory/model/versionList')
+    },
+    {
+      path: '/model/serviceList',
+      name: 'serviceList',
+      meta: {
+        login: true,
+        groupName: 'model'
+      },
+      component: () =>
+        import('../views/modelFactory/service/serviceList.vue')
+    },
+    {
+      path: '/model/serviceList/:namespace/:serviceName',
+      name: 'containerList',
+      meta: {
+        login: true,
+        groupName: 'model',
+        title: 'serviceList.containerList'
+      },
+      component: () =>
+        import('../views/modelFactory/service/ContainerList')
+    },
+    {
+      path: '/model/image',
+      name: 'modelImage',
+      meta: {
+        login: true,
+        groupName: 'model'
+      },
+      component: () =>
+        import('../views/modelFactory/image/index.vue')
+    },
+    {
+      path: '/model/report',
+      name: 'modelReport',
+      meta: {
+        login: true,
+        groupName: 'model'
+      },
+      component: () =>
+        import('../views/modelFactory/reportList/index')
+    },
+    {
+      path: '/model/reportVersion/:reportId',
+      name: 'reportVersion',
+      meta: {
+        login: true,
+        groupName: 'model',
+        title: 'modelList.versionList'
+      },
+      component: () =>
+        import('../views/modelFactory/reportList/versionList.vue')
     },
     {
       path: '/help',
@@ -131,6 +252,19 @@ const routes = [
       },
       component: () =>
         import('../views/manage/UserGroup.vue')
+    },
+    {
+      path: '/manage/user/proxy',
+      name: 'settingUserProxy',
+      meta: {
+        login: true,
+        permission: true,
+        groupName: 'manage',
+        title: 'user.proxyUserSetting'
+      },
+      props: true,
+      component: () =>
+        import('../views/manage/user/SettingProxy.vue')
     },
     {
       path: '/manage/namespace',

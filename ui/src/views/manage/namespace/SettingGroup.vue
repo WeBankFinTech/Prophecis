@@ -15,7 +15,8 @@
                        :label="$t('ns.nameSpaceName')" />
       <el-table-column prop="groupName"
                        :label="$t('user.userGroup')" />
-      <el-table-column :label="$t('common.operation')">
+      <el-table-column :label="$t('common.operation')"
+                       width="80px">
         <template slot-scope="scope">
           <el-button @click="deleteItem(scope.row)"
                      type="text"

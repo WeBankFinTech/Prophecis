@@ -50,7 +50,7 @@ export default {
       }
       let pathArr = path.split('/').splice(1)
       let startIndex = 1
-      if (pathArr[0] === 'manage') {
+      if (pathArr[0] === 'manage' || pathArr[0] === 'model') {
         startIndex = 2
       }
       if (pathArr.length - 1 >= startIndex) {
