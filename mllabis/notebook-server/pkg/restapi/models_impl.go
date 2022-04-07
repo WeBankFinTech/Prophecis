@@ -1110,52 +1110,13 @@ func getDashboards(params operations.GetDashboardsParams) middleware.Responder {
 
 //FIXME MLSS Change: v_1.5.1 add logic for path when create notebook
 func getNoteBookByClusterName(clusterName string, res []*models.Notebook) []*models.Notebook {
-	clusterResult := make([]*models.Notebook, 0)
-	if len(res) > 0 {
-		if clusterName != "" {
-			for _, v := range res {
-				if clusterName == utils.BDP || clusterName == utils.BDAP {
-					if stringsUtil.Split(v.Namespace, "-")[2] == clusterName && !stringsUtil.Contains(stringsUtil.Split(v.Namespace, "-")[6], "safe") {
-						clusterResult = append(clusterResult, v)
-					}
-				}
-				if clusterName == utils.BDAPSAFE {
-					if stringsUtil.Split(v.Namespace, "-")[2] == utils.BDAP && stringsUtil.Contains(stringsUtil.Split(v.Namespace, "-")[6], "safe") {
-						clusterResult = append(clusterResult, v)
-					}
-				}
-			}
-			//res = clusterResult
-		} else {
-			clusterResult = res
-		}
-	}
-	return clusterResult
+	return res
 }
 
 func getNoteBookInMongoByClusterName(clusterName string, res []utils.NotebookInMongo) []utils.NotebookInMongo {
-	clusterResult := make([]utils.NotebookInMongo, 0)
-	if len(res) > 0 {
-		if clusterName != "" {
-			for _, v := range res {
-				if clusterName == utils.BDP || clusterName == utils.BDAP {
-					if stringsUtil.Split(v.Namespace, "-")[2] == clusterName &&
-						!stringsUtil.Contains(stringsUtil.Split(v.Namespace, "-")[6], "safe") {
-						clusterResult = append(clusterResult, v)
-					}
-				}
-				if clusterName == utils.BDAPSAFE {
-					if stringsUtil.Split(v.Namespace, "-")[2] == utils.BDAP &&
-						stringsUtil.Contains(stringsUtil.Split(v.Namespace, "-")[6], "safe") {
-						clusterResult = append(clusterResult, v)
-					}
-				}
-			}
-		} else {
-			clusterResult = res
-		}
-	}
-	return clusterResult
+	//clusterResult := make([]utils.NotebookInMongo, 0)
+	//clusterResult = res
+	return res
 }
 
 //FIXME MLSS Change: v_1.5.1 add logic for path when create notebook
