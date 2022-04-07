@@ -10,13 +10,19 @@
           {{ $t('home.introduction') }}
         </div>
       </el-row>
+      <div class="label">
+        {{ $t('home.modelTrain') }}
+      </div>
       <div class="content-box">
         <el-row>
-          <el-col :span="18" class="distributed">
-            {{ $t('trainingJob') }}<span>DI</span>
+          <el-col :span="18"
+                  class="distributed">
+            {{ $t('DI.distributedModeling') }}<span>MLFlow</span>
           </el-col>
-          <el-col :span="6" class="btn-right">
-            <el-button type="primary" @click="goDistributedModel">
+          <el-col :span="6"
+                  class="btn-right">
+            <el-button type="primary"
+                       @click="goDistributedModel">
               {{ $t('home.jobList') }}
             </el-button>
           </el-col>
@@ -45,10 +51,10 @@
         </el-row>
         <el-row class="center nape-text">
           <el-col :span="4">
-            {{ $t('home.totalJob') }}
+            {{ $t('home.totalExperiment') }}
           </el-col>
           <el-col :span="4">
-            {{ $t('home.runjob') }}
+            {{ $t('home.runExperiment') }}
           </el-col>
           <el-col :span="4">
             {{ $t('home.cardNumber') }}
@@ -57,11 +63,14 @@
       </div>
       <div class="content-box">
         <el-row>
-          <el-col :span="18" class="notebooks">
-            {{$t('Notebook1')}}<span>MLLabis</span>
+          <el-col :span="18"
+                  class="notebooks">
+            Notebooks<span>MLLabis</span>
           </el-col>
-          <el-col :span="6" class="btn-right">
-            <el-button type="primary" @click="goNotebook">
+          <el-col :span="6"
+                  class="btn-right">
+            <el-button type="primary"
+                       @click="goNotebook">
               {{ $t('home.instanceList') }}
             </el-button>
           </el-col>
@@ -100,6 +109,57 @@
           </el-col>
         </el-row>
       </div>
+      <div class="label">
+        {{ $t('home.modelService') }}
+      </div>
+      <div class="content-box">
+        <el-row>
+          <el-col :span="18"
+                  class="distributed">
+            {{ $t('home.modelOnlineService') }}<span>Model Factory</span>
+          </el-col>
+          <el-col :span="6"
+                  class="btn-right">
+            <el-button type="primary"
+                       @click="goExperiment">
+              {{ $t('home.serviceList') }}
+            </el-button>
+          </el-col>
+        </el-row>
+        <el-row class="center stauts-row">
+          <el-col :span="4">
+            {{ MFList.running_count }}
+          </el-col>
+          <el-col :span="4">
+            {{ MFList.exception_count }}
+          </el-col>
+          <el-col :span="4">
+            {{ MFList.card_count }}
+          </el-col>
+        </el-row>
+        <el-row class="center img-row">
+          <el-col :span="4">
+            <img :src="containerImg">
+          </el-col>
+          <el-col :span="4">
+            <img :src="containerImg">
+          </el-col>
+          <el-col :span="4">
+            <img :src="cardImg">
+          </el-col>
+        </el-row>
+        <el-row class="center nape-text">
+          <el-col :span="4">
+            {{ $t('home.runServiceNum') }}
+          </el-col>
+          <el-col :span="4">
+            {{ $t('home.abServiceNum') }}
+          </el-col>
+          <el-col :span="4">
+            {{ $t('home.cardNumber') }}
+          </el-col>
+        </el-row>
+      </div>
     </div>
   </div>
 </template>
@@ -107,7 +167,6 @@
 import container from '../assets/images/container.png'
 import task from '../assets/images/task.png'
 import card from '../assets/images/card.png'
-import util from '../util/common.js'
 export default {
   data: function () {
     return {
@@ -119,32 +178,38 @@ export default {
         jobRunning: 0,
         jobTotal: 0
       },
-      intervalFunc: null,
+      intervalFunc: '',
       AIDEList: {
         gpuCount: 0,
         nbRunning: 0,
         nbTotal: 0
+      },
+      MFList: {
+        running_count: 0,
+        exception_count: 0,
+        card_count: 0
       }
     }
   },
   created () {
-    this.getDataList()
+    this.getList()
   },
   methods: {
-    getDataList () {
+    getList () {
       this.getDIFunc()
       this.getAIDEFunc()
+      this.getMFFunc()
       this.intervalFunc = setInterval(() => {
         this.getDIFunc()
         this.getAIDEFunc()
+        this.getMFFunc()
       }, 10000)
     },
     getDIFunc () {
       let url = `/di/${this.FesEnv.diApiVersion}/dashboards`
-      if (this.FesEnv.filterUiServer) {
-        url = util.setUiServerUrl(url, this.FesEnv.uiServer)
-      }
-      this.FesApi.fetch(url, 'get').then(rst => {
+      this.FesApi.fetch(url, {}, {
+        method: 'get'
+      }).then(rst => {
         this.DIList = rst
       }, () => {
         this.DIList = {
@@ -156,10 +221,9 @@ export default {
     },
     getAIDEFunc () {
       let url = `/aide/${this.FesEnv.aideApiVersion}/dashboards`
-      if (this.FesEnv.filterUiServer) {
-        url = util.setUiServerUrl(url, this.FesEnv.uiServer)
-      }
-      this.FesApi.fetch(url, 'get').then(rst => {
+      this.FesApi.fetch(url, {}, {
+        method: 'get'
+      }).then(rst => {
         this.AIDEList = rst
       }, () => {
         this.AIDEList = {
@@ -169,11 +233,28 @@ export default {
         }
       })
     },
+    getMFFunc () {
+      let url = '/mf/v1/dashboard'
+      this.FesApi.fetch(url, {}, {
+        method: 'get'
+      }).then(rst => {
+        this.MFList = rst
+      }, () => {
+        this.MFList = {
+          running_count: 0,
+          exception_count: 0,
+          card_count: 0
+        }
+      })
+    },
     goDistributedModel () {
-      this.$router.push('/DI')
+      this.$router.push('/experiment')
     },
     goNotebook () {
       this.$router.push('/AIDE')
+    },
+    goExperiment () {
+      this.$router.push('/model/serviceList')
     }
   },
   destroyed: function () {
