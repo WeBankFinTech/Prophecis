@@ -22,6 +22,8 @@ import (
 	"mlss-controlcenter-go/pkg/logger"
 	"mlss-controlcenter-go/pkg/models"
 	"mlss-controlcenter-go/pkg/repo"
+	"os"
+	"path"
 )
 
 func GetAllStorage(page int64, size int64) (models.PageStorageList, error) {
@@ -31,19 +33,19 @@ func GetAllStorage(page int64, size int64) (models.PageStorageList, error) {
 	if page > 0 && size > 0 {
 		allStorage, err = repo.GetAllStorageByOffSet(offSet, size)
 		if err != nil {
-			logger.Logger().Error("Get all storage by offset err, ",err)
+			logger.Logger().Error("Get all storage by offset err, ", err)
 			return models.PageStorageList{}, err
 		}
 	} else {
-		allStorage,err = repo.GetAllStorage()
+		allStorage, err = repo.GetAllStorage()
 		if err != nil {
-			logger.Logger().Error("Get all storage err, ",err)
+			logger.Logger().Error("Get all storage err, ", err)
 			return models.PageStorageList{}, err
 		}
 	}
 	total, err := repo.CountStorage()
 	if err != nil {
-		logger.Logger().Error("Get count storage err, ",err)
+		logger.Logger().Error("Get count storage err, ", err)
 		return models.PageStorageList{}, err
 	}
 	var totalPage float64
@@ -63,15 +65,39 @@ func GetAllStorage(page int64, size int64) (models.PageStorageList, error) {
 }
 
 func AddStorage(storage models.Storage) (*models.Storage, error) {
+	//mkdir -p $Path/data
+	//mkdir -p $Path/result
+	//chmod -R 700 $Path
+	dataPath := path.Join(storage.Path, "data")
+	if ok, _ := common.PathExists(dataPath); !ok {
+		err := os.MkdirAll(dataPath, 0700)
+		if err != nil {
+			logger.Logger().Errorf("fail to make dir %q, err: %v\n", dataPath, err)
+			return nil, err
+		}
+	}
+	resultPath := path.Join(storage.Path, "result")
+	if ok, _ := common.PathExists(resultPath); !ok {
+		err := os.MkdirAll(resultPath, 0700)
+		if err != nil {
+			logger.Logger().Errorf("fail to make dir %q, err: %v\n", resultPath, err)
+			return nil, err
+		}
+	}
+	if err := os.Chmod(storage.Path, 0700); err != nil {
+		logger.Logger().Debugf("fail to chmod path %q, err :%v\n", storage.Path, err)
+		return nil, err
+	}
+
 	db := datasource.GetDB()
 	err := repo.AddStorage(storage, db)
 	if err != nil {
-		logger.Logger().Errorf("Get storage by path err, ",err)
+		logger.Logger().Errorf("Get storage by path err, ", err)
 		return nil, err
 	}
 	path, err := repo.GetStorageByPath(storage.Path, db)
 	if err != nil {
-		logger.Logger().Errorf("Get storage by path err, ",err)
+		logger.Logger().Errorf("Get storage by path err, ", err)
 		return nil, err
 	}
 	return path, nil
@@ -94,9 +120,9 @@ func DeleteStorageById(storageId int64) error {
 		return err
 	}
 
-	groupStorageByStorageId,err := repo.GetAllGroupStorageByStorageId(tx, storageId)
-	if err != nil{
-		logger.Logger().Errorf("DeleteStorageById Repo GetAllGroupStorageByStorageId error:%v",err.Error())
+	groupStorageByStorageId, err := repo.GetAllGroupStorageByStorageId(tx, storageId)
+	if err != nil {
+		logger.Logger().Errorf("DeleteStorageById Repo GetAllGroupStorageByStorageId error:%v", err.Error())
 		return err
 	}
 
@@ -107,13 +133,27 @@ func DeleteStorageById(storageId int64) error {
 			return err
 		}
 	}
+	storageObj, err := repo.GetStorageById(storageId)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
 
 	if err := repo.DeleteStorageById(tx, storageId); nil != err {
 		tx.Rollback()
 		return err
 	}
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
 
-	return tx.Commit().Error
+	if ok, _ := common.PathExists(storageObj.Path); ok {
+		if err := os.RemoveAll(storageObj.Path); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func GetStorageByPath(path string) (*models.Storage, error) {
@@ -139,6 +179,26 @@ func GetDeleteStorageByPath(path string) (*models.Storage, error) {
 }
 
 func UpdateStorage(storage models.Storage) (*models.Storage, error) {
+	dataPath := path.Join(storage.Path, "data")
+	if ok, _ := common.PathExists(dataPath); !ok {
+		err := os.MkdirAll(dataPath, 0700)
+		if err != nil {
+			logger.Logger().Errorf("fail to make dir %q, err: %v\n", dataPath, err)
+			return nil, err
+		}
+	}
+	resultPath := path.Join(storage.Path, "result")
+	if ok, _ := common.PathExists(resultPath); !ok {
+		err := os.MkdirAll(resultPath, 0700)
+		if err != nil {
+			logger.Logger().Errorf("fail to make dir %q, err: %v\n", resultPath, err)
+			return nil, err
+		}
+	}
+	if err := os.Chmod(storage.Path, 0700); err != nil {
+		logger.Logger().Debugf("fail to chmod path %q, err :%v\n", storage.Path, err)
+		return nil, err
+	}
 	log := logger.Logger()
 	db := datasource.GetDB()
 	err := repo.UpdateStorage(storage, db)

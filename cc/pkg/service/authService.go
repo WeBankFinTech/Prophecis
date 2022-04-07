@@ -46,7 +46,7 @@ func UserStorageCheck(username string, path string) error {
 			return err
 		}
 		ids = *groupIds
-	}else{
+	} else {
 		logger.Logger().Debugf("UserStorageCheck saByName: %v", saByName)
 		if username == saByName.Name {
 			groupIds, err := repo.GetAllGroupIds()
@@ -105,9 +105,9 @@ func UserNamespaceCheck(username string, namespace string) (*models.UserNamespac
 	if userFromDB == nil || username != userFromDB.Name {
 		return nil, errors.New("user is not exist in db")
 	}
-	getNamespace, err := repo.GetNamespaceByName(namespace);
-	if  err != nil {
-		logger.Logger().Error("Get namespace by name err, ",err)
+	getNamespace, err := repo.GetNamespaceByName(namespace)
+	if err != nil {
+		logger.Logger().Error("Get namespace by name err, ", err)
 		return nil, err
 	}
 	if namespace != getNamespace.Namespace {
@@ -170,9 +170,9 @@ func UserStoragePathCheck(username string, namespace string, path string) error 
 	if userFromDB == nil || username != userFromDB.Name {
 		return errors.New("user is not exist in db")
 	}
-	getNamespace, err := repo.GetNamespaceByName(namespace);
-	if  err != nil {
-		logger.Logger().Error("Get namespace by name err, ",err)
+	getNamespace, err := repo.GetNamespaceByName(namespace)
+	if err != nil {
+		logger.Logger().Error("Get namespace by name err, ", err)
 		return err
 	}
 	if namespace != getNamespace.Namespace {
@@ -220,7 +220,6 @@ func UserStoragePathCheck(username string, namespace string, path string) error 
 		for _, groupNS := range groupNamespaceByGroupId {
 			if namespace == groupNS.Namespace {
 				return nil
-				break
 			}
 		}
 	}
@@ -284,8 +283,8 @@ func CheckNamespace(namespace string, admin string) (string, error) {
 	saByName, err := repo.GetSAByName(admin)
 	if err != nil {
 		getNamespace, err := repo.GetNamespaceByName(namespace)
-		if  err != nil {
-			logger.Logger().Error("Get namespace by name err, ",err)
+		if err != nil {
+			logger.Logger().Error("Get namespace by name err, ", err)
 			return "", err
 		}
 		if namespace != getNamespace.Namespace {
@@ -301,7 +300,7 @@ func CheckNamespace(namespace string, admin string) (string, error) {
 
 		roleByName, err := GetRoleByName(constants.ADMIN)
 		if err != nil {
-			logger.Logger().Error("GetRoles err, ",err)
+			logger.Logger().Error("GetRoles err, ", err)
 			return "", err
 		}
 		if constants.ADMIN != roleByName.Name {
@@ -332,7 +331,7 @@ func CheckNamespace(namespace string, admin string) (string, error) {
 				return constants.GU, nil
 			}
 		}
-	}else{
+	} else {
 		if admin == saByName.Name {
 			return "SA", nil
 		}
@@ -344,7 +343,6 @@ func CheckNamespaceUser(namespace string, admin string, username string) error {
 	err := CheckAdmin(namespace, admin, username)
 
 	if nil != err {
-		logger.Logger().Errorf("CheckNamespaceUser error:%v", err.Error())
 		return err
 	}
 
@@ -353,8 +351,13 @@ func CheckNamespaceUser(namespace string, admin string, username string) error {
 
 func CheckUserGetNamespace(admin string, username string) (*models.UserNoteBook, error) {
 	db := datasource.GetDB()
-	logger.Logger().Infof("1admin:%v,username:%v",admin,username)
 	var userNotebook *models.UserNoteBook
+	if admin == username {
+		userNotebook = &models.UserNoteBook{
+			Role: "SELF",
+		}
+		return userNotebook, nil
+	}
 
 	saByAdmin, err := repo.GetSAByName(username)
 	if err != nil {
@@ -367,42 +370,42 @@ func CheckUserGetNamespace(admin string, username string) (*models.UserNoteBook,
 		return userNotebook, nil
 	}
 
-	user,err := repo.GetUserByName(username,db)
+	user, err := repo.GetUserByName(username, db)
 	if err != nil {
-		logger.Logger().Errorf("GetUserByName error:%v",err.Error())
-		return nil,err
+		logger.Logger().Errorf("GetUserByName error:%v", err.Error())
+		return nil, err
 	}
-	groupIds,err := repo.GetGroupIdListByUserIdRoleId(user.ID,constants.GA_ID)
-	if err != nil{
-		logger.Logger().Errorf("GetGroupIdsByUserIds error:",err.Error())
-		return nil,err
+	groupIds, err := repo.GetGroupIdListByUserIdRoleId(user.ID, constants.GA_ID)
+	if err != nil {
+		logger.Logger().Errorf("GetGroupIdsByUserIds error:", err.Error())
+		return nil, err
 	}
 
-	groupNamespaceByGroupIds,err := repo.GetAllGroupNamespaceByGroupIds(*groupIds)
-	if err != nil{
-		logger.Logger().Errorf("groupNamespaceByGroupIds error:",err.Error())
-		return nil,err
+	groupNamespaceByGroupIds, err := repo.GetAllGroupNamespaceByGroupIds(*groupIds)
+	if err != nil {
+		logger.Logger().Errorf("groupNamespaceByGroupIds error:", err.Error())
+		return nil, err
 	}
 	var namespaces = common.NewStringSet()
 	for _, gn := range groupNamespaceByGroupIds {
 		namespaces.Add(gn.Namespace)
 	}
-	namespaceList :=  namespaces.SortList()
-	if len(*groupIds) == 1 && len(namespaceList) ==0{
+	namespaceList := namespaces.SortList()
+	if len(*groupIds) == 1 && len(namespaceList) == 0 {
 		userNotebook := models.UserNoteBook{
 			Role: "GU",
 		}
-		return &userNotebook,nil
+		return &userNotebook, nil
 	}
 	userNotebook = &models.UserNoteBook{
-		Role: "GA",
+		Role:       "GA",
 		Namespaces: namespaceList,
 	}
 
 	return userNotebook, nil
 }
 
-func CheckUserNotebook(namespace string, username string, notebook string) error {
+func CheckUserNotebook(namespace string, username string, notebookUser string, notebook string) error {
 	podList, err := manager.GetK8sApiClient().GetPodsByNS(namespace)
 
 	if nil != err {
@@ -433,4 +436,41 @@ func CheckUserNotebook(namespace string, username string, notebook string) error
 	}
 
 	return errors.New("auth failed")
+}
+
+func GetNotebookProxyUserAndUser(namespace string, name string) (string, string, error) {
+	envs, err := manager.GetK8sApiClient().GetPodEnvlByNSAndName(namespace, name+"-0")
+	var user string
+	var proxyUser string
+	var nbUser string
+	if err != nil {
+		return "", "", err
+	}
+	for _, env := range envs {
+		if env.Name == "CREATE_USER" {
+			user = env.Value
+		}
+		if env.Name == "PROXY_USER" {
+			proxyUser = env.Value
+		}
+		if env.Name == "NB_USER" {
+			nbUser = env.Value
+		}
+	}
+
+	//Fix Old Version Notebook
+	if user == "" {
+		user = nbUser
+	}
+
+	return user, proxyUser, nil
+}
+
+func GetMFServiceUser(namespace string, mfService string) (*string, error) {
+	sldp, err := manager.GetK8sApiClient().GetSeldonDeployment(namespace, mfService)
+	if err != nil {
+		return nil, err
+	}
+	user := sldp.Labels["MLSS-USER"]
+	return &user, nil
 }

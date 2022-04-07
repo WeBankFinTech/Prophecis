@@ -21,6 +21,7 @@ import (
 	"crypto/tls"
 	"mlss-controlcenter-go/pkg/controller"
 	mw "mlss-controlcenter-go/pkg/restapi/restapi/middleware"
+	"mlss-controlcenter-go/pkg/restapi/restapi/operations/proxy_user"
 	"net/http"
 
 	"github.com/go-openapi/errors"
@@ -66,6 +67,10 @@ func configureAPI(api *operations.MlssCcAPI) http.Handler {
 	api.GroupsAddGroupHandler = groups.AddGroupHandlerFunc(func(params groups.AddGroupParams) middleware.Responder {
 		return controller.AddGroup(params)
 	})
+	api.GroupsGetGroupByUsernameHandler = groups.GetGroupByUsernameHandlerFunc(func(params groups.GetGroupByUsernameParams) middleware.Responder {
+		return controller.GetGroupByUsername(params)
+	})
+
 	api.KeysAddKeyHandler = keys.AddKeyHandlerFunc(func(params keys.AddKeyParams) middleware.Responder {
 		return controller.AddKey(params)
 	})
@@ -216,6 +221,9 @@ func configureAPI(api *operations.MlssCcAPI) http.Handler {
 	api.AlertsReceiveTaskAlertHandler = alerts.ReceiveTaskAlertHandlerFunc(func(params alerts.ReceiveTaskAlertParams) middleware.Responder {
 		return controller.ReceiveTaskAlert(params)
 	})
+	api.AlertsPostAlertHandler = alerts.PostAlertHandlerFunc(func(params alerts.PostAlertParams) middleware.Responder {
+		return middleware.NotImplemented("operation AlertsPostAlert has not yet been implemented")
+	})
 	api.SamplesSampleGetHandler = samples.SampleGetHandlerFunc(func(params samples.SampleGetParams) middleware.Responder {
 		return controller.SampleGet(params)
 	})
@@ -261,6 +269,10 @@ func configureAPI(api *operations.MlssCcAPI) http.Handler {
 	api.NamespacesGetMyNamespaceHandler = namespaces.GetMyNamespaceHandlerFunc(func(params namespaces.GetMyNamespaceParams) middleware.Responder {
 		return controller.GetMyNamespace(params)
 	})
+	api.NamespacesListNamespaceByRoleNameAndUserNameHandler = namespaces.ListNamespaceByRoleNameAndUserNameHandlerFunc(
+		func(params namespaces.ListNamespaceByRoleNameAndUserNameParams) middleware.Responder {
+			return controller.ListNamespaceByRoleAndUserName(params)
+		})
 	api.RolesUpdateRoleHandler = roles.UpdateRoleHandlerFunc(func(params roles.UpdateRoleParams) middleware.Responder {
 		return controller.UpdateRole(params)
 	})
@@ -293,6 +305,46 @@ func configureAPI(api *operations.MlssCcAPI) http.Handler {
 	})
 	api.LoginsGetRsaPubKeyHandler = logins.GetRsaPubKeyHandlerFunc(func(params logins.GetRsaPubKeyParams) middleware.Responder {
 		return controller.GetRsaPubKey(params)
+	})
+	api.AuthsCheckGroupByUserHandler = auths.CheckGroupByUserHandlerFunc(func(params auths.CheckGroupByUserParams) middleware.Responder {
+		return controller.CheckGroupByUser(params)
+	})
+	api.GroupsGetUserGroupsHandler = groups.GetUserGroupsHandlerFunc(func(params groups.GetUserGroupsParams) middleware.Responder {
+		return controller.GetUserGroups(params)
+	})
+	api.ProxyUserAddProxyUserHandler = proxy_user.AddProxyUserHandlerFunc(func(params proxy_user.AddProxyUserParams) middleware.Responder {
+		return controller.AddProxyUser(params)
+	})
+	api.ProxyUserDeleteProxyUserHandler = proxy_user.DeleteProxyUserHandlerFunc(func(params proxy_user.DeleteProxyUserParams) middleware.Responder {
+		return controller.DeleteProxyUser(params)
+	})
+	api.ProxyUserUpdateProxyUserHandler = proxy_user.UpdateProxyUserHandlerFunc(func(params proxy_user.UpdateProxyUserParams) middleware.Responder {
+		return controller.UpdateProxyUser(params)
+	})
+	api.ProxyUserGetProxyUserHandler = proxy_user.GetProxyUserHandlerFunc(func(params proxy_user.GetProxyUserParams) middleware.Responder {
+		return controller.GetProxyUser(params)
+	})
+	api.ProxyUserListProxyUserHandler = proxy_user.ListProxyUserHandlerFunc(func(params proxy_user.ListProxyUserParams) middleware.Responder {
+		return controller.ProxyUserList(params)
+	})
+	api.ProxyUserGetProxyUserByUserIDHandler = proxy_user.GetProxyUserByUserIDHandlerFunc(func(params proxy_user.GetProxyUserByUserIDParams) middleware.Responder {
+		return controller.GetProxyUserByUser(params)
+	})
+	api.AuthsCheckResourceHandler = auths.CheckResourceHandlerFunc(func(params auths.CheckResourceParams) middleware.Responder {
+		return controller.CheckResource(params)
+	})
+	api.AuthsCheckURLAccessHandler = auths.CheckURLAccessHandlerFunc(func(params auths.CheckURLAccessParams) middleware.Responder {
+		return controller.CheckURLAccess(params)
+	})
+	api.UsersGetUserTokenHandler = users.GetUserTokenHandlerFunc(func(params users.GetUserTokenParams) middleware.Responder {
+		return controller.GetUserToken(params)
+	})
+	api.ProxyUserProxyUserCheckHandler = proxy_user.ProxyUserCheckHandlerFunc(func(params proxy_user.ProxyUserCheckParams) middleware.Responder {
+		return controller.ProxyUserCheck(params)
+	})
+	api.AuthsCheckMLFlowResourceAccessHandler = auths.CheckMLFlowResourceAccessHandlerFunc(
+		func(params auths.CheckMLFlowResourceAccessParams) middleware.Responder{
+		return 	controller.CheckMLFlowResource(params)
 	})
 	api.ServerShutdown = func() {}
 

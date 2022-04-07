@@ -26,24 +26,24 @@ import (
 	"mlss-controlcenter-go/pkg/restapi/restapi/operations/users"
 	"mlss-controlcenter-go/pkg/service"
 	"net/http"
-	"strconv"
 )
 
 func GetAllUsers(params users.GetAllUsersParams) middleware.Responder {
 	page := *params.Page
 	size := *params.Size
-	err := common.CheckPageParams(page, size)
-	if nil != err {
-		return ResponderFunc(http.StatusBadRequest, "failed to check for page and size", err.Error())
+	error := common.CheckPageParams(page, size)
+	if nil != error {
+		return ResponderFunc(http.StatusBadRequest, "failed to check for page and size", error.Error())
 	}
 
 	logger.Logger().Debugf("v1/users GetAllUsers params page: %v, size: %v", page, size)
 
-	pageUsers, err := service.GetAllUsers(page, size)
-	if err != nil {
-		return ResponderFunc(http.StatusInternalServerError, "failed to GetAllUsers", err.Error())
+	pageUsers, error := service.GetAllUsers(page, size)
+	if nil != error {
+		return ResponderFunc(http.StatusBadRequest, "failed to GetAllUsers", error.Error())
 	}
-	marshal, marshalErr := json.Marshal(*pageUsers)
+	marshal, marshalErr := json.Marshal(pageUsers)
+
 	return GetResult(marshal, marshalErr)
 }
 
@@ -110,18 +110,27 @@ func AddUser(params users.AddUserParams) middleware.Responder {
 		return ResponderFunc(http.StatusBadRequest, "failed to add user", userCheckError.Error())
 	}
 	userRequest := *params.User
-	userByUID, err := service.GetUserByUID(userRequest.UID)
-	var repoUser *models.User
+
+	existed, err := service.IfUserIdExisted(userRequest.UID)
 	if err != nil {
-		repoUser, err = service.AddUser(userRequest)
-		if nil != err {
-			return ResponderFunc(http.StatusInternalServerError, "failed to add user", err.Error())
+		logger.Logger().Error("Check UserID is Existed Error: ", err.Error())
+	}
+	if existed {
+		userByUID, err := service.GetUserByUID(userRequest.UID)
+		if err != nil {
+			logger.Logger().Error("GetUserByUID Error: ", err.Error())
 		}
-	}else{
-		if userByUID.Name != userRequest.Name && userByUID.UID == userRequest.UID {
+
+		if userByUID.EnableFlag != 1 {
 			return ResponderFunc(http.StatusBadRequest, "failed to add user", "the uid has been assigned")
 		}
 	}
+
+	repoUser, addUserErr := service.AddUser(userRequest)
+	if nil != addUserErr {
+		return ResponderFunc(http.StatusInternalServerError, "failed to add user", addUserErr.Error())
+	}
+
 	marshal, marshalErr := json.Marshal(repoUser)
 	return GetResult(marshal, marshalErr)
 }
@@ -146,22 +155,10 @@ func UpdateUser(params users.UpdateUserParams) middleware.Responder {
 	if userRequest.Name != userByUserName.Name {
 		return ResponderFunc(http.StatusBadRequest, "failed to update user", "The user id and name do not match")
 	}
-	var repoUser *models.User
-	user, err := service.GetUserByUserId(userRequest.ID)
+
+	repoUser, err := service.UpdateUser(userRequest)
 	if err != nil {
-		return ResponderFunc(http.StatusBadRequest, "failed to update user", "Get user failed, " + err.Error())
-	}
-	_, err = service.GetUserByUID(userRequest.UID)
-	if err != nil {
-		if userRequest.UID != user.UID {
-			logger.Logger().Debugf("UpdateUser userRequest: %v", userRequest)
-			repoUser, err = service.UpdateUser(userRequest)
-			if err != nil {
-				return ResponderFunc(http.StatusBadRequest, "failed to update user", err.Error())
-			}
-		}
-	}else{
-		return ResponderFunc(http.StatusBadRequest,"failed to update user", "UID" + strconv.Itoa(int(userRequest.UID)) + " exist in db")
+		return ResponderFunc(http.StatusBadRequest, "failed to update user", err.Error())
 	}
 	marshal, marshalErr := json.Marshal(repoUser)
 	return GetResult(marshal, marshalErr)
@@ -172,9 +169,8 @@ func GetUserByUserId(params users.GetUserByUserIDParams) middleware.Responder {
 
 	user, err := service.GetUserByUserId(userId)
 	if err != nil {
-		return ResponderFunc(http.StatusInternalServerError, "failed to GetUserByUserId:%v", err.Error())
+		return ResponderFunc(http.StatusBadRequest, "failed to get user by id", "user is not exist in db"+err.Error())
 	}
-
 	if userId != user.ID {
 		return ResponderFunc(http.StatusBadRequest, "failed to get user by id", "user is not exist in db")
 	}
@@ -287,9 +283,10 @@ func GetSessionByContext(request *http.Request) *models.SessionUser {
 		user := models.SessionUser{UserName: userName}
 		return &user
 	}
+	logger.Logger().Info("Token：", request.Header.Get(constants.AUTH_HEADER_TOKEN))
 	logger.Logger().Debugf("AUTH TYPE: %v", request.Context())
 	sessionUser := request.Context().Value(request.Header.Get(constants.AUTH_HEADER_TOKEN))
-	logger.Logger().Debugf("get sessionUser from context:", request.Header.Get(constants.AUTH_HEADER_AUTH_TYPE))
+	logger.Logger().Debugf("get sessionUser from context: %v\n", request.Header.Get(constants.AUTH_HEADER_AUTH_TYPE))
 	if nil != sessionUser {
 		return sessionUser.(*models.SessionUser)
 	}
@@ -298,5 +295,14 @@ func GetSessionByContext(request *http.Request) *models.SessionUser {
 }
 
 func FailedToGetUserByToken() middleware.Responder {
-	return ResponderFunc(http.StatusForbidden, "failed to access", "token is empty or invalid")
+	return ResponderFunc(http.StatusUnauthorized, "failed to access", "token is empty or invalid")
+}
+
+func GetUserToken(params users.GetUserTokenParams) middleware.Responder {
+	headerToken := params.HTTPRequest.Header.Get(constants.AUTH_HEADER_TOKEN)
+	user := params.HTTPRequest.Header.Get(constants.AUTH_HEADER_USERID)
+	logger.Logger().Infof("CheckURLAccess token: %v, url:%v ", headerToken, user)
+	result := models.TokenMsg{User: user, Token: headerToken}
+	marshal, marshalErr := json.Marshal(result)
+	return GetResult(marshal, marshalErr)
 }
