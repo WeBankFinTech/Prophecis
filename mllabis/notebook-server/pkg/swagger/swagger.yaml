@@ -78,12 +78,62 @@ paths:
           description: Notebook create failed
           schema:
             $ref: '#/definitions/Error'
+#    patch:
+#      summary: Patch a Notebook in the given Namesapce, Update Yarn Resource Setting
+#      description: Post Notebooks.
+#      operationId: PatchNamespacedNotebook
+#      parameters:
+#        - name: namespace
+#          in: path
+#          required: true
+#          type: string
+#          format: string
+#        - in: body
+#          name: notebook
+#          description: The Patch Notebook Request
+#          required: true
+#          schema:
+#            $ref: '#/definitions/PatchNotebookRequest'
+#      responses:
+#        200:
+#          description: OK
+#        401:
+#          description: Unauthorized
+#          schema:
+#            $ref: '#/definitions/Error'
+#        404:
+#          description: Notebook create failed
+#          schema:
+#            $ref: '#/definitions/Error'
+
+  /aide/v1/notebooks/{id}:
+    delete:
+      summary: Delete a Notebook in the given id
+      description: Delete Notebook.
+      operationId: deleteNotebookById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+          format: string
+      responses:
+        200:
+          description: OK
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Notebook cannot be found
+          schema:
+            $ref: '#/definitions/Error'
     patch:
       summary: Patch a Notebook in the given Namesapce, Update Yarn Resource Setting
       description: Post Notebooks.
       operationId: PatchNamespacedNotebook
       parameters:
-        - name: namespace
+        - name: id
           in: path
           required: true
           type: string
@@ -105,19 +155,13 @@ paths:
           description: Notebook create failed
           schema:
             $ref: '#/definitions/Error'
-
-  /aide/v1/namespaces/{namespace}/notebooks/{notebook}:
-    delete:
-      summary: Delete a Notebook in the given Namespace
-      description: Delete Notebook.
-      operationId: deleteNamespacedNotebook
+  /aide/v1/notebooks/{id}/start:
+    post:
+      summary: start a Notebook, request information from mongo
+      description: Post Notebooks.
+      operationId: startNotebookById
       parameters:
-        - name: namespace
-          in: path
-          required: true
-          type: string
-          format: string
-        - name: notebook
+        - name: id
           in: path
           required: true
           type: string
@@ -125,6 +169,94 @@ paths:
       responses:
         200:
           description: OK
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Notebook create failed
+          schema:
+            $ref: '#/definitions/Error'
+  /aide/v1/notebooks/{id}/stop:
+    delete:
+      summary: stop a Notebook, request information from mongo
+      description: stop Notebooks.
+      operationId: stopNotebookById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+          format: string
+      responses:
+        200:
+          description: OK
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Notebook create failed
+          schema:
+            $ref: '#/definitions/Error'
+  /aide/v1/notebooks/{id}/status:
+    get:
+      summary: Get the status of Notebooks in the given Namespace
+      description: Get Notebook status.
+      operationId: getNamespacedNotebookStatus
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+          format: string
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/GetNotebookStatusResponse'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Notebook cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+  /aide/v1/namespaces/{namespace}/notebooks/{notebook_name}/log:
+    get:
+      summary: Get log of notebook in the given namespace
+      description: Get notebook log.
+      operationId: getNamespacedNotebookLog
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          type: string
+          format: string
+        - name: notebook_name
+          in: path
+          required: true
+          type: string
+          format: string
+        - in: query
+          name: currentPage
+          type: integer
+          default: 1
+        - in: query
+          name: pageSize
+          type: integer
+          default: 10
+        - in: query
+          name: asc
+          type: boolean
+          default: false
+          description: whether sort by time  in asc, default false (desc).
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/GetNotebookLogResponse'
         401:
           description: Unauthorized
           schema:
@@ -222,6 +354,33 @@ paths:
           description: The Notebook cannot be found
           schema:
             $ref: '#/definitions/Error'
+  /aide/v1/notebook/user/{Namespace}/{Name}:
+    get:
+      summary: Get user of notebook.
+      description: Get user of notebook.
+      operationId: getNotebookUser
+      parameters:
+        - name: Namespace
+          in: path
+          type: string
+          required: true
+        - name: Name
+          in: path
+          type: string
+          required: true
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/GetNotebookUserResponse'
+        403:
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The dashboard cannot be found
+          schema:
+            $ref: '#/definitions/Error'
   /aide/v1/dashboards:
     get:
       summary: Get the dashboard belongs to a User
@@ -260,6 +419,9 @@ definitions:
       namespace:
         type: string
         description: Kubernetes Namespace where notebook will be created
+      proxyUser:
+        type: string
+        description: Proxy User of Notebook.
       image:
         $ref: '#/definitions/Image'
       cpu:
@@ -292,6 +454,11 @@ definitions:
       driverMemory:
         type: string
         description: User driver memory in BDAP Yarn Cluster
+      sparkSessionNum:
+        type: number
+        format: int
+        default: 0
+        description: The number of spark session
     required:
       - name
       - namespace
@@ -398,9 +565,20 @@ definitions:
       cpus:
         type: string
         description: number of cpu.
+  GetNotebookUserResponse:
+    type: object
+    properties:
+      User:
+        type: string
+        description: Create User of Notebook.
+      ProxyUser:
+        type: string
+        description: Proxy User of Notebook.
   Notebook:
     type: object
     properties:
+      id:
+        type: string
       name:
         type: string
         description: Notebook name
@@ -410,6 +588,9 @@ definitions:
       namespace:
         type: string
         description: Namesapce where notebook has been created
+      proxyUser:
+        type: string
+        description: Proxy User of Notebook.
       cpu:
         type: string
         description: CPU used
@@ -464,6 +645,11 @@ definitions:
       driverMemory:
         type: string
         description: User driver memory in BDAP Yarn Cluster
+      sparkSessionNum:
+        type: number
+        format: int
+        default: 0
+        description: The number of spark session
   Error:
     type: object
     properties:
@@ -477,12 +663,12 @@ definitions:
   PatchNotebookRequest:
     type: object
     properties:
-      name:
-        type: string
-        description: Notebook name
-      namespace:
-        type: string
-        description: Namesapce where notebook has been created
+#      name:
+#        type: string
+#        description: Notebook name
+#      namespace:
+#        type: string
+#        description: Namesapce where notebook has been created
       queue:
         type: string
         description: BDAP Yarn Queue Setting
@@ -498,6 +684,157 @@ definitions:
       driverMemory:
         type: string
         description: User driver memory in BDAP Yarn Cluster
+      sparkSessionNum:
+        type: number
+        format: int
+        default: 0
+        description: The number of spark session
+      cpu:
+        type: number
+        format: float64
+        default: 0
+      memoryAmount:
+        type: number
+        format: float64
+        default: 0
+      memoryUnit:
+        type: string
+        default: "Mi"
+      extraResources:
+        type: string
+      imageName:
+        type: string
+      imageType:
+        type: string
+#    required:
+#      - namespace
+#      - name
+  GetNotebookStatusResponse:
+    type: object
+    properties:
+      name:
+        type: string
+        description: Notebook name
+      namespace:
+        type: string
+        description: Namesapce where notebook has been created
+      resource_req:
+        type: object
+        $ref: '#/definitions/Resource'
+        description: Notebook request resource
+      resource_limit:
+        type: object
+        $ref: '#/definitions/Resource'
+        description: Rsource that Notebook limted
+      image:
+        type: string
+        description: Docker Image used
+#      srtImage:
+#        type: string
+#        description: Image short name
+      create_time:
+        type: string
+        description: Notebook create time
+      notebook_status:
+        type: string
+        description: Notebook status
+      notebook_status_info:
+        type: string
+        description: The information that trigger notebook status, consist of Container State
+      containers_status_info:
+        type: array
+        items:
+          $ref: '#/definitions/ContainerStatusInfo'
+        description: The information of notebook containers status
+  ContainerStatusInfo:
+    type: object
+    properties:
+      container_name:
+        type: string
+        description: container name
+      namespace:
+        type: string
+        description: container namespace
+      containerId:
+        type: string
+        description: container id
+      startedTime:
+        type: string
+      fineshedTime:
+        type: string
+      containerStatusType:
+        type: string
+        description: this container status type
+      message:
+        type: string
+      lastStartedTime:
+        type: string
+      lastFinishedTime:
+        type: string
+      lastContainerStateType:
+        type: string
+      lastMessage:
+        type: string
+  Resource:
+    type: object
+    properties:
+      cpu:
+        type: string
+        description: CPU
+      gpu:
+        type: string
+        description: GPU
+      memory:
+        type: string
+        description: Memory
+  GetNotebookLogResponse:
+    type: object
+    properties:
+      total:
+        type: integer
+        format: int64
+      log_list:
+        type: array
+        items:
+          $ref: '#/definitions/NotebookLog'
+        description: Notebook log info list.
     required:
-      - namespace
-      - name
+      - total
+  NotebookLog:
+    type: object
+    properties:
+      log:
+        type: string
+  # NotebookLog:
+  #   type: object
+  #   properties:
+  #     pod_name:
+  #       type: string
+  #     container_name:
+  #       type: string
+  #     stream:
+  #       type: string
+  #     time:
+  #       type: string
+  #     ns:
+  #       type: string
+  #     log:
+  #       type: object
+  #       $ref: '#/definitions/Log'
+  # Log:
+  #   type: object
+  #   properties:
+  #     level:
+  #       type: string
+  #     ts:
+  #       type: number
+  #       format: double
+  #       description: timestamps
+  #     logger:
+  #       type: string
+  #     msg:
+  #       type: string
+  #     error:
+  #       type: string
+  #     stacktrace:
+  #       type: string
