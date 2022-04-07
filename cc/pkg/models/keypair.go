@@ -32,6 +32,9 @@ type Keypair struct {
 
 	// the secretKey
 	SecretKey string `json:"secretKey,omitempty"`
+
+	// the secretKey
+	SuperAdmin int64 `json:"superAdmin,omitempty"`
 }
 
 // Validate validates this keypair

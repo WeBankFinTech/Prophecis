@@ -43,15 +43,15 @@ func GetUserByUsername(name string, db *gorm.DB) (*models.User, error) {
 	return &user, err
 }
 
-func GetUserByName(name string, db *gorm.DB, ) (*models.User, error) {
+func GetUserByName(name string, db *gorm.DB) (*models.User, error) {
 	var user models.User
 	err := db.Find(&user, "name = ? AND enable_flag = ?", name, 1).Error // find product with id 1
 	return &user, err
 }
 
-func IsUserInDB(name string, db *gorm.DB, ) (int64, error) {
+func IsUserInDB(name string, db *gorm.DB) (int64, error) {
 	var count int64
-	err := db.Table("t_user").Where("name = ? AND enable_flag = ?", name,1).Count(&count).Error
+	err := db.Table("t_user").Where("name = ? AND enable_flag = ?", name, 1).Count(&count).Error
 	return count, err
 }
 
@@ -99,6 +99,12 @@ func GetUserByUID(uid int64) (models.User, error) {
 	var user models.User
 	err := datasource.GetDB().Find(&user, "uid = ?", uid).Error // find product with id 1
 	return user, err
+}
+
+func CountUserByUID(uid int64) (int, error) {
+	var count int
+	err := datasource.GetDB().Table("t_user").Where("uid = ?", uid).Count(&count).Error // find product with id 1
+	return count, err
 }
 
 func GetSAByName(username string) (models.Superadmin, error) {

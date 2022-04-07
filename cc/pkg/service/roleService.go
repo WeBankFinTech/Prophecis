@@ -28,16 +28,16 @@ func GetRoles() ([]*models.Role, error) {
 func AddRole(role models.Role) (models.Role, error) {
 	err := repo.AddRole(role)
 	if err != nil {
-		logger.Logger().Error("Add role err, ",err)
+		logger.Logger().Error("Add role err, ", err)
 		return models.Role{}, err
 	}
 	return repo.GetRoleByName(role.Name)
 }
 
-func UpdateRole(role models.Role) (models.Role,error) {
+func UpdateRole(role models.Role) (models.Role, error) {
 	err := repo.UpdateRole(role)
 	if err != nil {
-		logger.Logger().Error("Update role err, ",err)
+		logger.Logger().Error("Update role err, ", err)
 		return models.Role{}, err
 	}
 	return repo.GetRoleById(role.ID)

@@ -29,7 +29,7 @@ import (
 func GetRoles(params roles.GetRolesParams) middleware.Responder {
 	r, err := service.GetRoles()
 	if err != nil {
-		logger.Logger().Error("GetRoles err, ",err)
+		logger.Logger().Error("GetRoles err, ", err)
 		return ResponderFunc(http.StatusBadRequest, err.Error(), err.Error())
 	}
 	marshal, marshalErr := json.Marshal(r)
@@ -42,30 +42,30 @@ func AddRole(params roles.AddRoleParams) middleware.Responder {
 
 	roleByName, err := service.GetRoleByName(roleRequest.Name)
 	if err != nil {
-		logger.Logger().Error("AddRole err, ",err)
+		logger.Logger().Error("AddRole err, ", err)
 		return ResponderFunc(http.StatusBadRequest, err.Error(), err.Error())
 	}
 	if roleRequest.Name == roleByName.Name {
 		return ResponderFunc(http.StatusBadRequest, "failed to add role to db", "role is exist in db")
 	}
 
-	deleteRoleByName,err := service.GetDeleteRoleByName(roleRequest.Name)
+	deleteRoleByName, err := service.GetDeleteRoleByName(roleRequest.Name)
 	if err != nil {
-		logger.Logger().Error("DeleteRole err, ",err)
+		logger.Logger().Error("DeleteRole err, ", err)
 		return ResponderFunc(http.StatusBadRequest, err.Error(), err.Error())
 	}
 	var role models.Role
 	if roleRequest.Name == deleteRoleByName.Name {
 		roleRequest.ID = deleteRoleByName.ID
-		role,err = service.UpdateRole(roleRequest)
+		role, err = service.UpdateRole(roleRequest)
 		if err != nil {
-			logger.Logger().Error("UpdateRole err, ",err)
+			logger.Logger().Error("UpdateRole err, ", err)
 			return ResponderFunc(http.StatusBadRequest, err.Error(), err.Error())
 		}
 	} else {
-		role,err = service.AddRole(roleRequest)
+		role, err = service.AddRole(roleRequest)
 		if err != nil {
-			logger.Logger().Error("AddRole err, ",err)
+			logger.Logger().Error("AddRole err, ", err)
 			return ResponderFunc(http.StatusBadRequest, err.Error(), err.Error())
 		}
 	}
@@ -78,18 +78,18 @@ func AddRole(params roles.AddRoleParams) middleware.Responder {
 func UpdateRole(params roles.UpdateRoleParams) middleware.Responder {
 	roleRequest := common.FromUpdateRoleRequest(params)
 
-	roleById,err := service.GetRoleById(roleRequest.ID)
+	roleById, err := service.GetRoleById(roleRequest.ID)
 	if err != nil {
-		logger.Logger().Error("GetRoles err, ",err)
+		logger.Logger().Error("GetRoles err, ", err)
 		return ResponderFunc(http.StatusBadRequest, err.Error(), err.Error())
 	}
 	if roleRequest.ID != roleById.ID {
 		return ResponderFunc(http.StatusBadRequest, "failed to update role to db", "role is not exist in db")
 	}
 
-	role,err := service.UpdateRole(roleRequest)
+	role, err := service.UpdateRole(roleRequest)
 	if err != nil {
-		logger.Logger().Error("UpdateRole err, ",err)
+		logger.Logger().Error("UpdateRole err, ", err)
 		return ResponderFunc(http.StatusBadRequest, err.Error(), err.Error())
 	}
 	marshal, marshalErr := json.Marshal(role)
@@ -100,9 +100,9 @@ func UpdateRole(params roles.UpdateRoleParams) middleware.Responder {
 func GetRoleById(params roles.GetRoleByIDParams) middleware.Responder {
 	id := params.ID
 
-	roleById,err := service.GetRoleById(id)
+	roleById, err := service.GetRoleById(id)
 	if err != nil {
-		logger.Logger().Error("GetRoleById err, ",err)
+		logger.Logger().Error("GetRoleById err, ", err)
 		return ResponderFunc(http.StatusBadRequest, err.Error(), err.Error())
 	}
 	if id != roleById.ID {
@@ -117,9 +117,9 @@ func GetRoleById(params roles.GetRoleByIDParams) middleware.Responder {
 func GetRoleByName(params roles.GetRoleByNameParams) middleware.Responder {
 	name := params.Name
 
-	roleByName,err := service.GetRoleByName(name)
+	roleByName, err := service.GetRoleByName(name)
 	if err != nil {
-		logger.Logger().Error("GetRoleByName err, ",err)
+		logger.Logger().Error("GetRoleByName err, ", err)
 		return ResponderFunc(http.StatusBadRequest, err.Error(), err.Error())
 	}
 	if name != roleByName.Name {

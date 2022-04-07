@@ -33,7 +33,6 @@ func IpInterceptor() gin.HandlerFunc {
 
 		//check path
 		if common.CheckPattern(constants.IpInterceptor, c.Request.RequestURI) {
-
 			logger.Logger().Infof("check ip addr in IpInterceptor")
 		}
 		//next interceptor
