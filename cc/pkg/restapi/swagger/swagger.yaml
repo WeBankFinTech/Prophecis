@@ -119,6 +119,28 @@ paths:
           description: Model with the given ID not found.
           schema:
             $ref: '#/definitions/Error'
+  /cc/v1/users/token:
+    get:
+      tags:
+        - Users
+      summary: Returns a user.
+      description: Optional extended description in Markdown.
+      operationId: GetUserToken
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Detailed User and User information.
+          schema:
+            $ref: '#/definitions/TokenMsg'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model with the given ID not found.
+          schema:
+            $ref: '#/definitions/Error'
   /cc/v1/LDAPlogin:
     post:
       tags:
@@ -360,6 +382,13 @@ paths:
       operationId: GetMyUsers
       produces:
         - application/json
+      parameters:
+        - name: clusterName
+          in: query
+          description: clusterName.
+          required: false
+          type: string
+          default: ""
       responses:
         200:
           description: Detailed User and User information.
@@ -584,6 +613,34 @@ paths:
           schema:
             $ref: '#/definitions/Error'
 
+  /cc/v1/groups/username/{username}:
+    get:
+      tags:
+        - Groups
+      summary: Returns a Group.
+      description: Optional extended description in Markdown.
+      operationId: GetGroupByUsername
+      produces:
+        - application/json
+      parameters:
+        - name: username
+          in: path
+          description: the username of group
+          required: true
+          type: string
+      responses:
+        200:
+          description: Detailed Group and Group information.
+          schema:
+            $ref: '#/definitions/Group'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model with the given ID not found.
+          schema:
+            $ref: '#/definitions/Error'
   /cc/v1/groups/users:
     post:
       tags:
@@ -685,7 +742,34 @@ paths:
           description: Model with the given ID not found.
           schema:
             $ref: '#/definitions/Error'
-
+  /cc/v1/auth/access/usergroups/{userName}:
+    get:
+      tags:
+        - Groups
+      summary: Returns userGroups.
+      description: Optional extended description in Markdown.
+      operationId: GetUserGroups
+      parameters:
+        - name: userName
+          in: path
+          description: the userId of userGroups
+          required: true
+          type: string
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Detailed userGroup and userGroup information.
+          schema:
+            $ref: '#/definitions/UserGroups'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model with the given ID not found.
+          schema:
+            $ref: '#/definitions/Error'
   /cc/v1/groups/userGroup/user/{userId}/group/{groupId}:
     get:
       tags:
@@ -1440,6 +1524,39 @@ paths:
           schema:
             $ref: '#/definitions/Error'
 
+  /cc/v1/namespaces/role/{roleName}/user/{userName}:
+    get:
+      tags:
+        - Namespaces
+      summary: Returns a namespace list.
+      description: Optional extended description in Markdown.
+      operationId: ListNamespaceByRoleNameAndUserName
+      produces:
+        - application/json
+      parameters:
+        - name: roleName
+          in: path
+          description: the name of role
+          required: true
+          type: string
+        - name: userName
+          in: path
+          description: the name of user
+          required: true
+          type: string
+      responses:
+        200:
+          description: get namespace by role name and user name.
+          schema:
+            $ref: '#/definitions/ListNamespaceByRolenameAndUserNameResp'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model with the given ID not found.
+          schema:
+            $ref: '#/definitions/Error'
   /cc/v1/namespaces/myNamespace:
     get:
       tags:
@@ -1940,7 +2057,6 @@ paths:
           description: url to add namespace not found.
           schema:
             $ref: '#/definitions/Error'
-
   /cc/v1/auth/access/admin/namespaces/{namespace}:
     get:
       tags:
@@ -2003,6 +2119,61 @@ paths:
           description: url to add namespace not found.
           schema:
             $ref: '#/definitions/Error'
+  /cc/v1/auth/access:
+    get:
+      tags:
+        - Auths
+      summary: Use in Model Perditct， Auth If User Access to this service
+      description: Use in Model Perditct， Auth If User Access to this service
+      operationId: CheckURLAccess
+      produces:
+        - application/json
+      responses:
+        200:
+          description: auth by namespace and notebook.
+          schema:
+            $ref: '#/definitions/Result'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add namespace not found.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /cc/v1/auth/access/mlflow/uri/{request_uri}:
+    get:
+      tags:
+        - Auths
+      summary: Use
+      description: Use in MLFlow Resource Check
+      operationId: CheckMLFlowResourceAccess
+      produces:
+        - application/json
+      parameters:
+        - name: request_uri
+          in: path
+          description: request_uri.
+          required: true
+          type: string
+      responses:
+        200:
+          description: auth by namespace and notebook.
+          schema:
+            $ref: '#/definitions/Result'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        403:
+          description: Forbiddent
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add namespace not found.
+          schema:
+            $ref: '#/definitions/Error'
 
   /cc/v1/groups/users/roles/{roleId}/namespaces/clusterName/{clusterName}:
     get:
@@ -2038,7 +2209,35 @@ paths:
           description: url to add namespace not found.
           schema:
             $ref: '#/definitions/Error'
-
+  /cc/v1/alerts:
+    post:
+      tags:
+        - Alerts
+      summary: alert to ims
+      description: alert to ims
+      operationId: PostAlert
+      produces:
+        - application/json
+#      parameters:
+#        - in: body
+#          name: PostAlertRequest
+#          description: The alert of job Request
+#          required: true
+#          schema:
+#            $ref: '#/definitions/PostAlertRequest'
+      responses:
+        200:
+          description: alert to ims success.
+          schema:
+            $ref: '#/definitions/Result'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to alert not found.
+          schema:
+            $ref: '#/definitions/Error'
   /cc/v1/alerts/training:
     post:
       tags:
@@ -2126,7 +2325,34 @@ paths:
           description: url to add role not found.
           schema:
             $ref: '#/definitions/Error'
-
+  /cc/v1/auth/access/group/{userId}:
+    get:
+      tags:
+        - Auths
+      summary: auth group by userId .
+      description: Optional extended description in Markdown.
+      operationId: CheckGroupByUser
+      produces:
+        - application/json
+      parameters:
+        - name: userId
+          in: path
+          description: userId.
+          required: true
+          type: string
+      responses:
+        200:
+          description: auth group.
+          schema:
+            $ref: '#/definitions/Result'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: not found.
+          schema:
+            $ref: '#/definitions/Error'
   /cc/v1/auth/access/admin/users/{username}:
     get:
       tags:
@@ -2147,6 +2373,47 @@ paths:
           description: auth by namespace.
           schema:
             $ref: '#/definitions/Result'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add namespace not found.
+          schema:
+            $ref: '#/definitions/Error'
+  /cc/v1/auth/access/{namespace}/checkresource:
+    get:
+      tags:
+        - Auths
+      summary: Check resource
+      description: Check resource
+      operationId: checkResource
+      produces:
+        - application/json
+      parameters:
+        - name: namespace
+          in: path
+          description: namespace.
+          required: true
+          type: string
+        - name: cpu
+          in: query
+          description: Cpu.
+          required: true
+          type: string
+        - name: gpu
+          in: query
+          description: Gpu.
+          required: true
+          type: string
+        - name: memory
+          in: query
+          description: Memory.
+          required: true
+          type: string
+      responses:
+        200:
+          description: ok
         401:
           description: Unauthorized
           schema:
@@ -2343,7 +2610,322 @@ paths:
           schema:
             $ref: '#/definitions/Error'
 
+  /cc/v1/proxyUser:
+    post:
+      tags:
+        - proxyUser
+      summary: add proxyUser to User .
+      description: Optional extended description in Markdown.
+      operationId: AddProxyUser
+      parameters:
+        - in: body
+          name: keyPair
+          description: The alert of job Request
+          required: true
+          schema:
+            $ref: '#/definitions/ProxyUserPost'
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Post Proxy User Success.
+          schema:
+            $ref: '#/definitions/Result'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add keyPair not found.
+          schema:
+            $ref: '#/definitions/Error'
+  /cc/v1/proxyUser/{id}:
+    get:
+      tags:
+        - proxyUser
+      summary: get ProxyUser Details .
+      description: Optional extended description in Markdown.
+      operationId: getProxyUser
+      parameters:
+        - in: path
+          name: id
+          description: The name of proxy user
+          type: integer
+          required: true
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Proxy User.
+          schema:
+            $ref: '#/definitions/ProxyUser'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add keyPair not found.
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      tags:
+        - proxyUser
+      summary: delete ProxyUser.
+      description: Optional extended description in Markdown.
+      operationId: DeleteProxyUser
+      parameters:
+        - in: path
+          name: id
+          description: The name of proxy user
+          type: integer
+          required: true
+      produces:
+        - application/json
+      responses:
+        200:
+          description: keyPair interceptor.
+          schema:
+            $ref: '#/definitions/Result'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add keyPair not found.
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      tags:
+        - proxyUser
+      summary: delete ProxyUser.
+      description: Optional extended description in Markdown.
+      operationId: UpdateProxyUser
+      parameters:
+        - in: path
+          name: id
+          description: The name of proxy user
+          type: integer
+          required: true
+        - in: body
+          name: proxyUser
+          description: proxy update entity.
+          schema:
+            $ref: '#/definitions/ProxyUserPut'
+      produces:
+        - application/json
+      responses:
+        200:
+          description: keyPair interceptor.
+          schema:
+            $ref: '#/definitions/Result'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add keyPair not found.
+          schema:
+            $ref: '#/definitions/Error'
+  /cc/v1/proxyUsers/{user}:
+    get:
+      tags:
+        - proxyUser
+      summary: list proxy user.
+      description: Optional extended description in Markdown.
+      operationId: ListProxyUser
+      parameters:
+        - in: path
+          type: string
+          name: user
+          description: The alert of job Request
+          required: true
+      produces:
+        - application/json
+      responses:
+        200:
+          description: keyPair interceptor.
+          schema:
+            $ref: '#/definitions/ProxyUsers'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add keyPair not found.
+          schema:
+            $ref: '#/definitions/Error'
+  /cc/v1/proxyUser/{name}/user/{userName}:
+    get:
+      tags:
+        - proxyUser
+      summary: get proxy user by name and userid.
+      description: Optional extended description in Markdown.
+      operationId: GetProxyUserByUserId
+      parameters:
+        - in: path
+          type: string
+          name: name
+          description: The name of proxy user
+          required: true
+        - in: path
+          type: string
+          name: userName
+          description: The user id of job Request
+          required: true
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Proxy User Entity.
+          schema:
+            $ref: '#/definitions/ProxyUser'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add keyPair not found.
+          schema:
+            $ref: '#/definitions/Error'
+  /cc/v1/proxyUserCheck/{proxyUserName}/{userName}:
+    get:
+      tags:
+        - proxyUser
+      summary: get proxy user by name and userid.
+      description: Optional extended description in Markdown.
+      operationId: ProxyUserCheck
+      parameters:
+        - in: path
+          type: string
+          name: proxyUserName
+          description: The name of proxy user
+          required: true
+        - in: path
+          type: string
+          name: userName
+          description: The user id of job Request
+          required: true
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Proxy User Entity.
+          schema:
+            $ref: '#/definitions/ProxyUser'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: url to add keyPair not found.
+          schema:
+            $ref: '#/definitions/Error'
+
 definitions:
+  ProxyUser:
+    type: object
+    properties:
+      id:
+        type: integer
+        description: name of proxy user.
+      name:
+        type: string
+        description: the username
+      gid:
+        type: integer
+        format: int64
+        description: the gid of user
+      uid:
+        type: integer
+        format: int64
+        description: the uid of user
+      token:
+        type: string
+        description: the client_token of user
+      remarks:
+        type: string
+        description: the uid remarks user
+      user_id:
+        type: number
+        format: int64
+        description: the userId of user
+      isActivated:
+        type: integer
+        format: int64
+        description: the active of proxy user
+      enableFlag:
+        type: integer
+        format: int64
+        description: Whether the data is valid
+      path:
+        type: string
+        description: storage path of proxy user.
+  ProxyUsers:
+    type: array
+    items:
+      $ref: '#/definitions/ProxyUser'
+
+  ProxyUserPost:
+    type: object
+    properties:
+      name:
+        type: string
+        description: the username
+      gid:
+        type: integer
+        format: int64
+        description: the gid of user
+      uid:
+        type: integer
+        format: int64
+        description: the uid of user
+      user_id:
+        type: number
+        format: int64
+        description: the userId of user
+      remarks:
+        type: string
+        description: the uid remarks user
+      isActivated:
+        type: integer
+        format: int64
+        description: the active of the proxy user.
+      enableFlag:
+        type: integer
+        format: int64
+        description: Whether the data is valid
+      path:
+        type: string
+        description: storage path of proxy user.
+
+  ProxyUserPut:
+    type: object
+    properties:
+      id:
+        type: integer
+        description: name of proxy user.
+      gid:
+        type: integer
+        format: int64
+        description: the gid of user
+      uid:
+        type: integer
+        format: int64
+        description: the uid of user
+      remarks:
+        type: string
+        description: the uid remarks user
+      enableFlag:
+        type: integer
+        format: int64
+        description: Whether the data is valid
+      isActivated:
+        type: integer
+        format: int64
+        description: the active of the proxy user.
+      path:
+        type: string
+        description: storage path of proxy user.
 
   UserNotebookAddressResponse:
     type: object
@@ -2426,6 +3008,10 @@ definitions:
       name:
         type: string
         description: the name
+      superAdmin:
+        type: integer
+        format: int64
+        description: the secretKey
       apiKey:
         type: string
         description: the apiKey
@@ -2521,6 +3107,49 @@ definitions:
         type: string
         description: the alertReceiver
 
+  PostAlertRequest:
+    type: object
+    properties:
+      alertList:
+        type: array
+        items:
+          $ref: '#/definitions/PostAlertSubRequest'
+  PostAlertSubRequest:
+    type: object
+    properties:
+      alertInfo:
+        type: string
+        description: the info of alert
+      alertIp:
+        type: string
+        description: the ip address of alert, default is server's ip
+      alertObj:
+        type: string
+        description: alert object that trigger alert
+      alertLevel:
+        type: number
+        format: int
+        description: "1:critical, 2:major, 3:minor, 4:warning ,5:info; default: 5"
+      alertTitle:
+        type: string
+      remarkInfo:
+        type: string
+      subSystemId:
+        type: number
+        format: int64
+      receivers:
+        type: array
+        items:
+          $ref: '#/definitions/Receiver'
+    required:
+      - subSystemId
+      - alertTitle
+  Receiver:
+    type: object
+    properties:
+      alert_receiver:
+        type: string
+        description: the alert receiver
   JobRequest:
     type: object
     properties:
@@ -2682,6 +3311,10 @@ definitions:
         type: integer
         format: int64
         description: Whether the data is valid
+  UserGroups:
+    type: array
+    items:
+      $ref: '#/definitions/UserGroup'
 
   UserGroupRes:
     type: object
@@ -2882,7 +3515,10 @@ definitions:
         description: the permissions of storage
       type:
         type: string
-        description: thr type of storage
+        description: the type of storage
+      groupType:
+        type: string
+        description: the type of group
       remarks:
         type: string
         description: the remarks UserGroup
@@ -3058,8 +3694,7 @@ definitions:
         format: int64
         description: Whether the data is valid
       departmentId:
-        type: integer
-        format: int64
+        type: string
         description: the departmentId of group
       departmentName:
         type: string
@@ -3067,6 +3702,14 @@ definitions:
       clusterName:
         type: string
         description: the clusterName of group
+      rmb_dcn:
+        type: string
+      rmb_idc:
+        type: string
+      service_id:
+        type: integer
+        format: int64
+
 
   #  Annotations:
   #    type: object
@@ -3106,6 +3749,18 @@ definitions:
       isSuperadmin:
         type: boolean
         description: true or false
+
+  ListNamespaceByRolenameAndUserNameResp:
+    type: array
+    items:
+      type: string
+      description: namespace name
+#      $ref: "#/definitions/ListNamespaceByRolenameAndUserNameRespSub"
+#  ListNamespaceByRolenameAndUserNameRespSub:
+#    type: object
+#    properties:
+#      namespace:
+#        type: string
 
   NamespaceRequest:
     type: object
@@ -3181,7 +3836,15 @@ definitions:
         type: integer
         format: int64
         description: Whether the data is valid
-
+  TokenMsg:
+    type: object
+    properties:
+      user:
+        type: string
+        description: Whether the data is valid
+      token:
+        type: string
+        description: the namespace name
   PageNamespaceList:
     type: object
     properties:
@@ -3242,6 +3905,43 @@ definitions:
         type: integer
         format: int64
 
+  UserGroupInfo:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+        description: the id of user
+      name:
+        type: string
+        description: the username
+      gid:
+        type: integer
+        format: int64
+        description: the gid of user
+      uid:
+        type: integer
+        format: int64
+        description: the uid of user
+      token:
+        type: string
+        description: the client_token of user
+      type:
+        type: string
+        description: the type of user, user or system
+      remarks:
+        type: string
+        description: the uid remarks user
+      enableFlag:
+        type: integer
+        format: int8
+        description: Whether the data is valid
+      guidCheck:
+        type: integer
+        format: int64
+        description: true or false
+      group:
+        $ref: '#/definitions/Group'
   PageUserList:
     type: object
     properties:
@@ -3261,7 +3961,6 @@ definitions:
       totalPage:
         type: integer
         format: int64
-
   UserList:
     type: object
     properties:

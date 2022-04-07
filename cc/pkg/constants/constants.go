@@ -34,6 +34,7 @@ const (
 	AUTH_REAL_PATH        = "MLSS-RealPath"
 	AUTH_REAL_METHOD      = "MLSS-RealMethod"
 	SAMPLE_REQUEST_USER   = "MLSS-Sample-User"
+	X_ORIGINAL_URI        = "X-Original-URI"
 )
 
 const (
@@ -50,11 +51,6 @@ const (
 	NameLengthLimit = 128
 	GUIdMinValue    = 0
 	GUIdMaxValue    = 90000
-
-	SAFE        = "safe"
-	BDAPSAFE    = "bdapsafe"
-	BDAPSAFE_UP = "BDAPSAFE"
-	BDAP_SAFESS = "bdap-safess"
 
 	TypePRIVATE = "PRIVATE"
 	TypeSYSTEM  = "SYSTEM"

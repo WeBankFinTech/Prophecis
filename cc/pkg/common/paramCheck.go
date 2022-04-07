@@ -111,6 +111,18 @@ func CheckForAddingUser(user models.User) error {
 	return nil
 }
 
+func CheckForUpdateGroup(group models.Group) error {
+	if group.GroupType != constants.TypePRIVATE && group.GroupType != constants.TypeSYSTEM {
+		return errors.New("group type must be PRIVATE or SYSTEM")
+	}
+
+	if group.DepartmentName == "" {
+		return errors.New("department name can't be empty")
+	}
+
+	return nil
+}
+
 func CheckForGroup(group models.Group) error {
 	if "" == group.Name {
 		return errors.New("group name can't be empty")
@@ -150,6 +162,14 @@ func CheckForStorage(storage models.Storage) error {
 
 	if !strings.HasPrefix(path, "/") {
 		return errors.New("path must be start with /")
+	}
+
+	if len(strings.Split(path[1:], "/")) < 4 {
+		return errors.New("the storage path is at least level 4")
+	}
+
+	if storage.Type != strings.Split(path[1:], "/")[1] {
+		return errors.New("type must be the same as in path")
 	}
 	return nil
 }

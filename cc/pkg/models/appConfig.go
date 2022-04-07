@@ -26,6 +26,7 @@ type AppConfig struct {
 		AuthAddress AuthAddress `yaml:"authAddress"`
 		Cache       Cache       `yaml:"cache"`
 		Cookie      Cookie      `yaml:"cookie"`
+		Mlss        MLSS        `yaml:"mlss"`
 	}
 	Server Server `yaml:"server"`
 	Application Application `yaml:"application"`
@@ -35,19 +36,20 @@ type Application struct {
 	Profile    string `yaml:"profile"`
 	PlatformNS string `yaml:"platformNS"`
 	Datasource struct {
-		Url      string `yaml:"url"`
-		Username string `yaml:"username"`
-		Password string `yaml:"password"`
-		Ip       string `yaml:"ip"`
-		Port     string `yaml:"port"`
-		Db       string `yaml:"db"`
+		Url        string `yaml:"url"`
+		Username   string `yaml:"username"`
+		Password   string `yaml:"password"`
+		EncryptPwd string `yaml:"encryptPwd"`
+		PrivKey    string `yaml:"privKey"`
+		Ip         string `yaml:"ip"`
+		Port       string `yaml:"port"`
+		Db         string `yaml:"db"`
 	}
-	Admin struct{
-		User   string `yaml:"user"`
+	Admin struct {
+		User     string `yaml:"user"`
 		Password string `yaml:"password"`
-
 	}
-	LDAP struct{
+	LDAP struct {
 		Address string `yaml:"server"`
 		BaseDN  string `yaml:"baseDN"`
 	}
@@ -91,10 +93,17 @@ type SSO struct {
 }
 
 type IMS struct {
-	AccessUrl     string `yaml:"accessUrl"`
-	SubSystemId   string `yaml:"subSystemId"`
-	AlertWay      string `yaml:"alertWay"`
-	AlertReceiver string `yaml:"alertReceiver"`
+	AccessUrl                  string `yaml:"accessUrl"`
+	SubSystemId                string `yaml:"subSystemId"`
+	AlertWay                   string `yaml:"alertWay"`
+	AlertReceiver              string `yaml:"alertReceiver"`
+	UseUmgPolicy               int    `yaml:"useUmgPolicy"`
+	KubesphereAlertSubSystemId int64  `yaml:"kubesphereAlertSubSystemId"`
+	KubesphereAlertObj         string `yaml:"kubesphereAlertObj"`
+}
+type MLSS struct {
+	Gid int64 `yaml:"gid"`
+	Uid int64 `yaml:"uid"`
 }
 
 type Kube struct {
@@ -113,6 +122,12 @@ type NamespacedResourceConfig struct {
 	DefaultRQCpu  string `yaml:"defaultRQCpu"`
 	DefaultRQMem  string `yaml:"defaultRQMem"`
 	DefaultRQGpu  string `yaml:"defaultRQGpu"`
+}
+
+type Gateway struct {
+	BdpAddress      string `yaml:"bdpAddress"`
+	BdapAddress     string `yaml:"bdapAddress"`
+	BdapsafeAddress string `yaml:"bdapsafeAddress"`
 }
 
 type AuthAddress struct {

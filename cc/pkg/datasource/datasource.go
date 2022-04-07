@@ -53,7 +53,7 @@ func InitDS() {
 		log.Fatalf("failed to connect database, reason: %v", err.Error())
 	}
 	db.SingularTable(true)
-	DB = db.Debug()
+	DB = db
 
 	//TokenDS = initTokenDB()
 }

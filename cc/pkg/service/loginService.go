@@ -47,10 +47,10 @@ func SetResponseHeader(res http.ResponseWriter, user models.SessionUser) {
 	res.Header().Add(constants.AUTH_RSP_SUPERADMIN, strconv.FormatBool(user.IsSuperadmin))
 }
 
-func LDAPLogin(w http.ResponseWriter, cookiesPath string ,user models.SessionUser) http.Cookie{
+func LDAPLogin(w http.ResponseWriter, cookiesPath string, user models.SessionUser) http.Cookie {
 	token := uuid.New().String()
 	logger.Logger().Debugf("login success to set token: %v", token)
-	logger.Logger().Infof("Login success to set token, user:  %v , token: %v", user,token)
+	logger.Logger().Infof("Login success to set token, user:  %v , token: %v", user, token)
 	authcache.TokenCache.Set(token, user, cache.DefaultExpiration)
 	w.Header().Add(constants.AUTH_HEADER_TOKEN, token)
 	SetResponseHeader(w, user)
@@ -58,7 +58,7 @@ func LDAPLogin(w http.ResponseWriter, cookiesPath string ,user models.SessionUse
 		Name:     "PROPHECIS",
 		Value:    token,
 		HttpOnly: true,
-		Path:    cookiesPath ,
+		Path:     cookiesPath,
 	}
 	return *cookie
 }

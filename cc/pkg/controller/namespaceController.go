@@ -72,7 +72,7 @@ func AddNamespace(params namespaces.AddNamespaceParams) middleware.Responder {
 		if nil != addErr {
 			return ResponderFunc(http.StatusBadRequest, "failed to add namespace", addErr.Error())
 		}
-	}else{
+	} else {
 		if namespace.Namespace == namespaceByName.Namespace {
 			return ResponderFunc(http.StatusBadRequest, "failed to add namespace", "namespace already in db")
 		}
@@ -253,7 +253,7 @@ func DeleteNamespaceByName(params namespaces.DeleteNamespaceByNameParams) middle
 		return ResponderFunc(http.StatusBadRequest, "failed to delete namespace from db", "namespace is not exist in db")
 	}
 
-	repoNamespace,err := service.DeleteNamespaceByID(namespaceByName.ID)
+	repoNamespace, err := service.DeleteNamespaceByID(namespaceByName.ID)
 	if err != nil {
 		return ResponderFunc(http.StatusInternalServerError, "failed to DeleteNamespaceByID:%v", err.Error())
 	}
@@ -283,7 +283,12 @@ func GetMyNamespace(params namespaces.GetMyNamespaceParams) middleware.Responder
 
 	logger.Logger().Debugf("getMyNamespace by sessionUser: %v", sessionUser)
 
-	if nil == sessionUser || "" == sessionUser.UserName {
+	if sessionUser == nil || "" == sessionUser.UserName {
+		logger.Logger().Error("SessionUser is nil or sessionUser.UserName's length <= 0")
+		logger.Logger().Info("sessionUser == nil：", sessionUser == nil)
+		if sessionUser != nil {
+			logger.Logger().Info("sessionUser.UserName <= 0：", len(sessionUser.UserName) <= 0)
+		}
 		return FailedToGetUserByToken()
 	}
 
@@ -292,8 +297,8 @@ func GetMyNamespace(params namespaces.GetMyNamespaceParams) middleware.Responder
 	var groupNamespaces []models.GroupNamespace
 
 	if IsSuperAdmin(sessionUser) {
-		groupNamespaces,err := service.GetAllNamespace()
-		if err != nil{
+		groupNamespaces, err := service.GetAllNamespace()
+		if err != nil {
 			return ResponderFunc(http.StatusInternalServerError, "failed to GetAllNamespace", err.Error())
 		}
 		myNamespace = common.GetMyNamespace(groupNamespaces, myNamespace)
@@ -304,14 +309,14 @@ func GetMyNamespace(params namespaces.GetMyNamespaceParams) middleware.Responder
 		if err != nil {
 			return ResponderFunc(http.StatusForbidden, "failed to GetUserByUserName", err.Error())
 		}
-		groupIds,err := service.GetGroupIdListByUserId(user.ID)
-		if err != nil{
+		groupIds, err := service.GetGroupIdListByUserId(user.ID)
+		if err != nil {
 			return ResponderFunc(http.StatusInternalServerError, "failed to GetGroupIdListByUserId", err.Error())
 		}
 		logger.Logger().Debugf("myNamespace for groupIds: %v", groupIds)
 		if nil != groupIds && len(groupIds) > 0 {
-			groupNamespaces,err = service.GetAllGroupNamespaceByGroupIds(groupIds)
-			if err != nil{
+			groupNamespaces, err = service.GetAllGroupNamespaceByGroupIds(groupIds)
+			if err != nil {
 				return ResponderFunc(http.StatusInternalServerError, "failed to GetAllGroupNamespaceByGroupIds", err.Error())
 			}
 			logger.Logger().Debugf("myNamespace for GU groupNamespaces: %v, length: %v", groupNamespaces, len(groupNamespaces))
@@ -322,5 +327,19 @@ func GetMyNamespace(params namespaces.GetMyNamespaceParams) middleware.Responder
 
 	marshal, marshalErr := json.Marshal(myNamespace.List())
 
+	return GetResult(marshal, marshalErr)
+}
+
+func ListNamespaceByRoleAndUserName(params namespaces.ListNamespaceByRoleNameAndUserNameParams) middleware.Responder {
+	roleName := params.RoleName
+	userName := params.UserName
+	resp, err := service.ListNamespaceByRoleNameAndUserName(roleName, userName)
+	if nil != err {
+		logger.Logger().Errorf("fail to list namespace by role name and user name, "+
+			"roleName: %s, userName:%s, err: %v\n", roleName, userName, err)
+		return ResponderFunc(http.StatusInternalServerError, "failed to list namespace", err.Error())
+	}
+
+	marshal, marshalErr := json.Marshal(resp)
 	return GetResult(marshal, marshalErr)
 }

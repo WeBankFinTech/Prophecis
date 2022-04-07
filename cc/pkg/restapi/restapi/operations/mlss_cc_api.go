@@ -27,6 +27,7 @@ import (
 	"mlss-controlcenter-go/pkg/restapi/restapi/operations/logins"
 	"mlss-controlcenter-go/pkg/restapi/restapi/operations/logouts"
 	"mlss-controlcenter-go/pkg/restapi/restapi/operations/namespaces"
+	"mlss-controlcenter-go/pkg/restapi/restapi/operations/proxy_user"
 	"mlss-controlcenter-go/pkg/restapi/restapi/operations/resources"
 	"mlss-controlcenter-go/pkg/restapi/restapi/operations/roles"
 	"mlss-controlcenter-go/pkg/restapi/restapi/operations/samples"
@@ -66,6 +67,9 @@ func NewMlssCcAPI(spec *loads.Document) *MlssCcAPI {
 		GroupsAddNamespaceToGroupHandler: groups.AddNamespaceToGroupHandlerFunc(func(params groups.AddNamespaceToGroupParams) middleware.Responder {
 			return middleware.NotImplemented("operation GroupsAddNamespaceToGroup has not yet been implemented")
 		}),
+		ProxyUserAddProxyUserHandler: proxy_user.AddProxyUserHandlerFunc(func(params proxy_user.AddProxyUserParams) middleware.Responder {
+			return middleware.NotImplemented("operation ProxyUserAddProxyUser has not yet been implemented")
+		}),
 		RolesAddRoleHandler: roles.AddRoleHandlerFunc(func(params roles.AddRoleParams) middleware.Responder {
 			return middleware.NotImplemented("operation RolesAddRole has not yet been implemented")
 		}),
@@ -90,11 +94,20 @@ func NewMlssCcAPI(spec *loads.Document) *MlssCcAPI {
 		AuthsCheckCurrentUserNamespacedNotebookHandler: auths.CheckCurrentUserNamespacedNotebookHandlerFunc(func(params auths.CheckCurrentUserNamespacedNotebookParams) middleware.Responder {
 			return middleware.NotImplemented("operation AuthsCheckCurrentUserNamespacedNotebook has not yet been implemented")
 		}),
+		AuthsCheckGroupByUserHandler: auths.CheckGroupByUserHandlerFunc(func(params auths.CheckGroupByUserParams) middleware.Responder {
+			return middleware.NotImplemented("operation AuthsCheckGroupByUser has not yet been implemented")
+		}),
+		AuthsCheckMLFlowResourceAccessHandler: auths.CheckMLFlowResourceAccessHandlerFunc(func(params auths.CheckMLFlowResourceAccessParams) middleware.Responder {
+			return middleware.NotImplemented("operation AuthsCheckMLFlowResourceAccess has not yet been implemented")
+		}),
 		AuthsCheckNamespaceHandler: auths.CheckNamespaceHandlerFunc(func(params auths.CheckNamespaceParams) middleware.Responder {
 			return middleware.NotImplemented("operation AuthsCheckNamespace has not yet been implemented")
 		}),
 		AuthsCheckNamespaceUserHandler: auths.CheckNamespaceUserHandlerFunc(func(params auths.CheckNamespaceUserParams) middleware.Responder {
 			return middleware.NotImplemented("operation AuthsCheckNamespaceUser has not yet been implemented")
+		}),
+		AuthsCheckURLAccessHandler: auths.CheckURLAccessHandlerFunc(func(params auths.CheckURLAccessParams) middleware.Responder {
+			return middleware.NotImplemented("operation AuthsCheckURLAccess has not yet been implemented")
 		}),
 		AuthsCheckUserGetNamespaceHandler: auths.CheckUserGetNamespaceHandlerFunc(func(params auths.CheckUserGetNamespaceParams) middleware.Responder {
 			return middleware.NotImplemented("operation AuthsCheckUserGetNamespace has not yet been implemented")
@@ -113,6 +126,9 @@ func NewMlssCcAPI(spec *loads.Document) *MlssCcAPI {
 		}),
 		NamespacesDeleteNamespaceByNameHandler: namespaces.DeleteNamespaceByNameHandlerFunc(func(params namespaces.DeleteNamespaceByNameParams) middleware.Responder {
 			return middleware.NotImplemented("operation NamespacesDeleteNamespaceByName has not yet been implemented")
+		}),
+		ProxyUserDeleteProxyUserHandler: proxy_user.DeleteProxyUserHandlerFunc(func(params proxy_user.DeleteProxyUserParams) middleware.Responder {
+			return middleware.NotImplemented("operation ProxyUserDeleteProxyUser has not yet been implemented")
 		}),
 		StoragesDeleteStorageByIDHandler: storages.DeleteStorageByIDHandlerFunc(func(params storages.DeleteStorageByIDParams) middleware.Responder {
 			return middleware.NotImplemented("operation StoragesDeleteStorageByID has not yet been implemented")
@@ -171,6 +187,9 @@ func NewMlssCcAPI(spec *loads.Document) *MlssCcAPI {
 		GroupsGetGroupByNameHandler: groups.GetGroupByNameHandlerFunc(func(params groups.GetGroupByNameParams) middleware.Responder {
 			return middleware.NotImplemented("operation GroupsGetGroupByName has not yet been implemented")
 		}),
+		GroupsGetGroupByUsernameHandler: groups.GetGroupByUsernameHandlerFunc(func(params groups.GetGroupByUsernameParams) middleware.Responder {
+			return middleware.NotImplemented("operation GroupsGetGroupByUsername has not yet been implemented")
+		}),
 		ResourcesGetLabelsOfNodeHandler: resources.GetLabelsOfNodeHandlerFunc(func(params resources.GetLabelsOfNodeParams) middleware.Responder {
 			return middleware.NotImplemented("operation ResourcesGetLabelsOfNode has not yet been implemented")
 		}),
@@ -191,6 +210,9 @@ func NewMlssCcAPI(spec *loads.Document) *MlssCcAPI {
 		}),
 		ResourcesGetNodeByNameHandler: resources.GetNodeByNameHandlerFunc(func(params resources.GetNodeByNameParams) middleware.Responder {
 			return middleware.NotImplemented("operation ResourcesGetNodeByName has not yet been implemented")
+		}),
+		ProxyUserGetProxyUserByUserIDHandler: proxy_user.GetProxyUserByUserIDHandlerFunc(func(params proxy_user.GetProxyUserByUserIDParams) middleware.Responder {
+			return middleware.NotImplemented("operation ProxyUserGetProxyUserByUserID has not yet been implemented")
 		}),
 		RolesGetRoleByIDHandler: roles.GetRoleByIDHandlerFunc(func(params roles.GetRoleByIDParams) middleware.Responder {
 			return middleware.NotImplemented("operation RolesGetRoleByID has not yet been implemented")
@@ -219,14 +241,32 @@ func NewMlssCcAPI(spec *loads.Document) *MlssCcAPI {
 		GroupsGetUserGroupByUserIDAndGroupIDHandler: groups.GetUserGroupByUserIDAndGroupIDHandlerFunc(func(params groups.GetUserGroupByUserIDAndGroupIDParams) middleware.Responder {
 			return middleware.NotImplemented("operation GroupsGetUserGroupByUserIDAndGroupID has not yet been implemented")
 		}),
+		GroupsGetUserGroupsHandler: groups.GetUserGroupsHandlerFunc(func(params groups.GetUserGroupsParams) middleware.Responder {
+			return middleware.NotImplemented("operation GroupsGetUserGroups has not yet been implemented")
+		}),
+		UsersGetUserTokenHandler: users.GetUserTokenHandlerFunc(func(params users.GetUserTokenParams) middleware.Responder {
+			return middleware.NotImplemented("operation UsersGetUserToken has not yet been implemented")
+		}),
 		IntersIPInterceptorHandler: inters.IPInterceptorHandlerFunc(func(params inters.IPInterceptorParams) middleware.Responder {
 			return middleware.NotImplemented("operation IntersIPInterceptor has not yet been implemented")
 		}),
 		LoginsLDAPLoginHandler: logins.LDAPLoginHandlerFunc(func(params logins.LDAPLoginParams) middleware.Responder {
 			return middleware.NotImplemented("operation LoginsLDAPLogin has not yet been implemented")
 		}),
+		NamespacesListNamespaceByRoleNameAndUserNameHandler: namespaces.ListNamespaceByRoleNameAndUserNameHandlerFunc(func(params namespaces.ListNamespaceByRoleNameAndUserNameParams) middleware.Responder {
+			return middleware.NotImplemented("operation NamespacesListNamespaceByRoleNameAndUserName has not yet been implemented")
+		}),
+		ProxyUserListProxyUserHandler: proxy_user.ListProxyUserHandlerFunc(func(params proxy_user.ListProxyUserParams) middleware.Responder {
+			return middleware.NotImplemented("operation ProxyUserListProxyUser has not yet been implemented")
+		}),
 		LogoutsLogoutHandler: logouts.LogoutHandlerFunc(func(params logouts.LogoutParams) middleware.Responder {
 			return middleware.NotImplemented("operation LogoutsLogout has not yet been implemented")
+		}),
+		AlertsPostAlertHandler: alerts.PostAlertHandlerFunc(func(params alerts.PostAlertParams) middleware.Responder {
+			return middleware.NotImplemented("operation AlertsPostAlert has not yet been implemented")
+		}),
+		ProxyUserProxyUserCheckHandler: proxy_user.ProxyUserCheckHandlerFunc(func(params proxy_user.ProxyUserCheckParams) middleware.Responder {
+			return middleware.NotImplemented("operation ProxyUserProxyUserCheck has not yet been implemented")
 		}),
 		AlertsReceiveTaskAlertHandler: alerts.ReceiveTaskAlertHandlerFunc(func(params alerts.ReceiveTaskAlertParams) middleware.Responder {
 			return middleware.NotImplemented("operation AlertsReceiveTaskAlert has not yet been implemented")
@@ -258,6 +298,9 @@ func NewMlssCcAPI(spec *loads.Document) *MlssCcAPI {
 		NamespacesUpdateNamespaceHandler: namespaces.UpdateNamespaceHandlerFunc(func(params namespaces.UpdateNamespaceParams) middleware.Responder {
 			return middleware.NotImplemented("operation NamespacesUpdateNamespace has not yet been implemented")
 		}),
+		ProxyUserUpdateProxyUserHandler: proxy_user.UpdateProxyUserHandlerFunc(func(params proxy_user.UpdateProxyUserParams) middleware.Responder {
+			return middleware.NotImplemented("operation ProxyUserUpdateProxyUser has not yet been implemented")
+		}),
 		RolesUpdateRoleHandler: roles.UpdateRoleHandlerFunc(func(params roles.UpdateRoleParams) middleware.Responder {
 			return middleware.NotImplemented("operation RolesUpdateRole has not yet been implemented")
 		}),
@@ -281,6 +324,12 @@ func NewMlssCcAPI(spec *loads.Document) *MlssCcAPI {
 		}),
 		AuthsUserStoragePathCheckHandler: auths.UserStoragePathCheckHandlerFunc(func(params auths.UserStoragePathCheckParams) middleware.Responder {
 			return middleware.NotImplemented("operation AuthsUserStoragePathCheck has not yet been implemented")
+		}),
+		AuthsCheckResourceHandler: auths.CheckResourceHandlerFunc(func(params auths.CheckResourceParams) middleware.Responder {
+			return middleware.NotImplemented("operation AuthsCheckResource has not yet been implemented")
+		}),
+		ProxyUserGetProxyUserHandler: proxy_user.GetProxyUserHandlerFunc(func(params proxy_user.GetProxyUserParams) middleware.Responder {
+			return middleware.NotImplemented("operation ProxyUserGetProxyUser has not yet been implemented")
 		}),
 	}
 }
@@ -323,6 +372,8 @@ type MlssCcAPI struct {
 	NamespacesAddNamespaceHandler namespaces.AddNamespaceHandler
 	// GroupsAddNamespaceToGroupHandler sets the operation handler for the add namespace to group operation
 	GroupsAddNamespaceToGroupHandler groups.AddNamespaceToGroupHandler
+	// ProxyUserAddProxyUserHandler sets the operation handler for the add proxy user operation
+	ProxyUserAddProxyUserHandler proxy_user.AddProxyUserHandler
 	// RolesAddRoleHandler sets the operation handler for the add role operation
 	RolesAddRoleHandler roles.AddRoleHandler
 	// StoragesAddStorageHandler sets the operation handler for the add storage operation
@@ -339,10 +390,16 @@ type MlssCcAPI struct {
 	IntersAuthInterceptorHandler inters.AuthInterceptorHandler
 	// AuthsCheckCurrentUserNamespacedNotebookHandler sets the operation handler for the check current user namespaced notebook operation
 	AuthsCheckCurrentUserNamespacedNotebookHandler auths.CheckCurrentUserNamespacedNotebookHandler
+	// AuthsCheckGroupByUserHandler sets the operation handler for the check group by user operation
+	AuthsCheckGroupByUserHandler auths.CheckGroupByUserHandler
+	// AuthsCheckMLFlowResourceAccessHandler sets the operation handler for the check m l flow resource access operation
+	AuthsCheckMLFlowResourceAccessHandler auths.CheckMLFlowResourceAccessHandler
 	// AuthsCheckNamespaceHandler sets the operation handler for the check namespace operation
 	AuthsCheckNamespaceHandler auths.CheckNamespaceHandler
 	// AuthsCheckNamespaceUserHandler sets the operation handler for the check namespace user operation
 	AuthsCheckNamespaceUserHandler auths.CheckNamespaceUserHandler
+	// AuthsCheckURLAccessHandler sets the operation handler for the check URL access operation
+	AuthsCheckURLAccessHandler auths.CheckURLAccessHandler
 	// AuthsCheckUserGetNamespaceHandler sets the operation handler for the check user get namespace operation
 	AuthsCheckUserGetNamespaceHandler auths.CheckUserGetNamespaceHandler
 	// KeysDeleteByNameHandler sets the operation handler for the delete by name operation
@@ -355,6 +412,8 @@ type MlssCcAPI struct {
 	GroupsDeleteGroupNamespaceHandler groups.DeleteGroupNamespaceHandler
 	// NamespacesDeleteNamespaceByNameHandler sets the operation handler for the delete namespace by name operation
 	NamespacesDeleteNamespaceByNameHandler namespaces.DeleteNamespaceByNameHandler
+	// ProxyUserDeleteProxyUserHandler sets the operation handler for the delete proxy user operation
+	ProxyUserDeleteProxyUserHandler proxy_user.DeleteProxyUserHandler
 	// StoragesDeleteStorageByIDHandler sets the operation handler for the delete storage by Id operation
 	StoragesDeleteStorageByIDHandler storages.DeleteStorageByIDHandler
 	// StoragesDeleteStorageByPathHandler sets the operation handler for the delete storage by path operation
@@ -393,6 +452,8 @@ type MlssCcAPI struct {
 	GroupsGetGroupByGroupIDHandler groups.GetGroupByGroupIDHandler
 	// GroupsGetGroupByNameHandler sets the operation handler for the get group by name operation
 	GroupsGetGroupByNameHandler groups.GetGroupByNameHandler
+	// GroupsGetGroupByUsernameHandler sets the operation handler for the get group by username operation
+	GroupsGetGroupByUsernameHandler groups.GetGroupByUsernameHandler
 	// ResourcesGetLabelsOfNodeHandler sets the operation handler for the get labels of node operation
 	ResourcesGetLabelsOfNodeHandler resources.GetLabelsOfNodeHandler
 	// NamespacesGetMyNamespaceHandler sets the operation handler for the get my namespace operation
@@ -407,6 +468,8 @@ type MlssCcAPI struct {
 	GroupsGetNamespacesByGroupIDHandler groups.GetNamespacesByGroupIDHandler
 	// ResourcesGetNodeByNameHandler sets the operation handler for the get node by name operation
 	ResourcesGetNodeByNameHandler resources.GetNodeByNameHandler
+	// ProxyUserGetProxyUserByUserIDHandler sets the operation handler for the get proxy user by user Id operation
+	ProxyUserGetProxyUserByUserIDHandler proxy_user.GetProxyUserByUserIDHandler
 	// RolesGetRoleByIDHandler sets the operation handler for the get role by Id operation
 	RolesGetRoleByIDHandler roles.GetRoleByIDHandler
 	// RolesGetRoleByNameHandler sets the operation handler for the get role by name operation
@@ -425,12 +488,24 @@ type MlssCcAPI struct {
 	UsersGetUserByUserNameHandler users.GetUserByUserNameHandler
 	// GroupsGetUserGroupByUserIDAndGroupIDHandler sets the operation handler for the get user group by user Id and group Id operation
 	GroupsGetUserGroupByUserIDAndGroupIDHandler groups.GetUserGroupByUserIDAndGroupIDHandler
+	// GroupsGetUserGroupsHandler sets the operation handler for the get user groups operation
+	GroupsGetUserGroupsHandler groups.GetUserGroupsHandler
+	// UsersGetUserTokenHandler sets the operation handler for the get user token operation
+	UsersGetUserTokenHandler users.GetUserTokenHandler
 	// IntersIPInterceptorHandler sets the operation handler for the Ip interceptor operation
 	IntersIPInterceptorHandler inters.IPInterceptorHandler
 	// LoginsLDAPLoginHandler sets the operation handler for the l d a p login operation
 	LoginsLDAPLoginHandler logins.LDAPLoginHandler
+	// NamespacesListNamespaceByRoleNameAndUserNameHandler sets the operation handler for the list namespace by role name and user name operation
+	NamespacesListNamespaceByRoleNameAndUserNameHandler namespaces.ListNamespaceByRoleNameAndUserNameHandler
+	// ProxyUserListProxyUserHandler sets the operation handler for the list proxy user operation
+	ProxyUserListProxyUserHandler proxy_user.ListProxyUserHandler
 	// LogoutsLogoutHandler sets the operation handler for the logout operation
 	LogoutsLogoutHandler logouts.LogoutHandler
+	// AlertsPostAlertHandler sets the operation handler for the post alert operation
+	AlertsPostAlertHandler alerts.PostAlertHandler
+	// ProxyUserProxyUserCheckHandler sets the operation handler for the proxy user check operation
+	ProxyUserProxyUserCheckHandler proxy_user.ProxyUserCheckHandler
 	// AlertsReceiveTaskAlertHandler sets the operation handler for the receive task alert operation
 	AlertsReceiveTaskAlertHandler alerts.ReceiveTaskAlertHandler
 	// ResourcesRemoveNodeLabelHandler sets the operation handler for the remove node label operation
@@ -451,6 +526,8 @@ type MlssCcAPI struct {
 	ResourcesUpdateLabelsHandler resources.UpdateLabelsHandler
 	// NamespacesUpdateNamespaceHandler sets the operation handler for the update namespace operation
 	NamespacesUpdateNamespaceHandler namespaces.UpdateNamespaceHandler
+	// ProxyUserUpdateProxyUserHandler sets the operation handler for the update proxy user operation
+	ProxyUserUpdateProxyUserHandler proxy_user.UpdateProxyUserHandler
 	// RolesUpdateRoleHandler sets the operation handler for the update role operation
 	RolesUpdateRoleHandler roles.UpdateRoleHandler
 	// StoragesUpdateStorageHandler sets the operation handler for the update storage operation
@@ -467,6 +544,10 @@ type MlssCcAPI struct {
 	AuthsUserStorageCheckHandler auths.UserStorageCheckHandler
 	// AuthsUserStoragePathCheckHandler sets the operation handler for the user storage path check operation
 	AuthsUserStoragePathCheckHandler auths.UserStoragePathCheckHandler
+	// AuthsCheckResourceHandler sets the operation handler for the check resource operation
+	AuthsCheckResourceHandler auths.CheckResourceHandler
+	// ProxyUserGetProxyUserHandler sets the operation handler for the get proxy user operation
+	ProxyUserGetProxyUserHandler proxy_user.GetProxyUserHandler
 
 	// ServeError is called when an error is received, there is a default handler
 	// but you can set your own with this
@@ -550,6 +631,10 @@ func (o *MlssCcAPI) Validate() error {
 		unregistered = append(unregistered, "groups.AddNamespaceToGroupHandler")
 	}
 
+	if o.ProxyUserAddProxyUserHandler == nil {
+		unregistered = append(unregistered, "proxy_user.AddProxyUserHandler")
+	}
+
 	if o.RolesAddRoleHandler == nil {
 		unregistered = append(unregistered, "roles.AddRoleHandler")
 	}
@@ -582,12 +667,24 @@ func (o *MlssCcAPI) Validate() error {
 		unregistered = append(unregistered, "auths.CheckCurrentUserNamespacedNotebookHandler")
 	}
 
+	if o.AuthsCheckGroupByUserHandler == nil {
+		unregistered = append(unregistered, "auths.CheckGroupByUserHandler")
+	}
+
+	if o.AuthsCheckMLFlowResourceAccessHandler == nil {
+		unregistered = append(unregistered, "auths.CheckMLFlowResourceAccessHandler")
+	}
+
 	if o.AuthsCheckNamespaceHandler == nil {
 		unregistered = append(unregistered, "auths.CheckNamespaceHandler")
 	}
 
 	if o.AuthsCheckNamespaceUserHandler == nil {
 		unregistered = append(unregistered, "auths.CheckNamespaceUserHandler")
+	}
+
+	if o.AuthsCheckURLAccessHandler == nil {
+		unregistered = append(unregistered, "auths.CheckURLAccessHandler")
 	}
 
 	if o.AuthsCheckUserGetNamespaceHandler == nil {
@@ -612,6 +709,10 @@ func (o *MlssCcAPI) Validate() error {
 
 	if o.NamespacesDeleteNamespaceByNameHandler == nil {
 		unregistered = append(unregistered, "namespaces.DeleteNamespaceByNameHandler")
+	}
+
+	if o.ProxyUserDeleteProxyUserHandler == nil {
+		unregistered = append(unregistered, "proxy_user.DeleteProxyUserHandler")
 	}
 
 	if o.StoragesDeleteStorageByIDHandler == nil {
@@ -690,6 +791,10 @@ func (o *MlssCcAPI) Validate() error {
 		unregistered = append(unregistered, "groups.GetGroupByNameHandler")
 	}
 
+	if o.GroupsGetGroupByUsernameHandler == nil {
+		unregistered = append(unregistered, "groups.GetGroupByUsernameHandler")
+	}
+
 	if o.ResourcesGetLabelsOfNodeHandler == nil {
 		unregistered = append(unregistered, "resources.GetLabelsOfNodeHandler")
 	}
@@ -716,6 +821,10 @@ func (o *MlssCcAPI) Validate() error {
 
 	if o.ResourcesGetNodeByNameHandler == nil {
 		unregistered = append(unregistered, "resources.GetNodeByNameHandler")
+	}
+
+	if o.ProxyUserGetProxyUserByUserIDHandler == nil {
+		unregistered = append(unregistered, "proxy_user.GetProxyUserByUserIDHandler")
 	}
 
 	if o.RolesGetRoleByIDHandler == nil {
@@ -754,6 +863,14 @@ func (o *MlssCcAPI) Validate() error {
 		unregistered = append(unregistered, "groups.GetUserGroupByUserIDAndGroupIDHandler")
 	}
 
+	if o.GroupsGetUserGroupsHandler == nil {
+		unregistered = append(unregistered, "groups.GetUserGroupsHandler")
+	}
+
+	if o.UsersGetUserTokenHandler == nil {
+		unregistered = append(unregistered, "users.GetUserTokenHandler")
+	}
+
 	if o.IntersIPInterceptorHandler == nil {
 		unregistered = append(unregistered, "inters.IPInterceptorHandler")
 	}
@@ -762,8 +879,24 @@ func (o *MlssCcAPI) Validate() error {
 		unregistered = append(unregistered, "logins.LDAPLoginHandler")
 	}
 
+	if o.NamespacesListNamespaceByRoleNameAndUserNameHandler == nil {
+		unregistered = append(unregistered, "namespaces.ListNamespaceByRoleNameAndUserNameHandler")
+	}
+
+	if o.ProxyUserListProxyUserHandler == nil {
+		unregistered = append(unregistered, "proxy_user.ListProxyUserHandler")
+	}
+
 	if o.LogoutsLogoutHandler == nil {
 		unregistered = append(unregistered, "logouts.LogoutHandler")
+	}
+
+	if o.AlertsPostAlertHandler == nil {
+		unregistered = append(unregistered, "alerts.PostAlertHandler")
+	}
+
+	if o.ProxyUserProxyUserCheckHandler == nil {
+		unregistered = append(unregistered, "proxy_user.ProxyUserCheckHandler")
 	}
 
 	if o.AlertsReceiveTaskAlertHandler == nil {
@@ -806,6 +939,10 @@ func (o *MlssCcAPI) Validate() error {
 		unregistered = append(unregistered, "namespaces.UpdateNamespaceHandler")
 	}
 
+	if o.ProxyUserUpdateProxyUserHandler == nil {
+		unregistered = append(unregistered, "proxy_user.UpdateProxyUserHandler")
+	}
+
 	if o.RolesUpdateRoleHandler == nil {
 		unregistered = append(unregistered, "roles.UpdateRoleHandler")
 	}
@@ -836,6 +973,14 @@ func (o *MlssCcAPI) Validate() error {
 
 	if o.AuthsUserStoragePathCheckHandler == nil {
 		unregistered = append(unregistered, "auths.UserStoragePathCheckHandler")
+	}
+
+	if o.AuthsCheckResourceHandler == nil {
+		unregistered = append(unregistered, "auths.CheckResourceHandler")
+	}
+
+	if o.ProxyUserGetProxyUserHandler == nil {
+		unregistered = append(unregistered, "proxy_user.GetProxyUserHandler")
 	}
 
 	if len(unregistered) > 0 {
@@ -964,6 +1109,11 @@ func (o *MlssCcAPI) initHandlerCache() {
 	if o.handlers["POST"] == nil {
 		o.handlers["POST"] = make(map[string]http.Handler)
 	}
+	o.handlers["POST"]["/cc/v1/proxyUser"] = proxy_user.NewAddProxyUser(o.context, o.ProxyUserAddProxyUserHandler)
+
+	if o.handlers["POST"] == nil {
+		o.handlers["POST"] = make(map[string]http.Handler)
+	}
 	o.handlers["POST"]["/cc/v1/roles"] = roles.NewAddRole(o.context, o.RolesAddRoleHandler)
 
 	if o.handlers["POST"] == nil {
@@ -1004,12 +1154,27 @@ func (o *MlssCcAPI) initHandlerCache() {
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
+	o.handlers["GET"]["/cc/v1/auth/access/group/{userId}"] = auths.NewCheckGroupByUser(o.context, o.AuthsCheckGroupByUserHandler)
+
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
+	o.handlers["GET"]["/cc/v1/auth/access/mlflow/uri/{request_uri}"] = auths.NewCheckMLFlowResourceAccess(o.context, o.AuthsCheckMLFlowResourceAccessHandler)
+
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
 	o.handlers["GET"]["/cc/v1/auth/access/admin/namespaces/{namespace}"] = auths.NewCheckNamespace(o.context, o.AuthsCheckNamespaceHandler)
 
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
 	o.handlers["GET"]["/cc/v1/auth/access/admin/namespaces/{namespace}/users/{username}"] = auths.NewCheckNamespaceUser(o.context, o.AuthsCheckNamespaceUserHandler)
+
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
+	o.handlers["GET"]["/cc/v1/auth/access"] = auths.NewCheckURLAccess(o.context, o.AuthsCheckURLAccessHandler)
 
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
@@ -1040,6 +1205,11 @@ func (o *MlssCcAPI) initHandlerCache() {
 		o.handlers["DELETE"] = make(map[string]http.Handler)
 	}
 	o.handlers["DELETE"]["/cc/v1/namespaces/namespace/{namespace}"] = namespaces.NewDeleteNamespaceByName(o.context, o.NamespacesDeleteNamespaceByNameHandler)
+
+	if o.handlers["DELETE"] == nil {
+		o.handlers["DELETE"] = make(map[string]http.Handler)
+	}
+	o.handlers["DELETE"]["/cc/v1/proxyUser/{id}"] = proxy_user.NewDeleteProxyUser(o.context, o.ProxyUserDeleteProxyUserHandler)
 
 	if o.handlers["DELETE"] == nil {
 		o.handlers["DELETE"] = make(map[string]http.Handler)
@@ -1124,7 +1294,7 @@ func (o *MlssCcAPI) initHandlerCache() {
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
-	o.handlers["GET"]["/cc/v1/groups/group/storage"] = groups.NewGetCurrentUserStoragePath(o.context, o.GroupsGetCurrentUserStoragePathHandler)
+	o.handlers["GET"]["/cc/v1/groups/group/storage/{clusterName}"] = groups.NewGetCurrentUserStoragePath(o.context, o.GroupsGetCurrentUserStoragePathHandler)
 
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
@@ -1135,6 +1305,11 @@ func (o *MlssCcAPI) initHandlerCache() {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
 	o.handlers["GET"]["/cc/v1/groups/name/{groupName}"] = groups.NewGetGroupByName(o.context, o.GroupsGetGroupByNameHandler)
+
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
+	o.handlers["GET"]["/cc/v1/groups/username/{username}"] = groups.NewGetGroupByUsername(o.context, o.GroupsGetGroupByUsernameHandler)
 
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
@@ -1170,6 +1345,11 @@ func (o *MlssCcAPI) initHandlerCache() {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
 	o.handlers["GET"]["/cc/v1/resources/{nodeName}"] = resources.NewGetNodeByName(o.context, o.ResourcesGetNodeByNameHandler)
+
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
+	o.handlers["GET"]["/cc/v1/proxyUser/{name}/user/{userName}"] = proxy_user.NewGetProxyUserByUserID(o.context, o.ProxyUserGetProxyUserByUserIDHandler)
 
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
@@ -1219,6 +1399,16 @@ func (o *MlssCcAPI) initHandlerCache() {
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
+	o.handlers["GET"]["/cc/v1/auth/access/usergroups/{userName}"] = groups.NewGetUserGroups(o.context, o.GroupsGetUserGroupsHandler)
+
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
+	o.handlers["GET"]["/cc/v1/users/token"] = users.NewGetUserToken(o.context, o.UsersGetUserTokenHandler)
+
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
 	o.handlers["GET"]["/cc/v1/inter/ip"] = inters.NewIPInterceptor(o.context, o.IntersIPInterceptorHandler)
 
 	if o.handlers["POST"] == nil {
@@ -1229,7 +1419,27 @@ func (o *MlssCcAPI) initHandlerCache() {
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
+	o.handlers["GET"]["/cc/v1/namespaces/role/{roleName}/user/{userName}"] = namespaces.NewListNamespaceByRoleNameAndUserName(o.context, o.NamespacesListNamespaceByRoleNameAndUserNameHandler)
+
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
+	o.handlers["GET"]["/cc/v1/proxyUsers/{user}"] = proxy_user.NewListProxyUser(o.context, o.ProxyUserListProxyUserHandler)
+
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
 	o.handlers["GET"]["/cc/v1/logout"] = logouts.NewLogout(o.context, o.LogoutsLogoutHandler)
+
+	if o.handlers["POST"] == nil {
+		o.handlers["POST"] = make(map[string]http.Handler)
+	}
+	o.handlers["POST"]["/cc/v1/alerts"] = alerts.NewPostAlert(o.context, o.AlertsPostAlertHandler)
+
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
+	o.handlers["GET"]["/cc/v1/proxyUserCheck/{proxyUserName}/{userName}"] = proxy_user.NewProxyUserCheck(o.context, o.ProxyUserProxyUserCheckHandler)
 
 	if o.handlers["POST"] == nil {
 		o.handlers["POST"] = make(map[string]http.Handler)
@@ -1284,6 +1494,11 @@ func (o *MlssCcAPI) initHandlerCache() {
 	if o.handlers["PUT"] == nil {
 		o.handlers["PUT"] = make(map[string]http.Handler)
 	}
+	o.handlers["PUT"]["/cc/v1/proxyUser/{id}"] = proxy_user.NewUpdateProxyUser(o.context, o.ProxyUserUpdateProxyUserHandler)
+
+	if o.handlers["PUT"] == nil {
+		o.handlers["PUT"] = make(map[string]http.Handler)
+	}
 	o.handlers["PUT"]["/cc/v1/roles"] = roles.NewUpdateRole(o.context, o.RolesUpdateRoleHandler)
 
 	if o.handlers["PUT"] == nil {
@@ -1320,6 +1535,16 @@ func (o *MlssCcAPI) initHandlerCache() {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
 	o.handlers["GET"]["/cc/v1/auth/access/users/{username}/namespaces/{namespace}/storages"] = auths.NewUserStoragePathCheck(o.context, o.AuthsUserStoragePathCheckHandler)
+
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
+	o.handlers["GET"]["/cc/v1/auth/access/{namespace}/checkresource"] = auths.NewCheckResource(o.context, o.AuthsCheckResourceHandler)
+
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
+	o.handlers["GET"]["/cc/v1/proxyUser/{id}"] = proxy_user.NewGetProxyUser(o.context, o.ProxyUserGetProxyUserHandler)
 
 }
 

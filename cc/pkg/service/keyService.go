@@ -23,8 +23,8 @@ import (
 
 func AddKey(key models.Keypair) (models.Keypair, error) {
 	err := repo.AddKey(key)
-	if err !=nil {
-		logger.Logger().Error("Add key err, ",err)
+	if err != nil {
+		logger.Logger().Error("Add key err, ", err)
 		return models.Keypair{}, err
 	}
 	return repo.GetKeyByName(key.Name)
@@ -32,8 +32,8 @@ func AddKey(key models.Keypair) (models.Keypair, error) {
 
 func UpdateKey(key models.Keypair) (models.Keypair, error) {
 	err := repo.UpdateKey(key)
-	if err !=nil {
-		logger.Logger().Error("Update key err, ",err)
+	if err != nil {
+		logger.Logger().Error("Update key err, ", err)
 		return models.Keypair{}, err
 	}
 	return repo.GetKeyById(key.ID)
@@ -53,8 +53,8 @@ func GetDeleteKeyByName(name string) (models.Keypair, error) {
 
 func DeleteByName(name string) (models.Keypair, error) {
 	err := repo.DeleteByName(name)
-	if err !=nil {
-		logger.Logger().Error("DeleteByName err, ",err)
+	if err != nil {
+		logger.Logger().Error("DeleteByName err, ", err)
 		return models.Keypair{}, err
 	}
 	return repo.GetDeleteKeyByName(name)
