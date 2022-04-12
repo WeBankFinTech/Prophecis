@@ -5,13 +5,11 @@ metadata:
   namespace: {{.Values.namespace}}
   labels:
     service: ffdl-trainer
-    environment: {{.Values.env}}
+    environment: {{.Values.envir}}
 spec:
-  type: NodePort
   ports:
   - name: grpc
     port: 80
     targetPort: 8443
-    nodePort: 0
   selector:
     service: ffdl-trainer
