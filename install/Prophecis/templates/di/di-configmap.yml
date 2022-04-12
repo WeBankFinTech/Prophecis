@@ -4,8 +4,10 @@ metadata:
   name: di-config
   namespace: {{.Values.namespace}}
 data:
-  config-{{.Values.env}}.yml: |
+  config-{{.Values.envir}}.yml: |
     mlssVersion: v1.3.0
+    #ccAddress: http://controlcenter.{{.Values.namespace}}.svc.cluster.local:7777
+    #ccAddress: http://controlcenter-go.{{.Values.namespace}}.svc.cluster.local:6666
     ccAddress: https://controlcenter-go
     platformNamespace: {{.Values.namespace}}
     queuePollInterval: 10
@@ -15,17 +17,20 @@ data:
     linkisLogCollector:
       replicas: 2
     linkis:
-      address: 127.0.0.1:8088
-      tokenCode: MLSS
+      address: {{.Values.linkis.address}}
+      tokenCode: {{.Values.linkis.tokenCode}}
+    mlflow:
+      address: {{.Values.mlflow.address}}
+    linkispro:
+      address: {{.Values.linkispro.address}}
+      tokenCode: {{.Values.linkispro.tokenCode}}
     datasource:
-      userName: {{.Values.database.user}}
-      userPwd: {{.Values.database.pwd}}
-      url: {{.Values.database.server}}
-      port: {{.Values.database.port}}
-      db: {{.Values.database.name}}
-      privKey: {{.Values.database.privKey}}
-      encryptPwd: {{.Values.database.encryptPwd}}
-
+      userName: {{.Values.db.user}}
+      userPwd: {{.Values.db.pwd}}
+      url: {{.Values.db.server}}
+      port: {{.Values.db.port}}
+      db: {{.Values.db.name}}
+    encodeFlag: {{.Values.encodeFlag}}
   server.crt: |
     -----BEGIN CERTIFICATE-----
     MIICzDCCAbQCCQCVrtRO5rcr1DANBgkqhkiG9w0BAQUFADAoMQswCQYDVQQGEwJD

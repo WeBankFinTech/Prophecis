@@ -1,21 +1,17 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: di-restapi
+  name: ffdl-restapi
   namespace: {{.Values.namespace}}
   labels:
-    service: di-restapi
-    environment: {{.Values.env}}
+    service: ffdl-restapi
+    environment: {{.Values.envir}}
 spec:
   type: NodePort
   ports:
   - name: ffdl
     port: 80
     targetPort: 8080
-    nodePort: 30960
-  - name: di-debug-port
-    port: 40000
-    targetPort: 40000
-    nodePort: 30961
+    nodePort: {{.Values.restapi.port}}
   selector:
-    service: di-restapi
+    service: ffdl-restapi
