@@ -5,11 +5,11 @@ metadata:
   namespace: {{.Values.namespace}}
   labels:
     service: ffdl-lcm
-    environment: {{.Values.env}}
+    environment: {{.Values.envir}}
 spec:
   ports:
   - name: grpc
     port: 80
-    targetPort: 8443
+    targetPort: 8080
   selector:
     service: ffdl-lcm
