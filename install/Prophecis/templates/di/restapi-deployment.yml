@@ -1,22 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: di-restapi
+  name: ffdl-restapi
   namespace: {{.Values.namespace}}
   labels:
-    service: di-restapi
-    environment: {{.Values.env}}
+    service: ffdl-restapi
+    environment: {{.Values.envir}}
 spec:
   selector:
     matchLabels:
-       service: di-restapi
-       environment: {{.Values.env}}
-  replicas: 1
+       service: ffdl-restapi
+       environment: {{.Values.envir}}
+  replicas: {{.Values.restapi.replicas}}
   template:
     metadata:
       labels:
-        service: di-restapi
-        environment: {{.Values.env}}
+        service: ffdl-restapi
+        environment: {{.Values.envir}}
         version: {{.Values.restapi.version}}
     spec:
 ######### 1.3.0 ############
@@ -30,15 +30,15 @@ spec:
           type: File
       - name: oss-storage
         hostPath:
-          path: /data/bdap-ss/mlss-data/tmp
+          path: {{.Values.storage.share_storage_dir}}
           type: Directory
 ############################
-      serviceAccount: lcm
-      serviceAccountName: lcm
       containers:
-      - name: di-restapi-container
-        image: {{.Values.server_repository}}:{{.Values.restapi.version}}
-        imagePullPolicy: Always
+      - name: ffdl-restapi-container
+        image: {{.Values.image.registry}}:{{.Values.restapi.version}}
+{{ if .Values.image.pullPolicy }}
+        imagePullPolicy: {{.Values.image.pullPolicy}}
+{{ end }}
         ports:
         - containerPort: 8080
 ####### 1.3.0 ############
@@ -56,26 +56,34 @@ spec:
             fieldRef:
               fieldPath: metadata.namespace
         - name: DLAAS_ENV
-          value: {{.Values.env}}
-        - name: DLAAS_MONGO_ADDRESS
-          value: mongo
+          value: {{.Values.envir}}
+        - name: MONGO_ADDRESS
+          value: {{.Values.mongo.address}}
         - name: DLAAS_LOGLEVEL
           value: {{.Values.log.level}}
-        - name: DLAAS_MONGO_ADDRESS
-          value: mongo:27017
+        - name: MONGO_ADDRESS
+          value: {{.Values.mongo.address}}
+        - name: MONGO_USERNAME
+          value: {{.Values.mongo.username}}
+        - name: MONGO_PASSWORD
+          value: {{.Values.mongo.password}}
+        - name: MONGO_DATABASE
+          value: {{.Values.mongo.database}}
+        - name: MONGO_Authentication_Database
+          value: {{.Values.mongo.authenticationDatabase}}
         command: ["/bin/sh", "-c"]
         args: ["DLAAS_PORT=8080 /main"]
-        #args: ["dlv --listen=:40000 --headless=true --api-version=2 exec /main -- --DLASS_PORT=8080"]
+        #args: ["dlv --listen=:40004 --headless=true --api-version=2 exec /main -- --DLASS_PORT=8080"]
         resources:
           limits:
-            cpu: 1000m
-            memory: 3400Mi
-        #livenessProbe:
-        #  httpGet:
-        #    path: /health
-        #    port: 8080
-        #  initialDelaySeconds: 30
-        #  timeoutSeconds: 10
+            cpu: {{.Values.restapi.cpus}}
+            memory: {{.Values.restapi.memory}}
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          timeoutSeconds: 10
       imagePullSecrets:
 #      - name: regcred
       - name: hubsecret

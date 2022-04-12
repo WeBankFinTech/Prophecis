@@ -4,25 +4,22 @@ metadata:
   name: di-storage
   namespace: {{.Values.namespace}}
   labels:
-    environment: {{.Values.env}}
+    environment: {{.Values.envir}}
     service: di-storage
 spec:
   selector:
     matchLabels:
       service: di-storage
-      environment: {{.Values.env}}
-  replicas: 1
+      environment: {{.Values.envir}}
+  replicas: {{.Values.storage.replicas}}
   template:
     metadata:
       labels:
         service: di-storage
-        environment: {{.Values.env}}
+        environment: {{.Values.envir}}
         version: {{.Values.storage.version}}
     spec:
       volumes:
-      - name: learner-config-volume
-        configMap:
-          name: learner-config
       - name: di-config
         configMap:
           name: di-config
@@ -32,15 +29,26 @@ spec:
           type: File
       - name: oss-storage
         hostPath:
-          path: /data/bdap-ss/mlss-data/tmp
+          path: {{.Values.ceph_path}}/{{.Values.storage.share_storage_dir}}
           type: Directory
-      - name: ceph
-        hostPath:
-          path: {{.Values.ceph_host_path}}/{{.Values.envir}}{{.Values.storage.uploadHostPath}}
+#      - name: ceph
+#        hostPath:
+#          path: {{.Values.ceph_path}}/
+#      - name: bdap-ss
+#        hostPath:
+#          path: {{.Values.storage.dataPath}}{{.Values.storage.bdap_ss}}
+#      - name: bdap-safess
+#        hostPath:
+#          path: {{.Values.storage.dataPath}}{{.Values.storage.bdap_safess}}
+#      - name: bdapsafe-ss
+#        hostPath:
+#          path: {{.Values.storage.dataPath}}{{.Values.storage.bdapsafe_ss}}
       containers:
       - name: di-storage-rpc-server
-        image: {{.Values.server_repository}}:{{.Values.storage.version}}
-        imagePullPolicy: Always
+        image: {{.Values.image.registry}}:{{.Values.storage.version}}
+{{ if .Values.image.pullPolicy }}
+        imagePullPolicy: {{.Values.image.pullPolicy}}
+{{ end }}
         ports:
         - containerPort: 8443
         env:
@@ -49,21 +57,25 @@ spec:
             fieldRef:
               fieldPath: metadata.namespace
         - name: DLAAS_ENV
-          value: {{.Values.env}}
+          value: {{.Values.envir}}
         - name: DLAAS_LOGLEVEL
           value: {{.Values.log.level}}
         - name: DLAAS_PUSH_METRICS_ENABLED
           value: "true"
         - name: LINKIS_ADDRESS
-          value: 127.0.0.1:8088
+          value: {{.Values.linkis.address}}
         - name: LINKIS_TOKEN_CODE
-          value: MLSS
-        - name: DLAAS_MONGO_ADDRESS
-          value: mongo.$(DLAAS_POD_NAMESPACE).svc.cluster.local
-        - name: DLAAS_MONGO_USERNAME
-          value: mlss
-        - name: DLAAS_MONGO_PASSWORD
-          value: mlss
+          value: {{.Values.linkis.tokenCode}}
+        - name: MONGO_ADDRESS
+          value: {{.Values.mongo.address}}
+        - name: MONGO_USERNAME
+          value: {{.Values.mongo.username}}
+        - name: MONGO_PASSWORD
+          value: {{.Values.mongo.password}}
+        - name: MONGO_DATABASE
+          value: {{.Values.mongo.database}}
+        - name: MONGO_Authentication_Database
+          value: {{.Values.mongo.authenticationDatabase}}
         - name: DLAAS_OBJECTSTORE_TYPE
           valueFrom:
             secretKeyRef:
@@ -85,11 +97,9 @@ spec:
               name: storage-secrets
               key: DLAAS_OBJECTSTORE_PASSWORD
         - name: DLAAS_ELASTICSEARCH_SCHEME
-          value: http
-{{ if eq .Values.env "dev" }}
+          value: {{.Values.elasticsearch.scheme}}
         - name: DLAAS_ELASTICSEARCH_ADDRESS
-          value: http://elasticsearch.prophecis.svc.cluster.local:9200
-{{ else }}
+          value: {{.Values.elasticsearch.address}}
         - name: DLAAS_ELASTICSEARCH_ADDRESS
           valueFrom:
             secretKeyRef:
@@ -105,25 +115,19 @@ spec:
             secretKeyRef:
               name: trainingdata-secrets
               key: DLAAS_ELASTICSEARCH_PASSWORD
-{{ end }}
         volumeMounts:
-        - mountPath: /etc/learner-config
-          name: learner-config-volume
         - mountPath: /etc/mlss/
           name: di-config
         - name: timezone-volume
           mountPath: /etc/localtime
-        - name: ceph
-          mountPath: {{.Values.storage.uploadContainerPath}}
-          mountPath: {{.Values.storage.uploadContainerPath}}
         - name: oss-storage
           mountPath: /data/oss-storage
         command: ["/bin/sh", "-c"]
         args: ["DLAAS_PORT=8443 /main"]
         resources:
           limits:
-            cpu: 500m
-            memory: 5000Mi
+            cpu: {{.Values.storage.cpus}}
+            memory: {{.Values.storage.memory}}
       imagePullSecrets:
       - name: hubsecret
       nodeSelector:

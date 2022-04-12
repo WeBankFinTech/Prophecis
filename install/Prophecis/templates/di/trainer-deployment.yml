@@ -4,26 +4,22 @@ metadata:
   name: ffdl-trainer
   namespace: {{.Values.namespace}}
   labels:
-    environment: {{.Values.env}}
+    environment: {{.Values.envir}}
     service: ffdl-trainer
 spec:
   selector:
     matchLabels:
       service: ffdl-trainer
-      environment: {{.Values.env}}
-  replicas: 1
+      environment: {{.Values.envir}}
+  replicas: {{.Values.trainer.replicas}}
   template:
     metadata:
       labels:
         service: ffdl-trainer
-        environment: {{.Values.env}}
+        environment: {{.Values.envir}}
         version: {{.Values.trainer.version}}
     spec:
       volumes:
-      - name: learner-config-volume
-        configMap:
-          name: learner-config
-######### 1.3.0 ############
       - name: di-config
         configMap:
           name: di-config
@@ -31,11 +27,12 @@ spec:
         hostPath:
           path: /usr/share/zoneinfo/Asia/Shanghai
           type: File
-############################
       containers:
       - name: ffdl-trainer-container
-        image: {{.Values.server_repository}}:{{.Values.trainer.version}}
-        imagePullPolicy: Always
+        image: {{.Values.image.registry}}:{{.Values.trainer.version}}
+{{ if .Values.image.pullPolicy }}
+        imagePullPolicy: {{.Values.image.pullPolicy}}
+{{ end }}
         ports:
         - containerPort: 8443
         env:
@@ -44,22 +41,44 @@ spec:
             fieldRef:
               fieldPath: metadata.namespace
         - name: DLAAS_ENV
-          value: {{.Values.env}}
+          value: {{.Values.envir}}
         - name: DLAAS_LOGLEVEL
           value: {{.Values.log.level}}
         - name: DLAAS_PUSH_METRICS_ENABLED
 #          value: "false"
           value: "true"
         - name: LINKIS_ADDRESS
-          value: 127.0.0.1:8088
+          value: {{.Values.linkis.address}}
         - name: LINKIS_TOKEN_CODE
-          value: MLSS
+          value: {{.Values.linkis.tokenCode}}
+{{ if eq .Values.envir "dev" }}
+        - name: MONGO_ADDRESS
+          value: {{.Values.mongo.address}}
+        - name: MONGO_USERNAME
+          value: {{.Values.mongo.username}}
+        - name: MONGO_PASSWORD
+          value: {{.Values.mongo.password}}
+        - name: MONGO_DATABASE
+          value: {{.Values.mongo.database}}
+        - name: MONGO_Authentication_Database
+          value: {{.Values.mongo.authenticationDatabase}}
+{{ else }}
         - name: DLAAS_MONGO_ADDRESS
-          value: mongo.$(DLAAS_POD_NAMESPACE).svc.cluster.local
+          valueFrom:
+             secretKeyRef:
+               name: trainer-secrets
+               key: DLAAS_MONGO_ADDRESS
         - name: DLAAS_MONGO_USERNAME
-          value: mlss
+          valueFrom:
+            secretKeyRef:
+              name: trainer-secrets
+              key: DLAAS_MONGO_USERNAME
         - name: DLAAS_MONGO_PASSWORD
-          value: mlss
+          valueFrom:
+            secretKeyRef:
+              name: trainer-secrets
+              key: DLAAS_MONGO_PASSWORD
+{{ end }}
         - name: DLAAS_OBJECTSTORE_TYPE
           valueFrom:
             secretKeyRef:
@@ -81,8 +100,6 @@ spec:
               name: trainer-secrets
               key: DLAAS_OBJECTSTORE_PASSWORD
         volumeMounts:
-        - mountPath: /etc/learner-config
-          name: learner-config-volume
 ####### 1.3.0 ############
         - mountPath: /etc/mlss/
           name: di-config
@@ -93,8 +110,8 @@ spec:
         args: ["DLAAS_PORT=8443 /main"]
         resources:
           limits:
-            cpu: 1000m
-            memory: 2048Mi
+            cpu: {{.Values.trainer.cpus}}
+            memory: {{.Values.trainer.memory}}
         livenessProbe:
           exec:
             command:
