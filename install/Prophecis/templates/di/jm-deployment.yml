@@ -5,18 +5,18 @@ metadata:
   namespace: {{.Values.namespace}}
   labels:
     service: di-jm
-    environment: {{.Values.env}}
+    environment: {{.Values.envir}}
 spec:
   selector:
     matchLabels:
       service: di-jm
-      environment: {{.Values.env}}
-  replicas: 1
+      environment: {{.Values.envir}}
+  replicas: {{.Values.lcm.replicas}}
   template:
     metadata:
       labels:
         service: di-jm
-        environment: {{.Values.env}}
+        environment: {{.Values.envir}}
         version:  {{.Values.lcm.version}}
     spec:
       volumes:
@@ -30,12 +30,14 @@ spec:
           hostPath:
             path: /usr/share/zoneinfo/Asia/Shanghai
             type: File
-      serviceAccount: lcm
-      serviceAccountName: lcm
+      serviceAccount: {{.Values.image.image_prefix}}lcm
+      serviceAccountName: {{.Values.image.image_prefix}}lcm
       containers:
       - name: jm
-        image: {{.Values.server_repository}}:{{.Values.jm.version}}
-        imagePullPolicy: Always
+        image: {{.Values.image.registry}}:{{.Values.jm.version}}
+{{ if .Values.image.pullPolicy }}
+        imagePullPolicy: {{.Values.image.pullPolicy}}
+{{ end }}
         volumeMounts:
         - mountPath: /etc/mlss/
           name: di-config
@@ -57,49 +59,49 @@ spec:
             fieldRef:
               fieldPath: metadata.namespace
         - name: DLAAS_LOAD_TRAINING_DATA_MEM_IN_MB
-          value: "300"
+          value: "{{.Values.lcm.load_training_data_mem_in_mb}}"
         - name: DLAAS_MILLI_CPU
-          value: "60"
+          value: "{{.Values.lcm.milli_cpu}}"
         - name: DLAAS_MEM_IN_MB
-          value: "300"
+          value: "{{.Values.lcm.mem_in_mb}}"
         - name: DLAAS_DEVICE_PLUGIN
-          value: "true"
+          value: "{{.Values.lcm.device_plugin}}"
         - name: DLAAS_IMAGE_TAG
           value: {{.Values.restapi.version}}
         - name: DLAAS_IMAGE_PULL_POLICY
-          value: Always
+          value: {{.Values.image.pullPolicy}}
         - name: DLAAS_ENV
-          value: {{.Values.env}}
+          value: {{.Values.envir}}
         - name: DLAAS_LOGLEVEL
           value: {{.Values.log.level}}
         - name: DLAAS_IMAGE_PREFIX
-          value: 
-        - name: DLAAS_LEARNER_TAG
-          value: {{.Values.learner.tag}}
-        - name: DLAAS_LEARNER_REGISTRY
-          value: {{.Values.server_repository}}/webank/mlss-di
+          value: {{.Values.image.image_prefix}}
         - name: LINKIS_ADDRESS
-          value: 127.0.0.1:8088
+          value: {{.Values.linkis.address}}
         - name: LINKIS_ADDRESS
-          value: 127.0.0.1:8088
+          value: {{.Values.linkis.address}}
         - name: LINKIS_TOKEN_CODE
-          value: MLSS
+          value: {{.Values.linkis.tokenCode}}
         - name: ENVIR
           value: {{.Values.envir}}
         - name: DLAAS_PUSH_METRICS_ENABLED
           value: "true"
-        - name: DLAAS_MONGO_ADDRESS
-          value: mongo.$(DLAAS_POD_NAMESPACE).svc.cluster.local
-        - name: DLAAS_MONGO_USERNAME
-          value: mlss
-        - name: DLAAS_MONGO_PASSWORD
-          value: mlss
+        - name: MONGO_ADDRESS
+          value: {{.Values.mongo.address}}
+        - name: MONGO_USERNAME
+          value: {{.Values.mongo.username}}
+        - name: MONGO_PASSWORD
+          value: {{.Values.mongo.password}}
+        - name: MONGO_DATABASE
+          value: {{.Values.mongo.database}}
+        - name: MONGO_Authentication_Database
+          value: {{.Values.mongo.authenticationDatabase}}
         command: ["/bin/sh", "-c"]
         args: ["DLAAS_PORT=8443 /main"]
         resources:
           limits:
-            cpu: 1000m
-            memory: 1000Mi
+            cpu: {{.Values.lcm.cpus}}
+            memory: {{.Values.lcm.memory}}
       imagePullSecrets:
       - name: hubsecret
       nodeSelector:

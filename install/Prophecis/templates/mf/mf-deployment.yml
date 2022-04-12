@@ -40,10 +40,6 @@ spec:
           path: /var/run/docker.sock
           type: File
         name: dockersock
-      - name: jdk
-        hostPath:
-          path: /nemo/jdk1.8.0_141
-          type: Directory
       - hostPath:
           path: /bin/docker
           type: File
@@ -75,8 +71,6 @@ spec:
           name: dockerclient
         - mountPath: /root/.docker/config.json
           name: dockerconfig
-        - mountPath: /nemo/jdk1.8.0_141
-          name: jdk
         env:
         - name: FLUENT_ELASTICSEARCH_HOST
           value: "elasticsearch.prophecis.svc.cluster.local"
