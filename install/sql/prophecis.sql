@@ -7,8 +7,8 @@
 
 
 -- 导出 mlss_gzpc_bdap_uat_01 的数据库结构
-CREATE DATABASE IF NOT EXISTS `mlss_gzpc_bdap_uat_01` /*!40100 DEFAULT CHARACTER SET utf8 */;
-USE `mlss_gzpc_bdap_uat_01`;
+CREATE DATABASE IF NOT EXISTS `prophecis_db` /*!40100 DEFAULT CHARACTER SET utf8 */;
+USE `prophecis_db`;
 
 -- 导出  表 mlss_gzpc_bdap_uat_01.t_experiment 结构
 CREATE TABLE IF NOT EXISTS `t_experiment` (

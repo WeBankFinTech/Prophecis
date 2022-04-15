@@ -11,7 +11,7 @@ namespace: logging
 
 image:
   # repository: fluent/fluent-bit
-  repository:  uat.sf.dockerhub.stgwebank/webank/mlss-di
+  repository:  wedatasphere/prophecis
   pullPolicy: IfNotPresent
   tag: fluent-bit-1.7.5-debug
 

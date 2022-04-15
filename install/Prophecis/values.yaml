@@ -11,7 +11,7 @@ db:
   user: prophecis
   pwd: password
 image:
-  registry: uat.sf.dockerhub.stgwebank/webank/prophecis
+  registry: wedatasphere/prophecis
   pullPolicy: Always
 gateway:
   address: 127.0.0.1
