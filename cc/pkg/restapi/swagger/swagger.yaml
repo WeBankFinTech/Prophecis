@@ -2175,7 +2175,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
 
-  /cc/v1/groups/users/roles/{roleId}/namespaces/clusterName/{clusterName}:
+  /cc/v1/groups/users/roles/{roleId}/namespaces:
     get:
       tags:
         - Groups
@@ -2191,11 +2191,6 @@ paths:
           required: true
           type: integer
           format: int64
-        - name: clusterName
-          in: path
-          description: clusterName.
-          required: true
-          type: string
       responses:
         200:
           description: auth by roleId and clusterName.
@@ -3694,7 +3689,8 @@ definitions:
         format: int64
         description: Whether the data is valid
       departmentId:
-        type: string
+        type: integer
+        format: int64
         description: the departmentId of group
       departmentName:
         type: string

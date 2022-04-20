@@ -29,7 +29,7 @@ func NewGetCurrentUserNamespaceWithRole(ctx *middleware.Context, handler GetCurr
 	return &GetCurrentUserNamespaceWithRole{Context: ctx, Handler: handler}
 }
 
-/*GetCurrentUserNamespaceWithRole swagger:route GET /cc/v1/groups/users/roles/{roleId}/namespaces/clusterName/{clusterName} Groups getCurrentUserNamespaceWithRole
+/*GetCurrentUserNamespaceWithRole swagger:route GET /cc/v1/groups/users/roles/{roleId}/namespaces Groups getCurrentUserNamespaceWithRole
 
 auth by roleId and clusterName .
 
