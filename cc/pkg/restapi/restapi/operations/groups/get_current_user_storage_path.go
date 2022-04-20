@@ -29,7 +29,7 @@ func NewGetCurrentUserStoragePath(ctx *middleware.Context, handler GetCurrentUse
 	return &GetCurrentUserStoragePath{Context: ctx, Handler: handler}
 }
 
-/*GetCurrentUserStoragePath swagger:route GET /cc/v1/groups/group/storage/{clusterName} Groups getCurrentUserStoragePath
+/*GetCurrentUserStoragePath swagger:route GET /cc/v1/groups/group/storage Groups getCurrentUserStoragePath
 
 Returns a storage list.
 

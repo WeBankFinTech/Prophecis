@@ -6,8 +6,8 @@ import (
 	"log"
 	"os"
 
-	"mlss-controlcenter-go/pkg/restapi/restapi"
-	"mlss-controlcenter-go/pkg/restapi/restapi/operations"
+	"mlss-controlcenter-go/pkg/restapi/restapi/restapi"
+	"mlss-controlcenter-go/pkg/restapi/restapi/restapi/operations"
 
 	loads "github.com/go-openapi/loads"
 	flags "github.com/jessevdk/go-flags"
