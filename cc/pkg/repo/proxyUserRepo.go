@@ -25,9 +25,6 @@ import (
 )
 
 func AddProxyUser(proxyUser *models.ProxyUser) error {
-	var token Token
-	datasource.TokenDS.GetDB().Table(datasource.WbUserToken).Where("USER = ?", proxyUser.Name).Find(&token)
-	proxyUser.Token = token.ClientToken
 	return datasource.GetDB().Create(&proxyUser).Error
 }
 
@@ -36,11 +33,6 @@ func DeleteProxyUser(proxyUserId int64) error {
 }
 
 func UpdateProxyUser(proxyUser *models.ProxyUser) error {
-	if proxyUser.Token == "" {
-		var token Token
-		datasource.TokenDS.GetDB().Table(datasource.WbUserToken).Where("USER = ?", proxyUser.Name).Find(&token)
-		proxyUser.Token = token.ClientToken
-	}
 	return datasource.GetDB().Table("t_proxy_user").Where("id = ?", proxyUser.ID).Updates(&proxyUser).Error
 }
 

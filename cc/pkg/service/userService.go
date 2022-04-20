@@ -26,6 +26,7 @@ import (
 	"mlss-controlcenter-go/pkg/models"
 	"mlss-controlcenter-go/pkg/repo"
 	"os"
+	"path"
 )
 
 func GetUserByUserId(userId int64) (models.User, error) {
@@ -201,7 +202,7 @@ func UpdateUser(user models.User) (*models.User, error) {
 	//更新user gid uid时校验权限
 	uid := user.UID
 	gid := user.Gid
-	pathStr := ""
+	pathStr := path.Join(constants.PRO_USER_PATH, user.Name)
 
 	if isExist, _ := common.PathExists(pathStr); !isExist {
 		err := os.MkdirAll(pathStr, os.ModePerm)
@@ -322,7 +323,7 @@ func createGroupForUser(user models.UserRequest, tx *gorm.DB) error {
 			GroupType:      constants.TypePRIVATE,
 			Name:           groupName,
 			DepartmentName: constants.MLSS,
-			DepartmentID:   "0",
+			DepartmentID:   0,
 			EnableFlag:     1,
 		}
 		err := repo.AddGroup(group, tx)

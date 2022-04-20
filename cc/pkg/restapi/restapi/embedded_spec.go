@@ -928,7 +928,7 @@ func init() {
         }
       }
     },
-    "/cc/v1/groups/group/storage/{clusterName}": {
+    "/cc/v1/groups/group/storage": {
       "get": {
         "description": "Optional extended description in Markdown.",
         "produces": [
@@ -939,15 +939,6 @@ func init() {
         ],
         "summary": "Returns a storage list.",
         "operationId": "GetCurrentUserStoragePath",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "the clusterName",
-            "name": "clusterName",
-            "in": "path",
-            "required": true
-          }
-        ],
         "responses": {
           "200": {
             "description": "Detailed GroupStorage and GroupStorage information.",
@@ -1800,7 +1791,7 @@ func init() {
         }
       }
     },
-    "/cc/v1/groups/users/roles/{roleId}/namespaces/clusterName/{clusterName}": {
+    "/cc/v1/groups/users/roles/{roleId}/namespaces": {
       "get": {
         "description": "Optional extended description in Markdown.",
         "produces": [
@@ -1817,13 +1808,6 @@ func init() {
             "format": "int64",
             "description": "roleId.",
             "name": "roleId",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "description": "clusterName.",
-            "name": "clusterName",
             "in": "path",
             "required": true
           }
@@ -4166,7 +4150,8 @@ func init() {
         },
         "departmentId": {
           "description": "the departmentId of group",
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         },
         "departmentName": {
           "description": "the departmentId of group",
@@ -6518,7 +6503,7 @@ func init() {
         }
       }
     },
-    "/cc/v1/groups/group/storage/{clusterName}": {
+    "/cc/v1/groups/group/storage": {
       "get": {
         "description": "Optional extended description in Markdown.",
         "produces": [
@@ -6529,15 +6514,6 @@ func init() {
         ],
         "summary": "Returns a storage list.",
         "operationId": "GetCurrentUserStoragePath",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "the clusterName",
-            "name": "clusterName",
-            "in": "path",
-            "required": true
-          }
-        ],
         "responses": {
           "200": {
             "description": "Detailed GroupStorage and GroupStorage information.",
@@ -7390,7 +7366,7 @@ func init() {
         }
       }
     },
-    "/cc/v1/groups/users/roles/{roleId}/namespaces/clusterName/{clusterName}": {
+    "/cc/v1/groups/users/roles/{roleId}/namespaces": {
       "get": {
         "description": "Optional extended description in Markdown.",
         "produces": [
@@ -7407,13 +7383,6 @@ func init() {
             "format": "int64",
             "description": "roleId.",
             "name": "roleId",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "description": "clusterName.",
-            "name": "clusterName",
             "in": "path",
             "required": true
           }
@@ -9756,7 +9725,8 @@ func init() {
         },
         "departmentId": {
           "description": "the departmentId of group",
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         },
         "departmentName": {
           "description": "the departmentId of group",
