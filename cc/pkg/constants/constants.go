@@ -88,5 +88,6 @@ const (
 )
 
 const (
-	GROUP_SUB_NAME    = "gp-private-"
+	GROUP_SUB_NAME = "gp-private-"
+	PRO_USER_PATH  = "/data/prophecis/prophecis-data"
 )

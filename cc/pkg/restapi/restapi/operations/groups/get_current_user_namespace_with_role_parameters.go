@@ -31,11 +31,6 @@ type GetCurrentUserNamespaceWithRoleParams struct {
 	// HTTP Request Object
 	HTTPRequest *http.Request `json:"-"`
 
-	/*clusterName.
-	  Required: true
-	  In: path
-	*/
-	ClusterName string
 	/*roleId.
 	  Required: true
 	  In: path
@@ -52,11 +47,6 @@ func (o *GetCurrentUserNamespaceWithRoleParams) BindRequest(r *http.Request, rou
 
 	o.HTTPRequest = r
 
-	rClusterName, rhkClusterName, _ := route.Params.GetOK("clusterName")
-	if err := o.bindClusterName(rClusterName, rhkClusterName, route.Formats); err != nil {
-		res = append(res, err)
-	}
-
 	rRoleID, rhkRoleID, _ := route.Params.GetOK("roleId")
 	if err := o.bindRoleID(rRoleID, rhkRoleID, route.Formats); err != nil {
 		res = append(res, err)
@@ -65,21 +55,6 @@ func (o *GetCurrentUserNamespaceWithRoleParams) BindRequest(r *http.Request, rou
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
-	return nil
-}
-
-// bindClusterName binds and validates parameter ClusterName from path.
-func (o *GetCurrentUserNamespaceWithRoleParams) bindClusterName(rawData []string, hasKey bool, formats strfmt.Registry) error {
-	var raw string
-	if len(rawData) > 0 {
-		raw = rawData[len(rawData)-1]
-	}
-
-	// Required: true
-	// Parameter is provided by construction from the route
-
-	o.ClusterName = raw
-
 	return nil
 }
 

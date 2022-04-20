@@ -16,8 +16,7 @@ import (
 
 // GetCurrentUserNamespaceWithRoleURL generates an URL for the get current user namespace with role operation
 type GetCurrentUserNamespaceWithRoleURL struct {
-	ClusterName string
-	RoleID      int64
+	RoleID int64
 
 	_basePath string
 	// avoid unkeyed usage
@@ -43,14 +42,7 @@ func (o *GetCurrentUserNamespaceWithRoleURL) SetBasePath(bp string) {
 func (o *GetCurrentUserNamespaceWithRoleURL) Build() (*url.URL, error) {
 	var _result url.URL
 
-	var _path = "/cc/v1/groups/users/roles/{roleId}/namespaces/clusterName/{clusterName}"
-
-	clusterName := o.ClusterName
-	if clusterName != "" {
-		_path = strings.Replace(_path, "{clusterName}", clusterName, -1)
-	} else {
-		return nil, errors.New("clusterName is required on GetCurrentUserNamespaceWithRoleURL")
-	}
+	var _path = "/cc/v1/groups/users/roles/{roleId}/namespaces"
 
 	roleID := swag.FormatInt64(o.RoleID)
 	if roleID != "" {
