@@ -704,13 +704,10 @@ func GetAllGroupNamespaceByNamespaceId(params groups.GetAllGroupNamespaceByNames
 
 func GetCurrentUserNamespaceWithRole(params groups.GetCurrentUserNamespaceWithRoleParams) middleware.Responder {
 	roleId := params.RoleID
-	clusterName := params.ClusterName
-	if clusterName == "default" {
-		clusterName = ""
-	}
+
 	token := params.HTTPRequest.Header.Get(constants.AUTH_HEADER_TOKEN)
 
-	logger.Logger().Debugf("GetCurrentUserNamespaceWithRole by clusterName: %v and roleId: %v, token: %v", clusterName, roleId, token)
+	logger.Logger().Debugf("GetCurrentUserNamespaceWithRole by clusterName: %v and roleId: %v, token: %v", "", roleId, token)
 	if "" == token {
 		return ResponderFunc(http.StatusForbidden, "failed to GetCurrentUserNamespaceWithRole", "token is empty")
 	}
@@ -746,11 +743,7 @@ func GetCurrentUserNamespaceWithRole(params groups.GetCurrentUserNamespaceWithRo
 
 	logger.Logger().Debugf("GetCurrentUserNamespaceWithRole get groupNamespaces: %v", namespaceList)
 
-	gns := NamespaceFilter(namespaceList, clusterName)
-
-	logger.Logger().Debugf("GetCurrentUserNamespaceWithRole to res ns: %v", gns)
-
-	marshal, marshalErr := json.Marshal(gns)
+	marshal, marshalErr := json.Marshal(namespaceList)
 
 	return GetResult(marshal, marshalErr)
 }
@@ -803,10 +796,6 @@ func GetNamespacesByGroupId(params groups.GetNamespacesByGroupIDParams) middlewa
 	return GetResult(marshal, marshalErr)
 }
 
-func NamespaceFilter(groupNamespaces []models.GroupNamespace, clusterName string) []models.GroupNamespace {
-	var gns []models.GroupNamespace
-	return gns
-}
 
 func GetCurrentUserStoragePath(params groups.GetCurrentUserStoragePathParams) middleware.Responder {
 	sessionUser := GetSessionByContext(params.HTTPRequest)

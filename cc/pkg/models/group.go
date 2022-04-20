@@ -19,7 +19,7 @@ type Group struct {
 	ClusterName string `json:"clusterName,omitempty"`
 
 	// the departmentId of group
-	DepartmentID string `json:"departmentId,omitempty"`
+	DepartmentID int64 `json:"departmentId,omitempty"`
 
 	// the departmentId of group
 	DepartmentName string `json:"departmentName,omitempty"`
@@ -38,6 +38,15 @@ type Group struct {
 
 	// the uid remarks user
 	Remarks string `json:"remarks,omitempty"`
+
+	// rmb dcn
+	RmbDcn string `json:"rmb_dcn,omitempty"`
+
+	// rmb idc
+	RmbIdc string `json:"rmb_idc,omitempty"`
+
+	// service id
+	ServiceID int64 `json:"service_id,omitempty"`
 
 	// the systemId of group
 	SubsystemID int64 `json:"subsystemId,omitempty"`

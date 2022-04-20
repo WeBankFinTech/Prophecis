@@ -1289,12 +1289,12 @@ func (o *MlssCcAPI) initHandlerCache() {
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
-	o.handlers["GET"]["/cc/v1/groups/users/roles/{roleId}/namespaces/clusterName/{clusterName}"] = groups.NewGetCurrentUserNamespaceWithRole(o.context, o.GroupsGetCurrentUserNamespaceWithRoleHandler)
+	o.handlers["GET"]["/cc/v1/groups/users/roles/{roleId}/namespaces"] = groups.NewGetCurrentUserNamespaceWithRole(o.context, o.GroupsGetCurrentUserNamespaceWithRoleHandler)
 
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
-	o.handlers["GET"]["/cc/v1/groups/group/storage/{clusterName}"] = groups.NewGetCurrentUserStoragePath(o.context, o.GroupsGetCurrentUserStoragePathHandler)
+	o.handlers["GET"]["/cc/v1/groups/group/storage"] = groups.NewGetCurrentUserStoragePath(o.context, o.GroupsGetCurrentUserStoragePathHandler)
 
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)

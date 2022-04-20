@@ -9,14 +9,25 @@ import (
 	"net/http"
 
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/middleware"
+
+	strfmt "github.com/go-openapi/strfmt"
 )
 
 // NewGetMyUsersParams creates a new GetMyUsersParams object
-// no default values defined in spec.
+// with the default values initialized.
 func NewGetMyUsersParams() GetMyUsersParams {
 
-	return GetMyUsersParams{}
+	var (
+		// initialize parameters with default values
+
+		clusterNameDefault = string("")
+	)
+
+	return GetMyUsersParams{
+		ClusterName: &clusterNameDefault,
+	}
 }
 
 // GetMyUsersParams contains all the bound params for the get my users operation
@@ -27,6 +38,12 @@ type GetMyUsersParams struct {
 
 	// HTTP Request Object
 	HTTPRequest *http.Request `json:"-"`
+
+	/*clusterName.
+	  In: query
+	  Default: ""
+	*/
+	ClusterName *string
 }
 
 // BindRequest both binds and validates a request, it assumes that complex things implement a Validatable(strfmt.Registry) error interface
@@ -38,8 +55,34 @@ func (o *GetMyUsersParams) BindRequest(r *http.Request, route *middleware.Matche
 
 	o.HTTPRequest = r
 
+	qs := runtime.Values(r.URL.Query())
+
+	qClusterName, qhkClusterName, _ := qs.GetOK("clusterName")
+	if err := o.bindClusterName(qClusterName, qhkClusterName, route.Formats); err != nil {
+		res = append(res, err)
+	}
+
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+// bindClusterName binds and validates parameter ClusterName from query.
+func (o *GetMyUsersParams) bindClusterName(rawData []string, hasKey bool, formats strfmt.Registry) error {
+	var raw string
+	if len(rawData) > 0 {
+		raw = rawData[len(rawData)-1]
+	}
+
+	// Required: false
+	// AllowEmptyValue: false
+	if raw == "" { // empty values pass all other validations
+		// Default values have been previously initialized by NewGetMyUsersParams()
+		return nil
+	}
+
+	o.ClusterName = &raw
+
 	return nil
 }

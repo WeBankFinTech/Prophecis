@@ -13,7 +13,11 @@ import (
 
 // GetMyUsersURL generates an URL for the get my users operation
 type GetMyUsersURL struct {
+	ClusterName *string
+
 	_basePath string
+	// avoid unkeyed usage
+	_ struct{}
 }
 
 // WithBasePath sets the base path for this url builder, only required when it's different from the
@@ -39,6 +43,18 @@ func (o *GetMyUsersURL) Build() (*url.URL, error) {
 
 	_basePath := o._basePath
 	_result.Path = golangswaggerpaths.Join(_basePath, _path)
+
+	qs := make(url.Values)
+
+	var clusterNameQ string
+	if o.ClusterName != nil {
+		clusterNameQ = *o.ClusterName
+	}
+	if clusterNameQ != "" {
+		qs.Set("clusterName", clusterNameQ)
+	}
+
+	_result.RawQuery = qs.Encode()
 
 	return &_result, nil
 }
