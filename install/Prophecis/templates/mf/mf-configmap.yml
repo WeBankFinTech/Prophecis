@@ -25,8 +25,8 @@ data:
       istioSideCarGpu: {{.Values.mf.istioSideCarGpu}}
     StorerConfig:
       platformNamespace: {{.Values.storage.platformNamespace}}
-      storerTls: {{.Values.storage.storageTls}}
-      storerServerEnvName: {{.Values.storage.storerEnvServerName}}
+      storerTls: {{.Values.storage.storerTls}}
+      storerServerEnvName: {{.Values.storage.storerServerEnvName}}
       storerServerName: {{.Values.storage.storerServerName}}
       storerCA: {{.Values.storage.storerCA}}
   server.crt: |
