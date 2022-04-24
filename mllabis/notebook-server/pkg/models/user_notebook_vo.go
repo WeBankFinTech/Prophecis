@@ -2,7 +2,7 @@ package models
 
 type UserNotebookVO struct {
 	Role          string   `json:"role,omitempty"`
-	NamespaceList []string `json:"namespaceList,omitempty"`
+	NamespaceList []string `json:"namespaces,omitempty"`
 }
 
 type PageListVO struct {
