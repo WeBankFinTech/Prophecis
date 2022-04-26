@@ -489,6 +489,11 @@ func GetDataStoreConfig() map[string]string {
 		m[StorageType] = val
 	}
 
+	//FIXME mlss test
+	//m = make(map[string]string)
+	//m[AuthURLKey] = "http://10.107.105.207:32000"
+	//m[UsernameKey] = "AKIAIOSFODNN7EXAMPLE"
+	//m[PasswordKey] = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
 
 	return m
 }
