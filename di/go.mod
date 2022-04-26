@@ -9,8 +9,6 @@ require (
 	github.com/aws/aws-sdk-go v1.29.11
 	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/coreos/etcd v3.3.10+incompatible
-	github.com/dre1080/recover v0.0.0-20150930082637-1c296bbb3227
-	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/go-kit/kit v0.10.0
 	github.com/go-openapi/errors v0.19.4
@@ -22,8 +20,8 @@ require (
 	github.com/go-openapi/validate v0.19.7
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/golang/mock v1.4.3
-	github.com/golang/protobuf v1.4.1
-	github.com/google/uuid v1.1.1
+	github.com/golang/protobuf v1.5.2
+	github.com/google/uuid v1.1.2
 	github.com/googleapis/gnostic v0.3.1 // indirect
 	github.com/gorilla/websocket v1.4.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
@@ -43,15 +41,16 @@ require (
 	github.com/spf13/cast v1.3.1
 	github.com/spf13/cobra v0.0.7
 	github.com/spf13/viper v1.6.2
-	github.com/stretchr/testify v1.5.1
+	github.com/stretchr/testify v1.7.0
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf // indirect
 	github.com/thoas/go-funk v0.6.0
 	github.com/tylerb/graceful v1.2.15
 	github.com/urfave/cli v1.22.4
 	github.com/ventu-io/go-shortid v0.0.0-20171029131806-771a37caa5cf
-	golang.org/x/net v0.0.0-20200324143707-d3edc9973b7e
-	google.golang.org/grpc v1.28.1
-	google.golang.org/protobuf v1.25.0
+	golang.org/x/net v0.0.0-20200822124328-c89045814202
+	google.golang.org/grpc v1.45.0
+	google.golang.org/grpc/examples v0.0.0-20220328174708-562e12f07b7f // indirect
+	google.golang.org/protobuf v1.26.0
 	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
 	gopkg.in/olivere/elastic.v5 v5.0.85
 	gopkg.in/yaml.v2 v2.2.8
@@ -68,3 +67,5 @@ replace k8s.io/client-go => github.com/kubernetes/client-go v0.16.8
 replace github.com/googleapis/gnostic/OpenAPIv2 => github.com/googleapis/gnostic/OpenAPIv2 v0.3.1
 
 replace github.com/nicksnyder/go-i18n/i18n => github.com/nicksnyder/go-i18n/i18n v1.10.1
+
+replace google.golang.org/grpc => google.golang.org/grpc v1.29.0
