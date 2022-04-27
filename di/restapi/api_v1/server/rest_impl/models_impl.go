@@ -911,7 +911,7 @@ func GetDashboards(params operations.GetDashboardsParams) middleware.Responder {
 						" parse response total, total: %s, err: %v", resp.Total, err)
 					return handleErrorResponse(logr, err.Error())
 				}
-				if (currentPage * pageSize) > totalInt64 {
+				if (currentPage * pageSize) < totalInt64 {
 					currentPage += 1
 				} else {
 					queryFlag = false
@@ -957,7 +957,7 @@ func GetDashboards(params operations.GetDashboardsParams) middleware.Responder {
 						" parse response total, total: %s, err: %v", resp.Total, err)
 					return handleErrorResponse(logr, err.Error())
 				}
-				if (currentPage * pageSize) > totalInt64 {
+				if (currentPage * pageSize) < totalInt64 {
 					currentPage += 1
 				} else {
 					queryFlag = false
