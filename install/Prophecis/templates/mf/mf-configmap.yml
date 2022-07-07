@@ -26,9 +26,9 @@ data:
     StorerConfig:
       platformNamespace: {{.Values.storage.platformNamespace}}
       storerTls: {{.Values.storage.storageTls}}
-      storerServerEnvName: {{.Values.storage.storerEnvServerName}}
-      storerServerName: {{.Values.storage.storerServerName}}
-      storerCA: {{.Values.storage.storerCA}}
+      storerServerEnvName: {{.Values.storage.storageEnvServerName}}
+      storerServerName: {{.Values.storage.storageServerName}}
+      storerCA: {{.Values.storage.storageCA}}
   server.crt: |
     -----BEGIN CERTIFICATE-----
     MIICzDCCAbQCCQCVrtRO5rcr1DANBgkqhkiG9w0BAQUFADAoMQswCQYDVQQGEwJD

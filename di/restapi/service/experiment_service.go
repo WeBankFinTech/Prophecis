@@ -77,7 +77,7 @@ type ExperimentServiceImpl struct {
 
 func (expService *ExperimentServiceImpl) CreateExperimentTag(expId int64, expTagStr string, username string) (*models.ExperimentTag, error) {
 	db := datasource.GetDB()
-	user, err := repo.UserRepo.Get(&username, db)
+	user, err := repo.UserRepo.GetByTransaction(&username, db)
 	if err != nil {
 		log.Errorf("DataBase Update Experiment Get User Info Error:" + err.Error())
 		return nil, err
@@ -103,7 +103,7 @@ func (expService *ExperimentServiceImpl) CreateExperimentTag(expId int64, expTag
 func (expService *ExperimentServiceImpl) UpdateExperimentInfo(id int64, expName string, expDesc string,
 	expTags []*restmodels.ProphecisExperimentTagPutBasicInfo, username string, isSA bool) (*models.Experiment, error) {
 	db := datasource.GetDB()
-	user, err := repo.UserRepo.Get(&username, db)
+	user, err := repo.UserRepo.GetByTransaction(&username, db)
 	if err != nil {
 		log.Errorf("DataBase Update Experiment Get User Info Error:" + err.Error())
 		return nil, err
@@ -372,7 +372,7 @@ func (expService *ExperimentServiceImpl) CreateExperiment(params *restmodels.Pro
 	}
 	var newExperiment *models.Experiment
 	err = datasource.GetDB().Transaction(func(tx *gorm.DB) error {
-		user, err := repo.UserRepo.Get(&username, tx)
+		user, err := repo.UserRepo.GetByTransaction(&username, tx)
 		if err != nil {
 			return err
 		}
@@ -1302,7 +1302,7 @@ func PermissionCheck(execUserName string, entityUserId int64, groupId *string, i
 		return nil
 	}
 	db := datasource.GetDB()
-	user, err := repo.UserRepo.Get(&execUserName, db)
+	user, err := repo.UserRepo.GetByTransaction(&execUserName, db)
 	if err != nil {
 		return errors.New("Permission Check Error, Get user err: " + err.Error())
 	}

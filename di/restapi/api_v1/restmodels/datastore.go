@@ -15,6 +15,9 @@ import (
 // swagger:model Datastore
 type Datastore struct {
 
+	// fields
+	Fields map[string]string `json:"Fields,omitempty"`
+
 	// connection
 	Connection map[string]string `json:"connection,omitempty"`
 

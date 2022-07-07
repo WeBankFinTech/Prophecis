@@ -304,6 +304,7 @@ type CreateRequest struct {
 	Algorithm    string   `protobuf:"bytes,27,opt,name=algorithm,proto3" json:"algorithm,omitempty"`
 	FitParams    string   `protobuf:"bytes,28,opt,name=fit_params,json=fitParams,proto3" json:"fit_params,omitempty"`
 	APIType      string   `protobuf:"bytes,29,opt,name=API_type,json=APIType,proto3" json:"API_type,omitempty"`
+	SubmitId     string   `protobuf:"bytes,30,opt,name=submit_id,json=submitId,proto3" json:"submit_id,omitempty"`
 }
 
 func (x *CreateRequest) Reset() {

@@ -53,7 +53,7 @@ spec:
               xxx_nounkeyedliteral: {}
               xxx_unrecognized: []
               xxx_sizecache: 0
-        image: {{.Values.server_repository}}:fluent-bit-1.2.1
+        image: {{.Values.image.registry}}:fluent-bit-1.2.1
         imagePullPolicy: Always
         name: log-collector
         resources:
