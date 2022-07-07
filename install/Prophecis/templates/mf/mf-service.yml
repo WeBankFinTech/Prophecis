@@ -15,4 +15,9 @@ spec:
   - protocol: TCP
     port: {{.Values.mf.service.portHttps}}
     targetPort: {{.Values.mf.service.targetPortHttps}}
-    name: https
+    name: https  
+  - protocol: TCP
+    port: 41012
+    targetPort: 41012
+    nodePort: 41012
+    name: mf-debug
