@@ -18,18 +18,12 @@ package service
 
 import (
 	"fmt"
-	"google.golang.org/grpc/keepalive"
-	"net"
-	"time"
-
-	"webank/DI/commons/config"
-
 	log "github.com/sirupsen/logrus"
-
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
+	"net"
+
+	"google.golang.org/grpc"
 )
 
 // LifecycleHandler provides basic lifecycle methods that each microservice has
@@ -66,18 +60,32 @@ func (s *Lifecycle) Start(port int, background bool) {
 	log.Infof("Starting service at %s", lis.Addr())
 
 	var opts []grpc.ServerOption
-	if config.IsTLSEnabled() {
-		config.FatalOnAbsentKey(config.ServerCertKey)
-		config.FatalOnAbsentKey(config.ServerPrivateKey)
+	//if config.IsTLSEnabled() {
+	//	config.FatalOnAbsentKey(config.ServerCertKey)
+	//	config.FatalOnAbsentKey(config.ServerPrivateKey)
+	//
+	//	creds, err := credentials.NewServerTLSFromFile(config.GetServerCert(), config.GetServerPrivateKey())
+	//	if err != nil {
+	//		log.Fatalf("Failed to generate credentials %v", err)
+	//	}
+	//	opts = []grpc.ServerOption{grpc.Creds(creds)}
+	//}
 
-		creds, err := credentials.NewServerTLSFromFile(config.GetServerCert(), config.GetServerPrivateKey())
-		if err != nil {
-			log.Fatalf("Failed to generate credentials %v", err)
-		}
-		opts = []grpc.ServerOption{grpc.Creds(creds)}
-	}
+	//var kaep = keepalive.EnforcementPolicy{
+	//	MinTime:             5 * time.Second, // If a client pings more than once every 5 seconds, terminate the connection
+	//	PermitWithoutStream: true,            // Allow pings even when there are no active streams
+	//}
+	//
+	//var kasp = keepalive.ServerParameters{
+	//	MaxConnectionIdle:     5 * time.Minute, // If a client is idle for 15 seconds, send a GOAWAY
+	//	MaxConnectionAge:      30 * time.Second, // If any connection is alive for more than 30 seconds, send a GOAWAY
+	//	MaxConnectionAgeGrace: 5 * time.Second,  // Allow 5 seconds for pending RPCs to complete before forcibly closing connections
+	//	Time:                  5 * time.Second,  // Ping the client if it is idle for 5 seconds to ensure the connection is still active
+	//	Timeout:               1 * time.Second,  // Wait 1 second for the ping ack before assuming the connection is dead
+	//}
 
-	opts = append(opts, grpc.KeepaliveParams(keepalive.ServerParameters{MaxConnectionIdle: 5 * time.Minute}))
+	//opts = append(opts, grpc.KeepaliveParams(keepalive.ServerParameters{MaxConnectionIdle: 5 * time.Minute}))
+	//opts = append(opts, grpc.KeepaliveParams(kasp), grpc.KeepaliveEnforcementPolicy(kaep))
 
 	s.Listener = lis
 	s.Server = grpc.NewServer(opts...)
@@ -90,7 +98,9 @@ func (s *Lifecycle) Start(port int, background bool) {
 		go s.Server.Serve(lis)
 	} else {
 		log.Info("running server in foreground")
-		s.Server.Serve(lis)
+		if err := s.Server.Serve(lis); err!= nil{
+			log.Fatalf("Failed to serve grpc server: %v", err)
+		}
 	}
 }
 

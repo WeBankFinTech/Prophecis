@@ -192,6 +192,39 @@ paths:
           description: Model with the given ID not found.
           schema:
             $ref: '#/definitions/Error'
+  /di/v1/models/{model_id}/retry:
+    get:
+      tags:
+        - Models
+      summary: Retry detailed information about a model.
+      description: |
+        Retry detailed information about a model such as training status.
+      parameters:
+        - name: model_id
+          in: path
+          description: The id of the model.
+          required: true
+          type: string
+        - name: version
+          in: query
+          description: The release date of the version of the API you want to use. Specify dates in YYYY-MM-DD format.
+          required: false
+          type: string
+          default: "2017-02-13"
+      operationId: retryModel
+      responses:
+        200:
+          description: Model repeat successfully.
+          schema:
+            $ref: '#/definitions/BasicModel'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The model cannot be found.
+          schema:
+            $ref: '#/definitions/Error'
   /di/v1/models/{model_id}:
     get:
       tags:
@@ -547,7 +580,6 @@ paths:
           description: The dashboard cannot be found
           schema:
             $ref: '#/definitions/Error'
-
   /di/v1/experiment:
     post:
       summary: createExperiment
@@ -597,6 +629,37 @@ paths:
             $ref: '#/definitions/Error'
         404:
           description: Model create failed
+          schema:
+            $ref: '#/definitions/Error'
+  /di/v1/experiment/{id}/copy:
+    get:
+      summary: copyExperiment
+      tags:
+        - Experiments
+      description: Copy Experiment.
+      operationId: copyExperiment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: number
+          format: int64
+          description: experiment id
+        - name: create_type
+          in: query
+          type: string
+          description: create type, include MLFLOW, DSS, WTSS
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/ProphecisExperimentRequest'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Models cannot be found
           schema:
             $ref: '#/definitions/Error'
   /di/v1/experiment/{id}:
@@ -1427,6 +1490,12 @@ definitions:
             description: api type of xgboost or lightgbm
           data_set:
             $ref: '#/definitions/DataSet'
+          code_selector:
+            type: string
+            description: code_selector type file 
+          submit_id:
+            type: string
+            description: submit_id describe user submit 
   Framework:
     type: object
     properties:
@@ -1518,6 +1587,10 @@ definitions:
         type: string
         description: the type of the data store as defined in the manifest.
       connection:
+        type: object
+        additionalProperties:
+          type: string
+      Fields:
         type: object
         additionalProperties:
           type: string
@@ -1772,7 +1845,7 @@ definitions:
       exp_desc:
         type: string
         description: Experiment Description.
-      createType:
+      create_type:
         default: "MLFlow"
         type: string
         description: experiment type, default "MLFlow", choose next value, "WTSS" "DSS" "MLFlow"
@@ -1781,9 +1854,28 @@ definitions:
         description: Experiment Tags
         items:
           $ref: "#/definitions/ProphecisExperimentTagPutBasicInfo"
+      dss_info:
+        type: object
+        $ref: '#/definitions/DSSInfo'
     required:
       - exp_name
       - exp_desc
+  DSSInfo:
+    type: object
+    properties:
+      flow_name:
+        type: string
+      flow_version:
+        type: string
+      flow_id:
+        type: number
+        format: int64
+      project_name:
+        type: string
+      project_id:
+        type: number
+        format: int64
+
   ProphecisExperiments:
     type: object
     properties:
@@ -1996,6 +2088,9 @@ definitions:
       flow_json:
         type: string
         description: Experiment Run type, Include CLI/UI/DSS/Schedulis.
+      run_date:
+        type: string
+        description: Experiment Run run date.
     required:
       - exp_exec_type
   ProphecisExperimentRunResponse:
@@ -2067,6 +2162,9 @@ definitions:
       exp_desc:
         type: string
         description: Experiment Description.
+      group_name:
+        type: string
+        description: Experiment group.
       tag_list:
         type: array
         description: Experiment Tags

@@ -17,8 +17,8 @@
 
 # FROM dlaas-service-base:ubuntu16.04
 #FROM ffdl/ffdl-restapi:v0.1.1
-#FROM ubuntu:latest
-FROM golang-dlv:latest
+FROM ubuntu:latest
+#FROM golang-dlv:latest
 # switch to root
 USER root
 
