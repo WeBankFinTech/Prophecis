@@ -53,7 +53,7 @@ spec:
               xxx_nounkeyedliteral: {}
               xxx_unrecognized: []
               xxx_sizecache: 0
-        image: uat.sf.dockerhub.stgwebank/webank/mlss-di:fluent-bit-1.2.1
+        image: wedatasphere/prophecis:fluent-bit-1.2.1
         imagePullPolicy: Always
         name: log-collector
         resources:

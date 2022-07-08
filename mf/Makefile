@@ -1,4 +1,4 @@
-registry = uat.sf.dockerhub.stgwebank/webank
+registry = wedatasphere
 repo = prophecis
 version = v0.3.0
 tag = mf-server-$(version)

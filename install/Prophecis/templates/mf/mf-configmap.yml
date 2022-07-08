@@ -79,7 +79,7 @@ data:
 
   
   Dockerfile: |
-    FROM uat.sf.dockerhub.stgwebank/webank/mlss-mf:MLSS-MF_1.14.0_Docker-Base
+    FROM wedatasphere/prophecis:MLSS-MF_1.14.0_Docker-Base
     COPY ./model/ /app
     WORKDIR /app
     #RUN pip install -i http://127.0.0.1:13141/root/pypi/+simple/ -r requirements.txt  --trusted-host=127.0.0.1
