@@ -1,18 +1,3 @@
-/*
- * Copyright 2020 WeBank
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package jobmonitor
 
 import (
@@ -144,12 +129,76 @@ func (jm *JobMonitor) monitoring() {
 	// go jm.monitoringLinkisJob()
 }
 
+func (jm *JobMonitor) handleErrorJob() {
+	//Init
+	logger := logger.GetLogger()
+	var labels = make(map[string]string)
+	labels[constants.ENVIR] = os.Getenv(constants.ENVIR_UPRER)
+	labels[constants.JOBTYPE] = constants.SINGLE
+
+	for {
+		select {
+		case <-jm.ctx.Done():
+			return
+		default:
+			//1. Get Running Job from Mongo: Set A
+			jobListFromMongo,err := jm.repo.FindAllByStatus(grpc_trainer_v2.Status_RUNNING,"","")
+			if err != nil {
+				logger.Errorf("GetNormalJobListFromK8s failed, %v", err)
+			}
+
+			//2. Get Running Job From Kubernetes: Set B
+			jobListFromK8s, err := jm.GetNormalJobListFromK8s(labels)
+			if err != nil {
+				logger.Errorf("GetNormalJobListFromK8s failed, %v", err)
+			}
+
+			//3. Cal: A-B
+			var trainingIdSet map[string]void
+			var errorJobList []string
+			var setMember void
+			for i := 0; i < len(jobListFromMongo.TrainingRecords); i++ {
+				trainingIdSet[jobListFromMongo.TrainingRecords[i].TrainingID] = setMember
+			}
+			for i := 0; i < len(jobListFromK8s); i++ {
+				if _,ok := trainingIdSet[jobListFromK8s[i].Name]; ok{
+					errorJobList = append(errorJobList, jobListFromK8s[i].Name)
+				}
+			}
+
+			//4. Handle Error Set A-B
+			for i := 0; i < len(errorJobList); i++ {
+				record, err := jm.repo.Find(errorJobList[i])
+				if err != nil {
+					logger.Errorf("GetNormalJobListFromK8s failed, %v", err)
+				}
+
+				updateStatus := &client.TrainingStatusUpdate{
+					Status: grpc_storage.Status_FAILED,
+					StatusMessage: "Job is Not Found in Kubernetes platform",
+				}
+
+				//Update Mongo Job to Failed
+				err = updateJobStatusInTrainer(record.TrainingID, record.UserID, updateStatus, logger)
+				if err != nil{
+					logger.Errorf("GetNormalJobListFromK8s failed, %v", err)
+				}
+
+			}
+			time.Sleep(10 * time.Second)
+		}
+	}
+
+
+
+}
+
+
 func (jm *JobMonitor) monitoringMLFlowJob() {
 	go jm.monitoringNormalMLFlowJob()
 	go jm.handleErrorJob()
 
 }
-
 func (jm *JobMonitor) monitoringNormalMLFlowJob() {
 	getLogger := logger.GetLogger()
 	getLogger.Debugf("monitoringSingleLearnerJob start")
@@ -177,105 +226,6 @@ func (jm *JobMonitor) monitoringNormalMLFlowJob() {
 }
 
 
-
-func (jm *JobMonitor) monitoringSingleLearnerJob() {
-	getLogger := logger.GetLogger()
-	getLogger.Debugf("monitoringSingleLearnerJob start")
-	var labels = make(map[string]string)
-	labels[constants.ENVIR] = os.Getenv(constants.ENVIR_UPRER)
-	labels[constants.JOBTYPE] = constants.SINGLE
-	getLogger.Debugf("labels: %+v", labels)
-	for {
-		select {
-		case <-jm.ctx.Done():
-			return
-		default:
-			//get job by envir and jobType from k8s
-			jobList, err := jm.GetNormalJobListFromK8s(labels)
-			if err != nil {
-				getLogger.Errorf("GetNormalJobListFromK8s failed, %v", err)
-			}
-			err = jm.updateStatusInDB(jobList)
-			if err != nil {
-				getLogger.Errorf("updateStatusInDB failed, %v", err)
-			}
-			time.Sleep(10 * time.Second)
-		}
-	}
-}
-
-
-func (jm *JobMonitor) handleErrorJob() {
-	//Init
-	logger := logger.GetLogger()
-	var labels = make(map[string]string)
-	labels[constants.ENVIR] = os.Getenv(constants.ENVIR_UPRER)
-	labels[constants.JOBTYPE] = constants.SINGLE
-
-	for {
-		select {
-		case <-jm.ctx.Done():
-			return
-		default:
-			//1. Get Running Job from Mongo: Set A
-			jobListFromMongo,err := jm.repo.FindAllByStatus(grpc_trainer_v2.Status_RUNNING,"","")
-			if err != nil {
-				logger.Errorf("GetNormalJobListFromK8s failed, %v", err)
-			}
-
-			//2. Get Running Job From Kubernetes: Set B
-			jobListFromK8s, err := jm.GetNormalJobListFromK8s(labels)
-			if err != nil {
-				logger.Errorf("GetNormalJobListFromK8s failed, %v", err)
-			}
-
-			if len(jobListFromMongo.TrainingRecords) == 0 {
-				continue
-			}
-
-			//3. Cal: A-B
-			trainingIdSet := make(map[string]void)
-			var errorJobList []string
-			var setMember void
-			for i := 0; i < len(jobListFromK8s); i++ {
-				trainingIdSet[jobListFromK8s[i].Name] = setMember
-				logger.Debugf("jobListFromK8s len is :"+strconv.Itoa(len(jobListFromK8s)))
-			}
-
-			for i := 0; i < len(jobListFromMongo.TrainingRecords); i++ {
-				logger.Debugf("JobListFromMongo len is :"+strconv.Itoa(len(jobListFromMongo.TrainingRecords)))
-				if _,ok := trainingIdSet[jobListFromMongo.TrainingRecords[i].TrainingID]; !ok{
-					errorJobList = append(errorJobList, jobListFromMongo.TrainingRecords[i].TrainingID)
-				}
-			}
-
-
-			//4. Handle Error Set A-B
-			for i := 0; i < len(errorJobList); i++ {
-				record, err := jm.repo.Find(errorJobList[i])
-				if err != nil {
-					logger.Errorf("GetNormalJobListFromK8s failed, %v", err)
-				}
-				logger.Errorf("handle error job , %v", errorJobList[i])
-				updateStatus := &client.TrainingStatusUpdate{
-					Status: grpc_storage.Status_FAILED,
-					StatusMessage: "Job is Not Found in Kubernetes platform",
-				}
-
-				//Update Mongo Job to Failed
-				err = updateJobStatusInTrainer(record.TrainingID, record.UserID, updateStatus, logger)
-				if err != nil{
-					logger.Errorf("GetNormalJobListFromK8s failed, %v", err)
-				}
-
-			}
-			time.Sleep(10 * time.Second)
-		}
-	}
-
-
-
-}
 
 
 
@@ -406,12 +356,6 @@ func (jm *JobMonitor) updateStatusInDB(list []v1.Job) error {
 		getLogger.Debugf("jm.repo.Find(JobId): %v, record.TrainingStatus.Status: %v", record.TrainingID, record.TrainingStatus.Status.String())
 		getLogger.Debugf("jm.repo.Find(JobId): %v, record.JobAlert: %+v", record.TrainingID, record.JobAlert)
 
-		if startTime == nil {
-			getLogger.Errorf("jm.repo.Find(JobId): %v, start time is nill ", record.TrainingID)
-			startTime = &metav1.Time{
-				time.Now(),
-			}
-		}
 		err = jm.processUpdateLearnerStatus(record, startTime.Time, actualStatus, getLogger)
 		if err != nil {
 			getLogger.Errorf("jm processUpdateLearnerStatus failed, %v", err.Error())
@@ -424,29 +368,26 @@ func (jm *JobMonitor) updateStatusInDB(list []v1.Job) error {
 		options := metav1.DeleteOptions{
 			PropagationPolicy: &propagation,
 		}
-		if strings.EqualFold(update.Status.String(), grpc_storage.Status_COMPLETED.String()) || strings.EqualFold(update.Status.String(), grpc_storage.Status_FAILED.String()) {
+		if strings.EqualFold(update.Status.String(), grpc_storage.Status_COMPLETED.String()) ||
+			strings.EqualFold(update.Status.String(), grpc_storage.Status_FAILED.String()) {
 			getLogger.Infof("job: %v done, cleaning up now", record.TrainingID)
 
 			//删除对应 job alerting对象
 			delete(jm.Alertings, record.TrainingID)
 
-			//go func() {
-			//	//todo if job failed, job will be deleted after 30s
-			//	time.Sleep(10 * time.Second)
+			go func() {
+				//IF Job Finish
+				time.Sleep(10 * time.Second)
 				getLogger.Debugf(" Deleting Job '%s'", record.TrainingID)
 				error := updateJobStatusInTrainer(record.TrainingID, record.UserID, actualStatus, getLogger)
 				if error != nil {
 					getLogger.WithError(error).Errorf("Failed to write the status %s for training %s to trainer", actualStatus.Status.String(), record.TrainingID)
 				}
-				err := jm.K8sClient.CoreV1().Services(j.Namespace).Delete(j.Name, &options)
-				if err != nil {
-					getLogger.Errorf("deleting service: %v  failed, %v", j.Name, err.Error())
-				}
-				err = jm.K8sClient.BatchV1().Jobs(j.Namespace).Delete(j.Name, &options)
+				err := jm.K8sClient.BatchV1().Jobs(j.Namespace).Delete(j.Name, &options)
 				if err != nil {
 					getLogger.Errorf("deleting job: %v in l8s failed, %v", j.Name, err.Error())
 				}
-			//}()
+			}() //todo error marked by lk
 		}
 
 		jm.HandlerAlertForDeadlineAndOvertimeJobStatus(actualStatus.Status.String(), startTime.Time, record, getLogger)
@@ -576,7 +517,7 @@ func updateJobStatusInTrainer(trainingID string, userID string, statusUpdate *cl
 	})
 
 	if err != nil {
-		//failedTrainerConnectivityCounter.Add(1)
+		failedTrainerConnectivityCounter.Add(1)
 		logr.WithError(err).Errorf("Failed to update status to the trainer. Already retried several times.WARNING : Status of job %s will likely be incorrect", trainingID)
 		return err
 	}

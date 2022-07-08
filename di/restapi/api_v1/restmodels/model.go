@@ -31,6 +31,9 @@ type Model struct {
 	// api type of xgboost or lightgbm
 	APIType string `json:"api_type,omitempty"`
 
+	// code_selector type file
+	CodeSelector string `json:"code_selector,omitempty"`
+
 	// completed timestamp of the job
 	CompletedTimestamp string `json:"completed_timestamp,omitempty"`
 
@@ -85,6 +88,9 @@ type Model struct {
 	// submission timestamp of the job.
 	SubmissionTimestamp string `json:"submission_timestamp,omitempty"`
 
+	// submit_id describe user submit
+	SubmitID string `json:"submit_id,omitempty"`
+
 	// training
 	Training *Training `json:"training,omitempty"`
 
@@ -110,6 +116,8 @@ func (m *Model) UnmarshalJSON(raw []byte) error {
 		TFosRequest *TFosRequest `json:"TFosRequest,omitempty"`
 
 		APIType string `json:"api_type,omitempty"`
+
+		CodeSelector string `json:"code_selector,omitempty"`
 
 		CompletedTimestamp string `json:"completed_timestamp,omitempty"`
 
@@ -147,6 +155,8 @@ func (m *Model) UnmarshalJSON(raw []byte) error {
 
 		SubmissionTimestamp string `json:"submission_timestamp,omitempty"`
 
+		SubmitID string `json:"submit_id,omitempty"`
+
 		Training *Training `json:"training,omitempty"`
 
 		UserID string `json:"user_id,omitempty"`
@@ -162,6 +172,8 @@ func (m *Model) UnmarshalJSON(raw []byte) error {
 	m.TFosRequest = dataAO1.TFosRequest
 
 	m.APIType = dataAO1.APIType
+
+	m.CodeSelector = dataAO1.CodeSelector
 
 	m.CompletedTimestamp = dataAO1.CompletedTimestamp
 
@@ -199,6 +211,8 @@ func (m *Model) UnmarshalJSON(raw []byte) error {
 
 	m.SubmissionTimestamp = dataAO1.SubmissionTimestamp
 
+	m.SubmitID = dataAO1.SubmitID
+
 	m.Training = dataAO1.Training
 
 	m.UserID = dataAO1.UserID
@@ -224,6 +238,8 @@ func (m Model) MarshalJSON() ([]byte, error) {
 		TFosRequest *TFosRequest `json:"TFosRequest,omitempty"`
 
 		APIType string `json:"api_type,omitempty"`
+
+		CodeSelector string `json:"code_selector,omitempty"`
 
 		CompletedTimestamp string `json:"completed_timestamp,omitempty"`
 
@@ -261,6 +277,8 @@ func (m Model) MarshalJSON() ([]byte, error) {
 
 		SubmissionTimestamp string `json:"submission_timestamp,omitempty"`
 
+		SubmitID string `json:"submit_id,omitempty"`
+
 		Training *Training `json:"training,omitempty"`
 
 		UserID string `json:"user_id,omitempty"`
@@ -273,6 +291,8 @@ func (m Model) MarshalJSON() ([]byte, error) {
 	dataAO1.TFosRequest = m.TFosRequest
 
 	dataAO1.APIType = m.APIType
+
+	dataAO1.CodeSelector = m.CodeSelector
 
 	dataAO1.CompletedTimestamp = m.CompletedTimestamp
 
@@ -309,6 +329,8 @@ func (m Model) MarshalJSON() ([]byte, error) {
 	dataAO1.Pss = m.Pss
 
 	dataAO1.SubmissionTimestamp = m.SubmissionTimestamp
+
+	dataAO1.SubmitID = m.SubmitID
 
 	dataAO1.Training = m.Training
 

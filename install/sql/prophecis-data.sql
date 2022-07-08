@@ -7,8 +7,8 @@
 
 
 -- 导出 mlss_gzpc_bdap_uat_01 的数据库结构
-CREATE DATABASE IF NOT EXISTS `mlss_gzpc_bdap_uat_01` /*!40100 DEFAULT CHARACTER SET utf8 */;
-USE `mlss_gzpc_bdap_uat_01`;
+CREATE DATABASE IF NOT EXISTS `prophecis_db` /*!40100 DEFAULT CHARACTER SET utf8 */;
+USE `prophecis_db`;
 
 -- 导出  表 mlss_gzpc_bdap_uat_01.t_group 结构
 CREATE TABLE IF NOT EXISTS `t_group` (
@@ -482,18 +482,7 @@ CREATE TABLE IF NOT EXISTS `t_superadmin` (
 DELETE FROM `t_superadmin`;
 /*!40000 ALTER TABLE `t_superadmin` DISABLE KEYS */;
 INSERT INTO `t_superadmin` (`id`, `name`, `remarks`, `enable_flag`, `operate_time`) VALUES
-	(1, 'kirkzhou', NULL, 1, '2019-03-12 19:09:40'),
-	(2, 'luckliu', NULL, 0, '2019-03-12 19:09:40'),
-	(5, 'neiljianliu', NULL, 0, '2019-03-22 15:11:29'),
-	(6, 'hduser05', NULL, 0, '2019-04-16 20:55:59'),
-	(7, 'hduser2006', NULL, 0, '2019-06-18 17:46:30'),
-	(8, 'hduser2007', NULL, 0, '2019-06-18 17:46:40'),
-	(9, 'hduser2008', NULL, 0, '2019-06-18 17:46:48'),
-	(10, 'hduser1009', NULL, 0, '2019-06-18 17:46:55'),
-	(11, 'hduser1010', NULL, 0, '2019-06-18 17:47:01'),
-	(12, 'alexwu', NULL, 1, '2019-11-11 19:49:50'),
-	(13, 'nanzou', NULL, 1, '2021-11-03 15:25:24'),
-	(14, 'livyhuang', NULL, 1, '2021-12-02 20:27:56');
+	(1, 'hadoop', NULL, 1, '2019-03-12 19:09:40');
 /*!40000 ALTER TABLE `t_superadmin` ENABLE KEYS */;
 
 -- 导出  表 mlss_gzpc_bdap_uat_01.t_user 结构
@@ -516,9 +505,7 @@ CREATE TABLE IF NOT EXISTS `t_user` (
 DELETE FROM `t_user`;
 /*!40000 ALTER TABLE `t_user` DISABLE KEYS */;
 INSERT INTO `t_user` (`id`, `name`, `gid`, `uid`, `token`, `type`, `remarks`, `enable_flag`, `guid_check`) VALUES
-	(1, 'alexwu', 22324, 22324, NULL, 'SYSTEM', NULL, 1, 0),
-	(539, 'neiljianliu', 30, 30, '', 'USER', '30', 1, 0),
-	(540, 'hadoop', 6004, 6004, '', 'USER', '6004', 1, 0);
+	(1, 'hadoop', 22324, 22324, NULL, 'SYSTEM', NULL, 1, 0);
 /*!40000 ALTER TABLE `t_user` ENABLE KEYS */;
 
 -- 导出  表 mlss_gzpc_bdap_uat_01.t_user_group 结构
