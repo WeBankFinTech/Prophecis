@@ -79,6 +79,9 @@ func configureAPI(api *operations.DiAPI) http.Handler {
 	api.ModelsGetModelHandler = models.GetModelHandlerFunc(func(params models.GetModelParams, principal interface{}) middleware.Responder {
 		return rest_impl.GetModel(params)
 	})
+	api.ModelsRetryModelHandler = models.RetryModelHandlerFunc(func(params models.RetryModelParams, principal interface{}) middleware.Responder {
+		return rest_impl.RetryModel(params)
+	})
 	api.ModelsListModelsHandler = models.ListModelsHandlerFunc(func(params models.ListModelsParams, principal interface{}) middleware.Responder {
 		return rest_impl.ListModels(params)
 	})
@@ -126,6 +129,9 @@ func configureAPI(api *operations.DiAPI) http.Handler {
 	})
 	api.ExperimentsCreateExperimentHandler = experiments.CreateExperimentHandlerFunc(func(params experiments.CreateExperimentParams, principal interface{}) middleware.Responder {
 		return rest_impl.CreateExperiment(params)
+	})
+	api.ExperimentsCopyExperimentHandler = experiments.CopyExperimentHandlerFunc(func(params experiments.CopyExperimentParams, principal interface{}) middleware.Responder {
+		return rest_impl.CopyExperiment(params)
 	})
 	api.ExperimentRunsCreateExperimentRunHandler = experiment_runs.CreateExperimentRunHandlerFunc(func(params experiment_runs.CreateExperimentRunParams, principal interface{}) middleware.Responder {
 		return rest_impl.CreateExperimentRun(params)
@@ -175,7 +181,7 @@ func configureAPI(api *operations.DiAPI) http.Handler {
 	api.ExperimentRunsGetExperimentRunsHistoryHandler = experiment_runs.GetExperimentRunsHistoryHandlerFunc(func(params experiment_runs.GetExperimentRunsHistoryParams, i interface{}) middleware.Responder {
 		return rest_impl.GetExperimentRunsHistory(params)
 	})
-	api.ModelsKillTrainingModelHandler = models.KillTrainingModelHandlerFunc(func(params models.KillTrainingModelParams, i interface{}) middleware.Responder{
+	api.ModelsKillTrainingModelHandler = models.KillTrainingModelHandlerFunc(func(params models.KillTrainingModelParams, i interface{}) middleware.Responder {
 		return rest_impl.KillTrainingModel(params)
 	})
 	api.ServerShutdown = func() {}

@@ -29,7 +29,7 @@ spec:
           type: File
       - name: oss-storage
         hostPath:
-          path: {{.Values.ceph_path}}/{{.Values.storage.share_storage_dir}}
+          path: {{.Values.storage.share_storage_dir}}
           type: Directory
 #      - name: ceph
 #        hostPath:

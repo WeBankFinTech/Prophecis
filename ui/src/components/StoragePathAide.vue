@@ -36,6 +36,7 @@
                          :label="$t('DI.image')"
                          min-width="300" />
         <el-table-column prop="status"
+                         min-width="110"
                          :label="$t('DI.status')">
           <template slot-scope="scope">
             <status-tag :status="scope.row.status"

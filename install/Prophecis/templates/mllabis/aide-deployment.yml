@@ -22,7 +22,7 @@ spec:
       containers:
       - name: aide
         image: {{.Values.image.registry}}:{{.Values.aide.image.tag}}
-        imagePullPolicy: {{.Values.aide.image.pullPolicy}}
+        imagePullPolicy: {{.Values.image.pullPolicy}}
         ports:
         - containerPort: 8080
         volumeMounts:

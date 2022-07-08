@@ -21,14 +21,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/jinzhu/copier"
-	"github.com/mholt/archiver/v3"
-	"github.com/modern-go/reflect2"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"math"
 	"net/http"
@@ -43,6 +35,15 @@ import (
 	"webank/DI/restapi/api_v1/server/operations"
 	"webank/DI/restapi/service"
 	"webank/DI/storage/storage/grpc_storage"
+
+	"github.com/google/uuid"
+	"github.com/jinzhu/copier"
+	"github.com/mholt/archiver/v3"
+	"github.com/modern-go/reflect2"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"gopkg.in/yaml.v2"
 
 	commonModels "webank/DI/commons/models"
 	"webank/DI/restapi/api_v1/restmodels"
@@ -95,8 +96,6 @@ var (
 // postModel posts a model definition and starts the training
 func PostModel(params models.PostModelParams) middleware.Responder {
 	operation := "postModel"
-	modelFile := params.ModelDefinition
-	var userID = getUserID(params.HTTPRequest)
 	// Read MainFest File
 	logr := logger.LocLogger(logWithPostModelParams(params))
 	logr.Debugf("postModel invoked: %v", params.HTTPRequest.Header)
@@ -111,6 +110,17 @@ func PostModel(params models.PostModelParams) middleware.Responder {
 		logr.WithError(err).Errorf("Parameter 'manifest' contains incorrect YAML")
 		return httpResponseHandle(http.StatusNotFound, err, operation, []byte("Incorrect manifest"))
 	}
+	return postModelInclude(params, manifest, operation)
+}
+
+// PostModelInclude is postModel include func
+func postModelInclude(params models.PostModelParams, manifest *ManifestV1, operation string) middleware.Responder {
+	var err error
+	modelFile := params.ModelDefinition
+	var userID = getUserID(params.HTTPRequest)
+
+	logr := logger.LocLogger(logWithPostModelParams(params))
+	logr.Infof("PostModel manifest: %v", manifest)
 
 	//TODO: Remove
 	if manifest.Name == "" {
@@ -383,11 +393,42 @@ func GetModel(params models.GetModelParams) middleware.Responder {
 	if rresp == nil {
 		return errFromTrainer
 	}
+
+	// FIXME MLSS Change: more properties for result
+	m := createModel(params.HTTPRequest, rresp.Job, logr)
+
+	logr.Debugf("m: %+v", m)
+	return models.NewGetModelOK().WithPayload(m)
+}
+
+func RetryModel(params models.RetryModelParams) middleware.Responder {
+	var (
+		getModelParams  models.GetModelParams
+		postModelParams models.PostModelParams
+		manifest        *ManifestV1
+		err             error
+	)
+	operation := "retryModel"
+	getModelParams.HTTPRequest = params.HTTPRequest
+	getModelParams.ModelID = params.ModelID
+	getModelParams.Version = params.Version
+	logr := logger.LocLogger(logWithRepeatModelParams(params))
+	//logr.Debugf("retryModel invoked: %v", params.HTTPRequest.Header)
+	rresp, errFromTrainer := getTrainingJobFromStorage(getModelParams)
+	if rresp == nil {
+		return errFromTrainer
+	}
+
 	// FIXME MLSS Change: more properties for result
 	m := createModel(params.HTTPRequest, rresp.Job, logr)
 
 	//logr.Debugf("m: %+v", m)
-	return models.NewGetModelOK().WithPayload(m)
+	manifest, err = trainingToManifest(m, nil, params.HTTPRequest, logr, "")
+	if err != nil {
+		return handleErrorResponse(logr, err.Error())
+	}
+	postModelParams.HTTPRequest = params.HTTPRequest
+	return postModelInclude(postModelParams, manifest, operation)
 }
 
 func ListModels(params models.ListModelsParams) middleware.Responder {
@@ -858,7 +899,14 @@ func GetDashboards(params operations.GetDashboardsParams) middleware.Responder {
 	var role string
 	logr.Debugf(">>getDashboards<< metaUserID: %v, superadmin: %v", currentUserId, isSA)
 	storage, err := storageClient.NewStorage()
-	defer storage.Close()
+	//defer func() {
+	//	err := storage.Close()
+	//	if err != nil {
+	//		logr.WithError(err).Errorf("Cannot create client for trainer service")
+	//	}else{
+	//		logr.Debugf("Storage Client is close")
+	//	}
+	//}()
 	if err != nil {
 		logr.WithError(err).Errorf("Cannot create client for trainer service")
 		return handleErrorResponse(logr, "")
@@ -896,11 +944,12 @@ func GetDashboards(params operations.GetDashboardsParams) middleware.Responder {
 		if nsList != nil && len(nsList) > 0 {
 			for queryFlag {
 				pageStr := strconv.FormatInt(currentPage, 10)
-				resp, err = storage.Client().GetAllTrainingsJobsByUserIdAndNamespaceList(params.HTTPRequest.Context(), &grpc_storage.GetAllRequest{
-					NamespaceList: nsList,
-					Page:          pageStr,
-					Size:          pageSizeStr,
-				})
+				resp, err = storage.Client().GetAllTrainingsJobsByUserIdAndNamespaceList(
+					params.HTTPRequest.Context(), &grpc_storage.GetAllRequest{
+						NamespaceList: nsList,
+						Page:          pageStr,
+						Size:          pageSizeStr,
+					})
 				if err != nil {
 					logr.WithError(err).Errorf("GetAllTrainingsJobsByUserIdAndNamespaceList failed")
 					return handleErrorResponse(logr, err.Error())
@@ -911,7 +960,7 @@ func GetDashboards(params operations.GetDashboardsParams) middleware.Responder {
 						" parse response total, total: %s, err: %v", resp.Total, err)
 					return handleErrorResponse(logr, err.Error())
 				}
-				if (currentPage * pageSize) > totalInt64 {
+				if (currentPage * pageSize) < totalInt64 {
 					currentPage += 1
 				} else {
 					queryFlag = false
@@ -957,7 +1006,7 @@ func GetDashboards(params operations.GetDashboardsParams) middleware.Responder {
 						" parse response total, total: %s, err: %v", resp.Total, err)
 					return handleErrorResponse(logr, err.Error())
 				}
-				if (currentPage * pageSize) > totalInt64 {
+				if (currentPage * pageSize) < totalInt64 {
 					currentPage += 1
 				} else {
 					queryFlag = false
@@ -994,6 +1043,12 @@ func GetDashboards(params operations.GetDashboardsParams) middleware.Responder {
 		Code:   "200",
 		Msg:    "success",
 		Result: json.RawMessage(marshal),
+	}
+
+	//6.Close Storage Client
+	err = storage.Close()
+	if err != nil {
+		logr.WithError(err).Errorf("Cannot create client for trainer service")
 	}
 
 	return middleware.ResponderFunc(func(w http.ResponseWriter, _ runtime.Producer) {
@@ -2286,13 +2341,14 @@ func createModel(req *http.Request, job *grpc_storage.Job, logr *logger.LocLoggi
 		SubmissionTimestamp: job.Status.SubmissionTimestamp,
 		CompletedTimestamp:  job.Status.CompletionTimestamp,
 		// FIXME MLSS Change: v_1.4.1 added field  JobAlert
-		JobAlert:    job.JobAlert,
-		ExpRunID:    job.ExpRunId,
-		ExpName:     job.ExpName,
-		FileName:    job.FileName,
-		FilePath:    job.FilePath,
-		TFosRequest: tFosRequest,
-		ProxyUser:   job.ProxyUser,
+		JobAlert:     job.JobAlert,
+		ExpRunID:     job.ExpRunId,
+		ExpName:      job.ExpName,
+		FileName:     job.FileName,
+		FilePath:     job.FilePath,
+		TFosRequest:  tFosRequest,
+		ProxyUser:    job.ProxyUser,
+		CodeSelector: job.CodeSelector,
 	}
 
 	// add data stores

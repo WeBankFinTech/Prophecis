@@ -483,6 +483,52 @@ func init() {
         }
       }
     },
+    "/di/v1/experiment/{id}/copy": {
+      "get": {
+        "description": "Copy Experiment.",
+        "tags": [
+          "Experiments"
+        ],
+        "summary": "copyExperiment",
+        "operationId": "copyExperiment",
+        "parameters": [
+          {
+            "type": "number",
+            "format": "int64",
+            "description": "experiment id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "create type, include MLFLOW, DSS, WTSS",
+            "name": "create_type",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ProphecisExperimentRequest"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "The Models cannot be found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/di/v1/experiment/{id}/export": {
       "get": {
         "description": "export Experiment.",
@@ -1789,6 +1835,52 @@ func init() {
         }
       }
     },
+    "/di/v1/models/{model_id}/retry": {
+      "get": {
+        "description": "Retry detailed information about a model such as training status.\n",
+        "tags": [
+          "Models"
+        ],
+        "summary": "Retry detailed information about a model.",
+        "operationId": "retryModel",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The id of the model.",
+            "name": "model_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "default": "2017-02-13",
+            "description": "The release date of the version of the API you want to use. Specify dates in YYYY-MM-DD format.",
+            "name": "version",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Model repeat successfully.",
+            "schema": {
+              "$ref": "#/definitions/BasicModel"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "The model cannot be found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/di/v1/models/{model_id}/trained_model": {
       "get": {
         "description": "Downloads the trained model as ZIP archive.",
@@ -1882,6 +1974,28 @@ func init() {
         }
       }
     },
+    "DSSInfo": {
+      "type": "object",
+      "properties": {
+        "flow_id": {
+          "type": "number",
+          "format": "int64"
+        },
+        "flow_name": {
+          "type": "string"
+        },
+        "flow_version": {
+          "type": "string"
+        },
+        "project_id": {
+          "type": "number",
+          "format": "int64"
+        },
+        "project_name": {
+          "type": "string"
+        }
+      }
+    },
     "DataSet": {
       "type": "object",
       "properties": {
@@ -1914,6 +2028,12 @@ func init() {
     "Datastore": {
       "type": "object",
       "properties": {
+        "Fields": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "connection": {
           "type": "object",
           "additionalProperties": {
@@ -2113,6 +2233,10 @@ func init() {
               "description": "api type of xgboost or lightgbm",
               "type": "string"
             },
+            "code_selector": {
+              "description": "code_selector type file",
+              "type": "string"
+            },
             "completed_timestamp": {
               "description": "completed timestamp of the job",
               "type": "string"
@@ -2183,6 +2307,10 @@ func init() {
             },
             "submission_timestamp": {
               "description": "submission timestamp of the job.",
+              "type": "string"
+            },
+            "submit_id": {
+              "description": "submit_id describe user submit",
               "type": "string"
             },
             "training": {
@@ -2375,6 +2503,10 @@ func init() {
           "description": "Experiment Name.",
           "type": "string"
         },
+        "group_name": {
+          "description": "Experiment group.",
+          "type": "string"
+        },
         "tag_list": {
           "description": "Experiment Tags",
           "type": "array",
@@ -2408,10 +2540,14 @@ func init() {
         "exp_desc"
       ],
       "properties": {
-        "createType": {
+        "create_type": {
           "description": "experiment type, default \"MLFlow\", choose next value, \"WTSS\" \"DSS\" \"MLFlow\"",
           "type": "string",
           "default": "MLFlow"
+        },
+        "dss_info": {
+          "type": "object",
+          "$ref": "#/definitions/DSSInfo"
         },
         "exp_desc": {
           "description": "Experiment Description.",
@@ -2525,6 +2661,10 @@ func init() {
         },
         "flow_json": {
           "description": "Experiment Run type, Include CLI/UI/DSS/Schedulis.",
+          "type": "string"
+        },
+        "run_date": {
+          "description": "Experiment Run run date.",
           "type": "string"
         }
       }
@@ -3435,6 +3575,52 @@ func init() {
         }
       }
     },
+    "/di/v1/experiment/{id}/copy": {
+      "get": {
+        "description": "Copy Experiment.",
+        "tags": [
+          "Experiments"
+        ],
+        "summary": "copyExperiment",
+        "operationId": "copyExperiment",
+        "parameters": [
+          {
+            "type": "number",
+            "format": "int64",
+            "description": "experiment id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "create type, include MLFLOW, DSS, WTSS",
+            "name": "create_type",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/ProphecisExperimentRequest"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "The Models cannot be found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/di/v1/experiment/{id}/export": {
       "get": {
         "description": "export Experiment.",
@@ -4741,6 +4927,52 @@ func init() {
         }
       }
     },
+    "/di/v1/models/{model_id}/retry": {
+      "get": {
+        "description": "Retry detailed information about a model such as training status.\n",
+        "tags": [
+          "Models"
+        ],
+        "summary": "Retry detailed information about a model.",
+        "operationId": "retryModel",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The id of the model.",
+            "name": "model_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "default": "2017-02-13",
+            "description": "The release date of the version of the API you want to use. Specify dates in YYYY-MM-DD format.",
+            "name": "version",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Model repeat successfully.",
+            "schema": {
+              "$ref": "#/definitions/BasicModel"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "The model cannot be found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/di/v1/models/{model_id}/trained_model": {
       "get": {
         "description": "Downloads the trained model as ZIP archive.",
@@ -4834,6 +5066,28 @@ func init() {
         }
       }
     },
+    "DSSInfo": {
+      "type": "object",
+      "properties": {
+        "flow_id": {
+          "type": "number",
+          "format": "int64"
+        },
+        "flow_name": {
+          "type": "string"
+        },
+        "flow_version": {
+          "type": "string"
+        },
+        "project_id": {
+          "type": "number",
+          "format": "int64"
+        },
+        "project_name": {
+          "type": "string"
+        }
+      }
+    },
     "DataSet": {
       "type": "object",
       "properties": {
@@ -4866,6 +5120,12 @@ func init() {
     "Datastore": {
       "type": "object",
       "properties": {
+        "Fields": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "connection": {
           "type": "object",
           "additionalProperties": {
@@ -5065,6 +5325,10 @@ func init() {
               "description": "api type of xgboost or lightgbm",
               "type": "string"
             },
+            "code_selector": {
+              "description": "code_selector type file",
+              "type": "string"
+            },
             "completed_timestamp": {
               "description": "completed timestamp of the job",
               "type": "string"
@@ -5135,6 +5399,10 @@ func init() {
             },
             "submission_timestamp": {
               "description": "submission timestamp of the job.",
+              "type": "string"
+            },
+            "submit_id": {
+              "description": "submit_id describe user submit",
               "type": "string"
             },
             "training": {
@@ -5327,6 +5595,10 @@ func init() {
           "description": "Experiment Name.",
           "type": "string"
         },
+        "group_name": {
+          "description": "Experiment group.",
+          "type": "string"
+        },
         "tag_list": {
           "description": "Experiment Tags",
           "type": "array",
@@ -5360,10 +5632,14 @@ func init() {
         "exp_desc"
       ],
       "properties": {
-        "createType": {
+        "create_type": {
           "description": "experiment type, default \"MLFlow\", choose next value, \"WTSS\" \"DSS\" \"MLFlow\"",
           "type": "string",
           "default": "MLFlow"
+        },
+        "dss_info": {
+          "type": "object",
+          "$ref": "#/definitions/DSSInfo"
         },
         "exp_desc": {
           "description": "Experiment Description.",
@@ -5477,6 +5753,10 @@ func init() {
         },
         "flow_json": {
           "description": "Experiment Run type, Include CLI/UI/DSS/Schedulis.",
+          "type": "string"
+        },
+        "run_date": {
+          "description": "Experiment Run run date.",
           "type": "string"
         }
       }

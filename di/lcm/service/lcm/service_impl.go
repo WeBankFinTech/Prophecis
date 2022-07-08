@@ -28,7 +28,6 @@ import (
 	"time"
 	"webank/DI/commons/constants"
 	"webank/DI/commons/tfjob"
-
 	// "webank/DI/pkg/operators/tf-operator/client/clientset/versioned"
 
 	// "webank/DI/linkisexecutor/linkisclientutils"
@@ -296,29 +295,29 @@ func (s *lcmService) DeployTrainingJob(ctx context.Context, req *service.JobDepl
 		Metrics:               nil,
 		EvaluationMetricsSpec: req.EvaluationMetricsSpec,
 		Namespace:             req.JobNamespace,
-		GID:           req.EnvVars["GID"],
-		UID:           req.EnvVars["UID"],
-		GuardianToken: req.EnvVars["GUARDIAN_TOKEN"],
-		JobAlert:      req.JobAlert,
-		PSs:          req.PSs,
-		PSCPU:        req.PSCPU,
-		PSImage:      req.PSImage,
-		PSMemory:     req.PSMemory,
-		CodeSelector: req.CodeSelector,
-		DataPath:     req.DataPath,
-		JobType:      req.JobType,
-		TFosRequest:  req.TFosRequest,
-		ExpRunId:     req.ExpRunId,
-		ExpName:      req.ExpName,
-		FileName:     req.FileName,
-		FilePath:     req.FilePath,
-		ProxyUser:    req.ProxyUser,
-		DataSet: req.DataSet,
-		MFModel: req.MfModel,
-		Algorithm: req.Algorithm,
-		JobParams: req.JobParams,
-		FitParams: req.FitParams,
-		APIType: req.APIType,
+		GID:                   req.EnvVars["GID"],
+		UID:                   req.EnvVars["UID"],
+		GuardianToken:         req.EnvVars["GUARDIAN_TOKEN"],
+		JobAlert:              req.JobAlert,
+		PSs:                   req.PSs,
+		PSCPU:                 req.PSCPU,
+		PSImage:               req.PSImage,
+		PSMemory:              req.PSMemory,
+		CodeSelector:          req.CodeSelector,
+		DataPath:              req.DataPath,
+		JobType:               req.JobType,
+		TFosRequest:           req.TFosRequest,
+		ExpRunId:              req.ExpRunId,
+		ExpName:               req.ExpName,
+		FileName:              req.FileName,
+		FilePath:              req.FilePath,
+		ProxyUser:             req.ProxyUser,
+		DataSet:               req.DataSet,
+		MFModel:               req.MfModel,
+		Algorithm:             req.Algorithm,
+		JobParams:             req.JobParams,
+		FitParams:             req.FitParams,
+		APIType:               req.APIType,
 	}
 	// JobParmas:    req.Params,
 	// DataSet:      req.DataSet}
@@ -455,14 +454,14 @@ func (s *lcmService) deployJobToK8s(tr *trainer.TrainingRecord, logr *logger.Loc
 		logr.WithError(err).Errorf("(deployDistributedTrainingJob) Before deploying job, error while calling Trainer service client update for trainingID %s , but still carrying on ", tr.TrainingID)
 	}
 
-	tr.TrainingStatus.Status = grpc_trainer_v2.Status_PENDING
-	logr.Debugf("deployJobToK8s_de tr cpu: %v", tr.Training.Resources.Cpus)
-	logr.Debugf("deployJobToK8s, tr.TFosRequest: %v", tr.TFosRequest)
-	logr.Debugf("deployJobToK8s, tr.ProxyUser: %v", tr.ProxyUser)
-	repoErr := s.repo.Store(tr)
-	if repoErr != nil {
-		return gerrf(codes.Internal, repoErr.Error())
-	}
+	//tr.TrainingStatus.Status = grpc_trainer_v2.Status_PENDING
+	//logr.Debugf("deployJobToK8s_de tr cpu: %v", tr.Training.Resources.Cpus)
+	//logr.Debugf("deployJobToK8s, tr.TFosRequest: %v", tr.TFosRequest)
+	//logr.Debugf("deployJobToK8s, tr.ProxyUser: %v", tr.ProxyUser)
+	//repoErr := s.repo.Store(tr)
+	//if repoErr != nil {
+	//	return gerrf(codes.Internal, repoErr.Error())
+	//}
 
 	jobConfig, createJobConfigErr := s.createJobConfig(tr)
 
@@ -954,12 +953,35 @@ func (s *lcmService) rateLimitTrainingJob(tr *trainer.TrainingRecord, quotaList 
 				nodeGpuRequested += pGpu
 			}
 		}
-		logr.Debugf("rateLimitTrainingJob debug for nod's pods available resources , nodeName: %v, cpus: %v, memory: %v, gpu: %v", nodeName, nodeCpu-nodeCpusRequested, nodeMem-nodeMemRequested, nodeGpu-nodeGpuRequested)
+		logr.Debugf("rateLimitTrainingJob debug for nod's pods available resources , nodeName: %v, cpus: %v, "+
+			"memory: %v, gpu: %v", nodeName, nodeCpu-nodeCpusRequested, nodeMem-nodeMemRequested, nodeGpu-nodeGpuRequested)
+		logr.Debugf("rateLimitTrainingJob debug for request resources memory: %v, cpu: %v, gpu: %v, learners:"+
+			" %v", nodeCpusRequested, nodeMemRequested, nodeGpuRequested, learners)
 		logr.Debugf("rateLimitTrainingJob debug for request resources memory: %v, cpu: %v, gpu: %v, learners: %v", memory, cpu, gpu, learners)
-		logr.Debugf("rateLimitTrainingJob debug for nodeCpu-nodeCpusRequested >= cpu: %v, nodeMem-nodeMemRequested >= float64(memory*1024*1024*1024): %v, nodeGpu-nodeGpuRequested >= float64(gpu): %v, learners: %v", nodeCpu-nodeCpusRequested >= float64(cpu), nodeMem-nodeMemRequested >= float64(memory)*1024*1024*1024, nodeGpu-nodeGpuRequested >= float64(gpu), learners)
-		if nodeCpu-nodeCpusRequested >= float64(cpu) && nodeMem-nodeMemRequested >= requestMEMInByte && nodeGpu-nodeGpuRequested >= float64(gpu) && nodeCpu-nodeCpusRequested >= psCPU && nodeMem-nodeMemRequested >= psMemory*1024*1024*1024 {
-			//logr.Debugf("node has insufficient cpu, gpu, memory resources")
+		logr.Debugf("rateLimitTrainingJob debug for nodeCpu-nodeCpusRequested >= cpu: %v,"+
+			" nodeMem-nodeMemRequested >= float64(memory*1024*1024*1024): %v, "+
+			"nodeGpu-nodeGpuRequested >= float64(gpu): %v, learners: %v", nodeCpu-nodeCpusRequested >= float64(cpu),
+			nodeMem-nodeMemRequested >= float64(memory)*1024*1024*1024, nodeGpu-nodeGpuRequested >= float64(gpu), learners)
+
+		if nodeCpu-nodeCpusRequested >= float64(cpu) && nodeMem-nodeMemRequested >= requestMEMInByte &&
+			nodeGpu-nodeGpuRequested >= float64(gpu) && nodeCpu-nodeCpusRequested >= psCPU &&
+			nodeMem-nodeMemRequested >= psMemory*1024*1024*1024 {
+			logr.Debugf("node has sufficient cpu, gpu, memory resources")
 			isLimit = false
+		} else {
+			logr.Debugf("node has insufficient cpu, gpu, memory resources")
+			logr.Debugf("insufficient cpu: %v", nodeCpu-nodeCpusRequested >= float64(cpu))
+			logr.Debugf("insufficient cpu: %v", nodeCpu-nodeCpusRequested)
+			logr.Debugf("insufficient cpu: %v", float64(cpu))
+			logr.Debugf("insufficient mem: %v", nodeMem-nodeMemRequested >= requestMEMInByte)
+			logr.Debugf("insufficient mem: %v", nodeMem-nodeMemRequested)
+			logr.Debugf("insufficient mem: %v", requestMEMInByte)
+			logr.Debugf("insufficient gpu: %v", nodeGpu-nodeGpuRequested >= float64(gpu))
+			logr.Debugf("insufficient gpu: %v", float64(gpu))
+			logr.Debugf("insufficient psCPU: %v", nodeCpu-nodeCpusRequested >= psCPU)
+			logr.Debugf("insufficient psCPU: %v", psCPU)
+			logr.Debugf("insufficient memory: %v", nodeMem-nodeMemRequested >= psMemory*1024*1024*1024)
+			logr.Debugf("insufficient memory: %v", psMemory*1024*1024*1024)
 		}
 
 		if gpu > 0 {
@@ -1123,7 +1145,7 @@ func (s *lcmService) pullJobFromQueue(gpuType string) {
 		logr.WithError(listE).Errorln("failed to getNodeList")
 		return
 	}
-	logr.Debugf("getResources for nodeList.Items: %v", nodeList.Items)
+	//logr.Debugf("getResources for nodeList.Items: %v", nodeList.Items)
 	if nodeList == nil {
 		logr.WithError(listE).Errorln("namespace is not yet tied to any node")
 		return
@@ -1500,7 +1522,7 @@ func (s *lcmService) createJobConfig(tr *trainer.TrainingRecord) (*service.JobDe
 		EvaluationMetricsSpec: tr.EvaluationMetricsSpec,
 		JobNamespace:          tr.Namespace,
 		// FIXME MLSS Change: add DataStore & ModelDefinition & Training from tr to JobDeploymentRequest
-		DataStores: tr.Datastores,
+		DataStores:   tr.Datastores,
 		JobAlert:     tr.JobAlert,
 		PSs:          tr.PSs,
 		PSCPU:        tr.PSCPU,
@@ -1514,9 +1536,9 @@ func (s *lcmService) createJobConfig(tr *trainer.TrainingRecord) (*service.JobDe
 		DataSet:      tr.DataSet,
 		MfModel:      tr.MFModel,
 		Algorithm:    tr.Algorithm,
-		JobParams: tr.JobParams,
-		FitParams: tr.FitParams,
-		APIType: tr.APIType,
+		JobParams:    tr.JobParams,
+		FitParams:    tr.FitParams,
+		APIType:      tr.APIType,
 	}
 
 	return job, nil
@@ -1961,20 +1983,18 @@ func (s *lcmService) checkQueueAndEnqueue(handler *queueHandler, queueName strin
 	return nil
 }
 
-
 //Kills a currently executing training job and cleans up its zookeeper entries
 func (s *lcmService) KillMLFlowJob(ctx context.Context, req *service.JobKillRequest) (*service.JobKillResponse, error) {
 	if req.JobType == "MLPipeline" {
 		return s.killMLPipelineJob(req)
-	}else if req.JobType == "dist-tf"{
+	} else if req.JobType == "dist-tf" {
 		return s.KillTrainingTFJob(ctx, req)
-	}else{ //Local
+	} else { //Local
 		return s.killSingleJob(req)
 	}
 }
 
-
-func (s *lcmService) killSingleJob(req *service.JobKillRequest)  (*service.JobKillResponse, error) {
+func (s *lcmService) killSingleJob(req *service.JobKillRequest) (*service.JobKillResponse, error) {
 	logr := logger.LocLogger(InitLogger(req.TrainingId, req.UserId))
 	propagation := metav1.DeletePropagationBackground
 	options := metav1.DeleteOptions{
@@ -1995,14 +2015,13 @@ func (s *lcmService) killSingleJob(req *service.JobKillRequest)  (*service.JobKi
 	return &service.JobKillResponse{}, nil
 }
 
-
-func(s *lcmService) killDistJob(req *service.JobKillRequest) (*service.JobKillResponse, error) {
+func (s *lcmService) killDistJob(req *service.JobKillRequest) (*service.JobKillResponse, error) {
 
 	return &service.JobKillResponse{}, nil
 
 }
 
-func (s *lcmService) killMLPipelineJob(req *service.JobKillRequest )  (*service.JobKillResponse, error) {
+func (s *lcmService) killMLPipelineJob(req *service.JobKillRequest) (*service.JobKillResponse, error) {
 	logr := logger.LocLogger(InitLogger(req.TrainingId, req.UserId))
 	propagation := metav1.DeletePropagationBackground
 	options := metav1.DeleteOptions{

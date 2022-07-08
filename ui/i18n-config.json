@@ -277,7 +277,8 @@
       "executionStatus": "执行状态",
       "termination": "终止",
       "terminateJobPro": "确定要终止该任务吗?",
-      "enterCodeDirectory": "进入代码目录"
+      "enterCodeDirectory": "进入代码目录",
+      "retry": "重拉"
     },
     "AIDE": {
       "individualDevEnvironment": "个人开发环境",
@@ -783,6 +784,8 @@
       "groupInfo": "项目组信息管理",
       "addGroup": "添加用项目组",
       "groupName": "项目组名",
+      "groupAbbr": "项目组缩写",
+      "groupAbbrPro": "请输入项目组缩写",
       "subsystemId": "关联子系统ID",
       "subsystemName": "关联子系统名",
       "groupType": "项目组类型",
@@ -821,7 +824,8 @@
       "serviceIDPro": "请输入服务ID",
       "RMBIDCFormat": "RMB IDC只能输入数字、字母",
       "RMBDCNFormat": "RMB DCN只能输入数字、字母",
-      "serviceIDFormat": "服务ID只能输入数字"
+      "serviceIDFormat": "服务ID只能输入数字",
+      "blankCharactersCheck": "不能输入空白字符"
     },
     "ns": {
       "nameSpace": "命名空间",
@@ -1178,7 +1182,8 @@
       "executionStatus": "Status",
       "termination": "Termination",
       "terminateJobPro": "Are you sure you want to terminate this job?",
-      "enterCodeDirectory": "Enter the code directory"
+      "enterCodeDirectory": "Enter the code directory",
+      "retry": "Retry"
     },
     "AIDE": {
       "individualDevEnvironment": "Individual development environment",
@@ -1684,6 +1689,8 @@
     "group": {
       "groupInfo": "Group managerment",
       "addGroup": "Add a group",
+      "groupAbbr": "Group abbr",
+      "groupAbbrPro": "Please input group abbreviation",
       "groupName": "Group name",
       "subsystemId": "Subsystem ID",
       "subsystemName": "Subsystem Name",
@@ -1723,7 +1730,8 @@
       "serviceIDPro": "Please enter the service ID",
       "RMBIDCFormat": "RMB IDC may only enter  digits and letters",
       "RMBDCNFormat": "RMB DCN may only enter  digits and letters",
-      "serviceIDFormat": "Service ID can only enter numbers"
+      "serviceIDFormat": "Service ID can only enter numbers",
+      "blankCharactersCheck": "Blank characters cannot be entered"
     },
     "ns": {
       "nameSpace": "Namespace",
