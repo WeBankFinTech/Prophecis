@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS `t_experiment` (
   `group_name` varchar(255) COLLATE utf8_bin DEFAULT NULL,
   `mlflow_exp_id` varchar(255) COLLATE utf8_bin DEFAULT NULL,
   `dss_project_id` bigint(20) DEFAULT NULL,
+  `dss_project_name` VARCHAR(50) NULL DEFAULT NULL COLLATE 'utf8_bin',
   `dss_project_version_id` bigint(20) DEFAULT NULL,
   `dss_bml_last_version` varchar(255) COLLATE utf8_bin DEFAULT NULL,
   `dss_workspace_id` bigint(20) DEFAULT NULL,
