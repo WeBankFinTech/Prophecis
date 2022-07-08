@@ -31,6 +31,9 @@ service TrainingData {
     // Get loglines, based on query
     rpc GetLogs (Query) returns (stream LogLine) {}
 
+    //Get loglines, response
+    rpc GetLog (Query) returns (LogResponse) {}
+
     // Get evaluation metrics records, based on query
     rpc GetEMetrics (Query) returns (stream EMetrics) {}
 
@@ -93,6 +96,10 @@ message LogLine {
     string line = 2;
 }
 
+message LogResponse {
+    repeated string log = 1;
+}
+
 message LogLineBatch {
     bool force = 1;
     repeated LogLine logLine = 2;
@@ -151,6 +158,7 @@ message Query {
 
     // The starting position.  If positive or zero, count from beginning, if negative, count from end.
     int64 pos = 6;
+    string startToEndLine = 7;
 }
 
 message DeleteQuery {

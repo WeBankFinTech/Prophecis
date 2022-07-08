@@ -43,8 +43,8 @@ data:
         user: {{.Values.cc.admin.user}}
         password: {{.Values.cc.admin.password}}
       ldap: 
-        server: {{.Values.cc.ldap.address}}
-        baseDN: {{.Values.cc.ldap.baseDN}}
+        server: {{.Values.ldap.address}}
+        baseDN: {{.Values.ldap.baseDN}}
     encodeFlag: {{.Values.encodeFlag}}
     aideAddress: {{.Values.cc.aideAddress}}
     server:

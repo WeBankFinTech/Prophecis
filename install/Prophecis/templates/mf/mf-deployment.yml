@@ -84,7 +84,7 @@ spec:
         - /bin/bash
         - -c
         - "/mf-server --host=0.0.0.0 --scheme=http --port=8080"
-#        - "dlv --listen=:40012 --headless=true --api-version=2 exec /mf-server --  --host=0.0.0.0 --scheme=http --port=8080"
+#        - "dlv --listen=:41012 --headless=true --api-version=2 exec /mf-server --  --host=0.0.0.0 --scheme=http --port=8080"
 #        - --listen=:40000
 #        - --headless=true
 #        - --api-version=2

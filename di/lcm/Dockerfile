@@ -17,8 +17,8 @@
 
 # FROM dlaas-service-base:ubuntu16.04
 # FROM ffdl/ffdl-lcm:v0.1.2
-#FROM ubuntu:latest
-FROM lcm-base:latest
+FROM ubuntu:latest
+#FROM lcm-base:latest
 # switch to root
 
 USER root

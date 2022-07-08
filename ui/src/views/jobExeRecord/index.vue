@@ -105,14 +105,19 @@
                        icon="el-icon-more"
                        round></el-button>
             <el-dropdown-menu slot="dropdown">
-              <el-dropdown-item :command="beforeHandleCommand('taskDetail',scope.row)">{{$t('DI.taskDetail')}}</el-dropdown-item>
-              <el-dropdown-item v-if="scope.row.JobType!=='MLPipeline'"
+              <el-dropdown-item v-if="scope.row.JobType !== 'tfos'"
+                                :command="beforeHandleCommand('taskDetail',scope.row)">{{$t('DI.taskDetail')}}</el-dropdown-item>
+              <el-dropdown-item v-if="scope.row.JobType!=='MLPipeline'&&scope.row.JobType !== 'tfos'"
                                 :command="beforeHandleCommand('copyJob',scope.row)">{{$t('common.copy')}}</el-dropdown-item>
               <el-dropdown-item :command="beforeHandleCommand('deleteItem',scope.row)">{{$t('common.delete')}}</el-dropdown-item>
-              <el-dropdown-item :command="beforeHandleCommand('viewLogFun',scope.row)">{{$t('DI.viewlog')}}</el-dropdown-item>
-              <el-dropdown-item :command="beforeHandleCommand('downloadJob',scope.row)">{{$t('common.export')}}</el-dropdown-item>
+              <el-dropdown-item v-if="scope.row.JobType !== 'tfos'"
+                                :command="beforeHandleCommand('viewLogFun',scope.row)">{{$t('DI.viewlog')}}</el-dropdown-item>
+              <el-dropdown-item v-if="(scope.row.status==='PENDING'||scope.row.status==='QUEUED'||scope.row.status==='RUNNING')&&scope.row.JobType !== 'tfos'"
+                                :command="beforeHandleCommand('downloadJob',scope.row)">{{$t('common.export')}}</el-dropdown-item>
               <el-dropdown-item v-if="scope.row.status==='PENDING'||scope.row.status==='QUEUED'||scope.row.status==='RUNNING'"
                                 :command="beforeHandleCommand('killJob',scope.row)">{{$t('DI.termination')}}</el-dropdown-item>
+              <el-dropdown-item v-if="scope.row.JobType !== 'tfos'"
+                                :command="beforeHandleCommand('repullJob',scope.row)">{{$t('DI.retry')}}</el-dropdown-item>
             </el-dropdown-menu>
           </el-dropdown>
         </template>
@@ -319,6 +324,12 @@ export default {
         }
       }, 100)
       this.showGPU()
+    },
+    repullJob (trData) {
+      this.FesApi.fetchUT(`/di/v1/models/${trData.model_id}/retry`, { version: '200' }, 'get').then((res) => {
+        this.toast()
+        this.getListData()
+      })
     },
     judgeImageType (imageType, image, imageInput, trDataImage, trData) {
       if (this.imageOptionList.indexOf(trDataImage) > -1) {
