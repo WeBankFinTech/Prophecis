@@ -352,12 +352,12 @@ func CheckNamespaceUser(namespace string, admin string, username string) error {
 func CheckUserGetNamespace(admin string, username string) (*models.UserNoteBook, error) {
 	db := datasource.GetDB()
 	var userNotebook *models.UserNoteBook
-	if admin == username {
-		userNotebook = &models.UserNoteBook{
-			Role: "SELF",
-		}
-		return userNotebook, nil
-	}
+	//if admin == username {
+	//	userNotebook = &models.UserNoteBook{
+	//		Role: "SELF",
+	//	}
+	//	return userNotebook, nil
+	//}
 
 	saByAdmin, err := repo.GetSAByName(username)
 	if err != nil {

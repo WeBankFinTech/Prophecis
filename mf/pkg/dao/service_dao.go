@@ -157,7 +157,7 @@ func (s *SerivceDao) CountServiceByUserGroup(username string, namespace string, 
 				"AND t_modelversion.latest_flag=1 AND t_group.cluster_name = ? "+
 				"AND CONCAT(t_model.model_name,t_service.service_name, t_service.remark, t_service.type, t_user.name, t_group.name) LIKE ?"+whereClause, subQuery, user.Id, clusterName, "%"+queryStr+"%").*/
 		Where(" (t_service.group_id in ? or t_service.user_id = ?) AND t_service.enable_flag = 1 "+
-			"AND t_modelversion.latest_flag=1"+
+			"AND t_modelversion.latest_flag=1 "+
 			"AND CONCAT(t_model.model_name,t_service.service_name, t_service.remark, t_service.type, t_user.name, t_group.name) LIKE ?"+whereClause, subQuery, user.Id, "%"+queryStr+"%").
 		Count(&count).Error
 	return count, err
