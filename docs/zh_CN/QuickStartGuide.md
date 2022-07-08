@@ -20,43 +20,82 @@
 |Seldon Core|1.13.0|[https://github.com/SeldonIO/seldon-core](https://github.com/SeldonIO/seldon-core)|
 |nfs-utils|1.3.0|    |
 
-* 验证Helm
-```powershell
-$ helm version
-version.BuildInfo{Version:"v3.2.1", GitCommit:"fe51cd1e31e6a202cba7dead9552a6d418ded79a", GitTreeState:"clean", GoVersion:"go1.13.10"}
+* 安装helm-3.2.1
+```shell
+#下载
+wget https://get.helm.sh/helm-v3.2.1-linux-amd64.tar.gz
+
+#安装
+tar -xzvf helm-v3.2.1-linux-amd64.tar.gz
+cd linux-amd64/
+mv helm /usr/bin/
+
+#验证helm版本
+helm version
+
+#修改库源
+helm repo add aliyuncs https://apphub.aliyuncs.com
+helm repo list
 ```
-* 验证Kubernertes
-```powershell
-$ kubectl version
-Client Version: version.Info{Major:"1", Minor:"19", GitVersion:"v1.19.3", GitCommit:"1e11e4a2108024935ecfcb2912226cedeafd99df", GitTreeState:"clean", BuildDate:"2020-10-14T12:50:19Z", GoVersion:"go1.15.2", Compiler:"gc", Platform:"linux/amd64"}
-Server Version: version.Info{Major:"1", Minor:"18", GitVersion:"v1.18.6", GitCommit:"dff82dc0de47299ab66c83c626e08b245ab19037", GitTreeState:"clean", BuildDate:"2020-07-15T16:51:04Z", GoVersion:"go1.13.9", Compiler:"gc", Platform:"linux/amd64"}
+* 修改Kubernertes配置
+```shell
+#修改k8s配置
+vim /etc/kubernetes/manifests/kube-apiserver.yaml
+#spec:
+# containers:
+# - command:
+# 中，增加如下配置项
+- --service-node-port-range=30000-40000
 ```
-* 验证Docker
-```powershell
-$ docker version
-...
-Client: Docker Engine - Community
- Version:           19.03.9
-...
-Server: Docker Engine - Community
- Engine:
-  Version:          19.03.9
+* 修改Docker配置
+```shell
+vim /root/.docker/config.json
+#增加如下配置
+{
+        "auths": {
+                "": {
+                        "auth": ""
+                }
+        },
+        "HttpHeaders": {
+                "User-Agent": "Docker-Client/20.10.8-ce (linux)"
+        }
+}
 ```
-* Seldon Core相关：
-```powershell
-#部署
-kubeclt create namespace seldon-system
-helm install seldon-core seldon-core-operator . \ --set usageMetrics.enabled=true \ --namespace seldon-system \ --set istio.enabled=true
-#验证
-kubectl -n seldon-system get pods
-```
+
+
 * Istio相关：
-```powershell
+```shell
+#下载
+wget https://github.com/istio/istio/releases/download/1.8.2/istio-1.8.2-linux-amd64.tar.gz
+
+#设置istioctl环境变量
+export PATH=$PATH:/opt/istio-1.8.2/bin
+
 #部署
 istioctl install
+
 #验证，查看相关Pod是否正常Running
 kubectl -n istio-system get pods 
 ```
+
+
+* Seldon Core相关：
+
+```shell
+#下载
+wget https://github.com/SeldonIO/seldon-core/archive/refs/tags/v1.13.0.tar.gz
+
+#部署
+kubeclt create namespace seldon-system
+cd seldon-core-1.13.0/helm-charts
+helm install seldon-core seldon-core-operator --set usageMetrics.enabled=true --namespace seldon-system --set istio.enabled=true
+#验证
+kubectl -n seldon-system get pods
+```
+
+
+
 ### 2.3 目录挂载(若不需共享目录可先跳过)
 
 Prophecis使用nfs来存储容器运行数据，需要挂载nfs
@@ -93,7 +132,7 @@ mount ${NFS_SERVER_IP}:${NFS_PATH_LOG} ${NFS_PATH_LOG}
 # MySQL数据库名  DATABASE_DB='mlss_db'
 # MySQL用户名    DATABASE_USERNAME='mlss'
 # MySQL用户密码  DATABASE_PASSWORD='123'
-database:
+db:
     server: ${DATABASE_IP}
     port: ${DATABASE_PORT}
     name: ${DATABASE_DB}
@@ -103,11 +142,9 @@ database:
 ## 配置UI的URL访问路径
 # 网页访问地址  SERVER_IP='127.0.0.1'
 # 网页访问端口  SERVER_PORT='30803'
-server_ui_gateway: ${SERVER_IP}:30778
-ui:
-    service:
-        bdap:
-            nodePost: ${SERVER_PORT}
+gateway:
+  address: ${SERVER_IP}
+  port: ${SERVER_PORT}
 
 ## Prophecis使用LDAP来负责统一认证
 # LDAP的服务地址  LDAP_ADDRESS='ldap://127.0.0.1:1389/' 
@@ -116,6 +153,11 @@ cc:
     ldap:
         address: ${LDAP_ADDRESS}
         baseDN: ${LDAP_BASE_DN}
+        
+#超级管理员的用户名密码，可以改成自己需要的，需对应数据库表t_superadmin
+admin:
+    user: ${SUPER_USER}
+    password: ${SUPER_USER_PASSWORD}
 ```
 ## 4. 操作序列
 
@@ -148,7 +190,7 @@ helm install notebook-controller ./notebook-controller
 ## 安装MinIO组件
 helm install minio-prophecis --namespace prophecis ./MinioDeployment
 ## 安装prophecis组件
-helm install prophecis ./prophecis
+helm install prophecis ./Prophecis
 ```
 ### 4.3 MLFlow实验工作流相关(mlflow appconn安装)
 
