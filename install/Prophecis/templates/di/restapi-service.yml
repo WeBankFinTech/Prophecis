@@ -13,5 +13,9 @@ spec:
     port: 80
     targetPort: 8080
     nodePort: {{.Values.restapi.port}}
+  - name: di-debug
+    port: 30961
+    targetPort: 30961
+    nodePort: 30961
   selector:
     service: ffdl-restapi
