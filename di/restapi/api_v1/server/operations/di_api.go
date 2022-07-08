@@ -52,6 +52,9 @@ func NewDiAPI(spec *loads.Document) *DiAPI {
 		ExperimentsCodeUploadHandler: experiments.CodeUploadHandlerFunc(func(params experiments.CodeUploadParams, principal interface{}) middleware.Responder {
 			return middleware.NotImplemented("operation ExperimentsCodeUpload has not yet been implemented")
 		}),
+		ExperimentsCopyExperimentHandler: experiments.CopyExperimentHandlerFunc(func(params experiments.CopyExperimentParams, principal interface{}) middleware.Responder {
+			return middleware.NotImplemented("operation ExperimentsCopyExperiment has not yet been implemented")
+		}),
 		ExperimentsCreateExperimentHandler: experiments.CreateExperimentHandlerFunc(func(params experiments.CreateExperimentParams, principal interface{}) middleware.Responder {
 			return middleware.NotImplemented("operation ExperimentsCreateExperiment has not yet been implemented")
 		}),
@@ -154,6 +157,9 @@ func NewDiAPI(spec *loads.Document) *DiAPI {
 		ModelsPostModelHandler: models.PostModelHandlerFunc(func(params models.PostModelParams, principal interface{}) middleware.Responder {
 			return middleware.NotImplemented("operation ModelsPostModel has not yet been implemented")
 		}),
+		ModelsRetryModelHandler: models.RetryModelHandlerFunc(func(params models.RetryModelParams, principal interface{}) middleware.Responder {
+			return middleware.NotImplemented("operation ModelsRetryModel has not yet been implemented")
+		}),
 		ExperimentsUpdateExperimentHandler: experiments.UpdateExperimentHandlerFunc(func(params experiments.UpdateExperimentParams, principal interface{}) middleware.Responder {
 			return middleware.NotImplemented("operation ExperimentsUpdateExperiment has not yet been implemented")
 		}),
@@ -231,6 +237,8 @@ type DiAPI struct {
 	ModelsKillTrainingModelHandler models.KillTrainingModelHandler
 	// ExperimentsCodeUploadHandler sets the operation handler for the code upload operation
 	ExperimentsCodeUploadHandler experiments.CodeUploadHandler
+	// ExperimentsCopyExperimentHandler sets the operation handler for the copy experiment operation
+	ExperimentsCopyExperimentHandler experiments.CopyExperimentHandler
 	// ExperimentsCreateExperimentHandler sets the operation handler for the create experiment operation
 	ExperimentsCreateExperimentHandler experiments.CreateExperimentHandler
 	// ExperimentRunsCreateExperimentRunHandler sets the operation handler for the create experiment run operation
@@ -299,6 +307,8 @@ type DiAPI struct {
 	ModelsPatchModelHandler models.PatchModelHandler
 	// ModelsPostModelHandler sets the operation handler for the post model operation
 	ModelsPostModelHandler models.PostModelHandler
+	// ModelsRetryModelHandler sets the operation handler for the retry model operation
+	ModelsRetryModelHandler models.RetryModelHandler
 	// ExperimentsUpdateExperimentHandler sets the operation handler for the update experiment operation
 	ExperimentsUpdateExperimentHandler experiments.UpdateExperimentHandler
 	// ExperimentsUpdateExperimentInfoHandler sets the operation handler for the update experiment info operation
@@ -392,6 +402,10 @@ func (o *DiAPI) Validate() error {
 
 	if o.ExperimentsCodeUploadHandler == nil {
 		unregistered = append(unregistered, "experiments.CodeUploadHandler")
+	}
+
+	if o.ExperimentsCopyExperimentHandler == nil {
+		unregistered = append(unregistered, "experiments.CopyExperimentHandler")
 	}
 
 	if o.ExperimentsCreateExperimentHandler == nil {
@@ -528,6 +542,10 @@ func (o *DiAPI) Validate() error {
 
 	if o.ModelsPostModelHandler == nil {
 		unregistered = append(unregistered, "models.PostModelHandler")
+	}
+
+	if o.ModelsRetryModelHandler == nil {
+		unregistered = append(unregistered, "models.RetryModelHandler")
 	}
 
 	if o.ExperimentsUpdateExperimentHandler == nil {
@@ -672,6 +690,11 @@ func (o *DiAPI) initHandlerCache() {
 		o.handlers["POST"] = make(map[string]http.Handler)
 	}
 	o.handlers["POST"]["/di/v1/codeUpload"] = experiments.NewCodeUpload(o.context, o.ExperimentsCodeUploadHandler)
+
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
+	o.handlers["GET"]["/di/v1/experiment/{id}/copy"] = experiments.NewCopyExperiment(o.context, o.ExperimentsCopyExperimentHandler)
 
 	if o.handlers["POST"] == nil {
 		o.handlers["POST"] = make(map[string]http.Handler)
@@ -842,6 +865,11 @@ func (o *DiAPI) initHandlerCache() {
 		o.handlers["POST"] = make(map[string]http.Handler)
 	}
 	o.handlers["POST"]["/di/v1/models"] = models.NewPostModel(o.context, o.ModelsPostModelHandler)
+
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
+	o.handlers["GET"]["/di/v1/models/{model_id}/retry"] = models.NewRetryModel(o.context, o.ModelsRetryModelHandler)
 
 	if o.handlers["PUT"] == nil {
 		o.handlers["PUT"] = make(map[string]http.Handler)

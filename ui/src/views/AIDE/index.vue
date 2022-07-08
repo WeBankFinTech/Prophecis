@@ -902,7 +902,7 @@ export default {
       imageType === 'Standard' ? job.image.imageOption = trData.image : job.image.imageInput = trData.image
       setTimeout(() => {
         Object.assign(this.form, job)
-        if (trData.dataVolume) {
+        if (trData.dataVolume && trData.dataVolume[0].localPath) {
           const dataVolume = this.dataVolumeInfo()
           for (let index in trData.dataVolume) {
             if (index > 0) {

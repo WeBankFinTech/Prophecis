@@ -25,10 +25,10 @@ data:
       istioSideCarGpu: {{.Values.mf.istioSideCarGpu}}
     StorerConfig:
       platformNamespace: {{.Values.storage.platformNamespace}}
-      storerTls: {{.Values.storage.storerTls}}
-      storerServerEnvName: {{.Values.storage.storerServerEnvName}}
-      storerServerName: {{.Values.storage.storerServerName}}
-      storerCA: {{.Values.storage.storerCA}}
+      storerTls: {{.Values.storage.storageTls}}
+      storerServerEnvName: {{.Values.storage.storageEnvServerName}}
+      storerServerName: {{.Values.storage.storageServerName}}
+      storerCA: {{.Values.storage.storageCA}}
   server.crt: |
     -----BEGIN CERTIFICATE-----
     MIICzDCCAbQCCQCVrtRO5rcr1DANBgkqhkiG9w0BAQUFADAoMQswCQYDVQQGEwJD

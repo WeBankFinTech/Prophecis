@@ -17,11 +17,12 @@
 package rest_impl
 
 import (
-	logr "github.com/sirupsen/logrus"
-	"webank/DI/restapi/api_v1/server/operations"
 	"webank/DI/commons/logger"
+	"webank/DI/restapi/api_v1/server/operations"
 	"webank/DI/restapi/api_v1/server/operations/models"
 	"webank/DI/restapi/api_v1/server/operations/training_data"
+
+	logr "github.com/sirupsen/logrus"
 )
 
 func logWithPostModelParams(params models.PostModelParams) *logr.Entry {
@@ -52,6 +53,15 @@ func logWithGetModelParams(params models.GetModelParams) *logr.Entry {
 	return &logr.Entry{Logger: logr.StandardLogger(), Data: data}
 }
 
+func logWithRepeatModelParams(params models.RetryModelParams) *logr.Entry {
+	data := logger.NewDlaaSLogData(logger.LogkeyRestAPIService)
+
+	data[logger.LogkeyUserID] = getUserID(params.HTTPRequest)
+	data[logger.LogkeyTrainingID] = params.ModelID
+
+	return &logr.Entry{Logger: logr.StandardLogger(), Data: data}
+}
+
 func logWithDownloadModelDefinitionParams(params models.DownloadModelDefinitionParams) *logr.Entry {
 	data := logger.NewDlaaSLogData(logger.LogkeyRestAPIService)
 
@@ -69,6 +79,7 @@ func logWithDownloadTrainedModelParams(params models.DownloadTrainedModelParams)
 
 	return &logr.Entry{Logger: logr.StandardLogger(), Data: data}
 }
+
 //
 //func logWithEMetricsParams(params training_data.GetEMetricsParams) *logr.Entry {
 //	data := logger.NewDlaaSLogData(logger.LogkeyRestAPIService)
@@ -124,4 +135,3 @@ func logWithGetDashboards(params operations.GetDashboardsParams) *logr.Entry {
 	data[logger.LogkeyUserID] = getUserID(params.HTTPRequest)
 	return &logr.Entry{Logger: logr.StandardLogger(), Data: data}
 }
-

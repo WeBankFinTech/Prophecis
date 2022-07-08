@@ -19,6 +19,7 @@ package service
 import (
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/sirupsen/logrus"
 
@@ -341,8 +342,8 @@ func (c *TrainingDataService) executeQuery(index string, query es.Query,
 			Type(typ).
 			Query(query).
 			Sort("meta.time", !isBackward).
+			Size(pagesize - pos).
 			From(pos).
-			Size(pagesize).
 			Do(ctx)
 	} else {
 		dlogr.Debugf("executing query with no post-sort processing")
@@ -399,9 +400,9 @@ func (c *TrainingDataService) GetLogs(in *tds.Query, stream tds.TrainingData_Get
 	res, err := c.executeQuery(indexName, query, isBackward, pos,
 		pagesize, docTypeLog, shouldPostSortProcess, dlogr)
 
-	logger.GetLogger().Infof("IndexName:%v,query:%+v",indexName,query)
+	logger.GetLogger().Infof("IndexName:%v,query:%+v", indexName, query)
 
-	logr.Infof("IndexName:%v,query:%v",indexName,query)
+	logr.Infof("IndexName:%v,query:%v", indexName, query)
 	doneQuery := time.Now()
 
 	if err != nil {
@@ -454,6 +455,70 @@ func (c *TrainingDataService) GetLogs(in *tds.Query, stream tds.TrainingData_Get
 
 	dlogr.Debugf("function exit")
 	return nil
+}
+
+func (c *TrainingDataService) GetLog(context context.Context, in *tds.Query) (*tds.LogResponse, error) {
+	logr := logger.LocLogger(logger.LogServiceBasic(LogkeyTrainingDataService)).
+		WithField(logger.LogkeyTrainingID, in.Meta.TrainingId).
+		WithField(logger.LogkeyUserID, in.Meta.UserId)
+	c.reportOnCluster("GetLogs", logr)
+	dlogr := makeDebugLogger(logr.Logger, TdsDebugMode)
+	query, _, err := makeESQueryFromDlaasQuery(in)
+	if err != nil {
+		logr.WithError(err).Error("Could not make elasticsearch query from submitted query: ", in)
+		return nil, err
+	}
+	lineSplit := strings.Split(in.StartToEndLine, ":")
+	size, err := strconv.Atoi(lineSplit[0])
+	if err != nil {
+		logger.GetLogger().Error("Start line atoi error, ", err)
+		return nil, err
+	}
+	from, err := strconv.Atoi(lineSplit[1])
+	if err != nil {
+		logger.GetLogger().Error("End line atoi error, ", err)
+		return nil, err
+	}
+	logResponse := &tds.LogResponse{}
+	pagesize := size
+	logLineRecord := new(tds.LogLine)
+	pos, isBackward := adjustOffsetPos(from)
+	logr.Debugf("executeQuery index: %v, isBackward: %v, pos: %v, pagesize: %v",
+		indexName, isBackward, pos, pagesize)
+	res, err := c.executeQuery(indexName, query, isBackward, pos, pagesize, docTypeLog, true, dlogr)
+	if err != nil {
+		//logr.WithError(err).Errorf("Search failed")
+		logr.WithError(err).Errorf("[lk]Search failed, executeQuery index: %v, isBackward: %v, pos: %v, pagesize: %v", indexName, isBackward, pos, pagesize)
+		return nil, err
+	}
+	if !(res.Hits == nil || res.Hits.Hits == nil || len(res.Hits.Hits) == 0) {
+		count := 0
+		for i := 0; ; {
+			err := json.Unmarshal(*res.Hits.Hits[i].Source, &logLineRecord)
+			if err != nil {
+				logr.WithError(err).Errorf("Unmarshal from ES failed!")
+				return nil, err
+			}
+			// if last line
+			if isBackward {
+				i--
+				if i < 0 {
+					break
+				}
+			} else {
+				i++
+				if i >= len(res.Hits.Hits) {
+					break
+				}
+			}
+			count++
+			if count >= pagesize {
+				break
+			}
+			logResponse.Log = append(logResponse.Log, logLineRecord.Line)
+		}
+	}
+	return logResponse, nil
 }
 
 // GetEMetrics returns a stream of evaluation metrics records.

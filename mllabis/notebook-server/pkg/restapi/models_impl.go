@@ -882,7 +882,7 @@ func getUserNotebooks(params operations.GetUserNotebooksParams) middleware.Respo
 
 	client := ccClient.GetCcClient(viper.GetString(cfg.CCAddress))
 	clusterName := params.ClusterName
-	logger.Logger().Debugf("getUserNotebooks for clusterName: %v", clusterName)
+	logger.Logger().Infof("getUserNotebooks for clusterName: %v", clusterName)
 	//check currentUser accessibility for user
 	nsResFromCC, err := client.CheckUserGetNamespace(params.HTTPRequest.Header.Get(ccClient.CcAuthToken), userId)
 	if err != nil {
@@ -899,8 +899,45 @@ func getUserNotebooks(params operations.GetUserNotebooksParams) middleware.Respo
 	}
 	logger.Logger().Infof("CheckUserGetNamespace nsResFromCC: %v, length: %v", string(nsResFromCC), len(nsResFromCC))
 
+	//Get User Role
+	var userNotebookVOFromCC models.UserNotebookVO
+	err = models.GetResultData(nsResFromCC, &userNotebookVOFromCC)
+	if err != nil {
+		logger.Logger().Errorf("parse userNotebookVOFromCC Unmarshal failed. %v", err.Error())
+		return operations.NewPostNamespacedNotebookNotFound().WithPayload(&models.Error{
+			Code:    404,
+			Error:   err.Error(),
+			Message: "parse userNotebookVOFromCC Unmarshal failed.",
+		})
+	}
+
 	// 3.获取notebook列表
-	notebooksInMongo, err := mongo.ListUserNotebook(params.User)
+	var notebooksInMongo []utils.NotebookInMongo
+	if userNotebookVOFromCC.Role == "GA" {
+		notebooksInMongo, err = mongo.ListUserNotebook("")
+	} else {
+		notebooksInMongo, err = mongo.ListUserNotebook(params.User)
+	}
+
+	strings := userNotebookVOFromCC.NamespaceList
+	var gaNotebooksInMongo []utils.NotebookInMongo
+	if userNotebookVOFromCC.Role == "GA" {
+		for _, v := range notebooksInMongo {
+			if v.User == userId {
+				gaNotebooksInMongo = append(gaNotebooksInMongo, v)
+				continue
+			}
+			for _, nv := range strings {
+				if v.Namespace == nv {
+					gaNotebooksInMongo = append(gaNotebooksInMongo, v)
+				}
+			}
+		}
+		notebooksInMongo = gaNotebooksInMongo
+	}
+
+
+
 	if err != nil {
 		logger.Logger().Errorf("fail to list user notebooks from mong0,"+
 			" userId: %s, err: %v", userId, err.Error())
@@ -957,10 +994,10 @@ func getUserNotebooks(params operations.GetUserNotebooksParams) middleware.Respo
 		}
 	}
 
-	logger.Logger().Debugf("notebook status map: %+v", notebookStatusMap)
+	logger.Logger().Infof("notebook status map: %+v", notebookStatusMap)
 
 	//add clusterName to filter notebook
-	logger.Logger().Debugf("namespace_userId clusterName: %v", *clusterName)
+	logger.Logger().Infof("namespace_userId clusterName: %v", *clusterName)
 	notebooksInMongo = getNoteBookInMongoByClusterName(*clusterName, notebooksInMongo)
 	// 5.生成resp
 	nbs := generateNotebooks(notebooksInMongo, notebookStatusMap)
@@ -1035,11 +1072,40 @@ func getDashboards(params operations.GetDashboardsParams) middleware.Responder {
 	var err error
 	var listFromK8s interface{}
 	ncClient := utils.GetNBCClient()
+	role := "GU"
+	var userNotebookVOFromCC models.UserNotebookVO
 
 	if superadmin == TRUE {
+		role = "SA"
 		listFromK8s, err = ncClient.GetNotebooks("", "", "")
 	} else {
-		listFromK8s, err = ncClient.GetNotebooks("", currentUserId, "")
+		client := ccClient.GetCcClient(viper.GetString(cfg.CCAddress))
+		if client == nil {
+			return operations.NewGetDashboardsNotFound().WithPayload(&models.Error{
+				Code:    500,
+				Error:   "CC Client init Error",
+				Message: "getUserNotebooks failed",
+			})
+		}
+		nsResFromCC, err := client.CheckUserGetNamespace(params.HTTPRequest.Header.Get(ccClient.CcAuthToken), currentUserId)
+
+		logger.Logger().Infof("getDashboards CheckUserGetNamespace nsResFromCC: %v", string(nsResFromCC))
+		if err != nil {
+			return operations.NewGetDashboardsNotFound().WithPayload(&models.Error{
+				Code:    500,
+				Error:   "CC Client init Error",
+				Message: "getUserNotebooks failed",
+			})
+		}
+		err = models.GetResultData(nsResFromCC, &userNotebookVOFromCC)
+
+		if userNotebookVOFromCC.Role == "GU" {
+			listFromK8s, err = ncClient.GetNotebooks("", currentUserId, "")
+		} else {
+			role = "GA"
+			listFromK8s, err = ncClient.GetNotebooks("", "", "")
+		}
+
 	}
 	if err != nil {
 		return operations.NewGetDashboardsNotFound().WithPayload(&models.Error{
@@ -1069,6 +1135,27 @@ func getDashboards(params operations.GetDashboardsParams) middleware.Responder {
 		})
 	}
 	res := models.ParseToNotebookRes(*notebookFromK8s, *configFromK8s)
+	logger.Logger().Infof("getDashboards first res:%v", res)
+
+	var finalResult []*models.Notebook
+	if role == "GA" {
+		namespaceList := userNotebookVOFromCC.NamespaceList
+		logger.Logger().Infof("getDashboards namespaceList:%v", namespaceList)
+		for _, v := range res {
+			if v.User == currentUserId {
+				finalResult = append(finalResult, v)
+				continue
+			}
+			logger.Logger().Infof("getDashboards v.Namespace: %v", v.Namespace)
+			for _, nv := range namespaceList {
+				if v.Namespace == nv {
+					finalResult = append(finalResult, v)
+				}
+			}
+		}
+		res = finalResult
+	}
+	logger.Logger().Infof("getDashboards finalResult res:%v", res)
 
 	//res = getNoteBookByClusterName(*clusterName, res)
 	//nbTotal:current user's notebooks; nbRunning: number of current user's notebooks is Ready for status; gpuCount:for gpu number of nbRunning
