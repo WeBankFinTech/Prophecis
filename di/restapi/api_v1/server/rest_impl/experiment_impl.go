@@ -18,9 +18,6 @@ package rest_impl
 import (
 	"encoding/json"
 	"errors"
-	"github.com/go-openapi/runtime"
-	"github.com/go-openapi/runtime/middleware"
-	"github.com/jinzhu/copier"
 	"io/ioutil"
 	"math"
 	"net/http"
@@ -29,6 +26,10 @@ import (
 	"webank/DI/commons/logger"
 	"webank/DI/restapi/api_v1/restmodels"
 	"webank/DI/restapi/api_v1/server/operations/experiments"
+
+	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/runtime/middleware"
+	"github.com/jinzhu/copier"
 
 	//"webank/DI/restapi/service"
 	service "webank/DI/restapi/newService"
@@ -45,17 +46,12 @@ func CreateExperiment(params experiments.CreateExperimentParams) middleware.Resp
 	if params.Experiment != nil && params.Experiment.CreateType != nil {
 		createType = *params.Experiment.CreateType
 	}
-	if  createType == "" {
-		createType = "MLFlow"
+	if len(*params.Experiment.ExpName) <= 0 || len(*params.Experiment.ExpName) <= 0 {
+		err := errors.New("ExpName's length <= 0 or ExpDesc's length <= 0")
+		return httpResponseHandle(http.StatusInternalServerError, err, operation, nil)
 	}
 
-	//if params.Experiment.GroupName == nil {
-	//	err := errors.New("group Id can not be null")
-	//	return httpResponseHandle(http.StatusInternalServerError, err, operation, []byte(err.Error()))
-	//}
-
-	//experiment, err := experimentService.CreateExperiment(params.Experiment, currentUserId, "MLFLOW", "NULL")
-	experiment, err := experimentService.CreateExperiment(params.Experiment, currentUserId, createType, "NULL")
+	experiment, err := experimentService.CreateExperiment(params.Experiment, currentUserId, createType)
 	if err != nil {
 		return httpResponseHandle(http.StatusInternalServerError, err, operation, []byte(err.Error()))
 	}
@@ -73,6 +69,27 @@ func CreateExperiment(params experiments.CreateExperimentParams) middleware.Resp
 		return httpResponseHandle(http.StatusInternalServerError, err, operation, nil)
 	}
 	return httpResponseHandle(http.StatusOK, err, operation, marshal)
+}
+
+func CopyExperiment(params experiments.CopyExperimentParams) middleware.Responder {
+	operation := "DeleteExperiment"
+	isSA := isSuperAdmin(params.HTTPRequest)
+	user := getUserID(params.HTTPRequest)
+	exp, err := experimentService.CopyExperiment(params.ID, *params.CreateType, user, isSA)
+	res := restmodels.ProphecisExperimentIDResponse{}
+	err = copier.Copy(&res, exp)
+	if err != nil {
+		log.Error("Copy Experiment To Response Error: " + err.Error())
+		return httpResponseHandle(http.StatusInternalServerError, err, operation, nil)
+	}
+
+	marshal, err := json.Marshal(res)
+	if err != nil {
+		log.WithError(err).Errorf(operation + "json.Marshal failed")
+		return httpResponseHandle(http.StatusInternalServerError, err, operation, nil)
+	}
+	return httpResponseHandle(http.StatusOK, err, operation, marshal)
+
 }
 
 func UpdateExperiment(params experiments.UpdateExperimentParams) middleware.Responder {
@@ -95,7 +112,7 @@ func UpdateExperimentInfo(params experiments.UpdateExperimentInfoParams) middlew
 	currentUserId := getUserID(params.HTTPRequest)
 	isSA := isSuperAdmin(params.HTTPRequest)
 
-	_, err := experimentService.UpdateExperimentInfo(params.ID, params.Experiment.ExpName, params.Experiment.ExpDesc,
+	_, err := experimentService.UpdateExperimentInfo(params.ID, params.Experiment.ExpName, params.Experiment.ExpDesc, params.Experiment.GroupName,
 		params.Experiment.TagList, currentUserId, isSA)
 	if err == commons.PermissionDeniedError {
 		return httpResponseHandle(http.StatusUnauthorized, err, operation, nil)
@@ -413,7 +430,7 @@ func ImportExperimentDss(params experiments.ImportExperimentDssParams) middlewar
 	return httpResponseHandle(http.StatusOK, err, "importExperimentDss", marshal)
 }
 
-func isSuperAdmin(r *http.Request) bool{
+func isSuperAdmin(r *http.Request) bool {
 	superAdminStr := r.Header.Get(config.CcAuthSuperadmin)
 	if "true" == superAdminStr {
 		return true
