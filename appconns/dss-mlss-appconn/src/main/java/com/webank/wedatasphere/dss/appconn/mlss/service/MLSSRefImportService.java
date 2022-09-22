@@ -25,8 +25,7 @@ public class MLSSRefImportService extends AbstractRefImportService {
 
     @Override
     protected RefImportOperation createRefImportOperation() {
-        MLSSRefImportOperation MLSSRefImportOperation = new MLSSRefImportOperation(this);
-        return MLSSRefImportOperation;
+        return new MLSSRefImportOperation(this);
     }
 
 }

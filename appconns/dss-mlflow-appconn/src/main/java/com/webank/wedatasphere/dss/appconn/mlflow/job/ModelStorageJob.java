@@ -33,7 +33,7 @@ public class ModelStorageJob extends MLFlowJob {
         this.setExecutionContext(executionRequestRefContext);
 
        //Execute Job
-        String user = MLFlowNodeUtils.getUser(executionRequestRefContext);
+        String user = this.getUser();
 
         Map result = ModelFactoryAPI.ModelPost(user,jsonBody);
         int statusCode = Integer.parseInt(result.get(APIClient.REPLY_STATUS_CODE).toString());

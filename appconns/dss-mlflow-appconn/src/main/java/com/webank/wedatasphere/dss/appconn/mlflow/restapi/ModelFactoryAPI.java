@@ -120,6 +120,19 @@ public class ModelFactoryAPI {
         return APIClient.doPost("/mf/v1/reportVersion/Push/"+reportVersionId, headers, params);
     }
 
+    public static Map modelMonitorReportPost(String user, String jsonBody) {
+        Map<String, String> headers = getDefaultHeaders(user);
+        Map<String, Object> params = new HashMap<>();
+        params.put("BODY",jsonBody);
+        return APIClient.doPost("/mf/v1/model_monitor/modelMonitorTask", headers, params);
+    }
+
+    public static Map modelMonitorReportGet(String user,  Map<String, String> params) {
+        Map<String, String> headers = getDefaultHeaders(user);
+        return APIClient.doGet("/mf/v1/model_monitor/modelMonitorTask", headers, params);
+    }
+
+
 
 //gson.fromJson(reply, JsonObject.class)
 

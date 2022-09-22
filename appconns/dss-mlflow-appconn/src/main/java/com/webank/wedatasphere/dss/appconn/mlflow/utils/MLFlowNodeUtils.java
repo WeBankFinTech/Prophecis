@@ -16,18 +16,11 @@
 
 package com.webank.wedatasphere.dss.appconn.mlflow.utils;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.webank.wedatasphere.dss.standard.app.development.listener.core.ExecutionRequestRefContext;
-import com.webank.wedatasphere.dss.standard.app.development.ref.NodeRequestRef;
-import com.webank.wedatasphere.dss.standard.common.exception.operation.ExternalOperationFailedException;
-import org.apache.linkis.server.BDPJettyServerHelper;
-
 import java.util.Map;
 
 public class MLFlowNodeUtils {
 
-    public static String getUser(ExecutionRequestRefContext requestRef) {
-        return requestRef.getRuntimeMap().get("wds.dss.workflow.submit.user").toString();
+    public static String getUser(Map<String, Object> contextInfo) {
+        return contextInfo.get("user").toString();
     }
 }
