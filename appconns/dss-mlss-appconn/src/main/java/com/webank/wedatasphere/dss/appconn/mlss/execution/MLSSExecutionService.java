@@ -26,7 +26,7 @@ public class MLSSExecutionService extends AbstractRefExecutionService {
 
     @Override
     public RefExecutionOperation createRefExecutionOperation() {
-        MLSSRefExecutionOperation MLSSRefExecutionOperation = new MLSSRefExecutionOperation(this);
+        MLSSRefExecutionOperation MLSSRefExecutionOperation = new MLSSRefExecutionOperation();
         MLSSConfig.BASE_URL = this.getAppInstance().getBaseUrl();
         Map<String, Object> config = this.getAppInstance().getConfig();
         MLSSConfig.APP_KEY = String.valueOf(config.get("MLSS-SecretKey"));

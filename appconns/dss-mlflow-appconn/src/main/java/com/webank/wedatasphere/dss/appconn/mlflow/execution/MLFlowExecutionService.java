@@ -33,7 +33,8 @@ public class MLFlowExecutionService extends AbstractRefExecutionService {
         MLFlowConfig.APP_SIGN = String.valueOf(config.get("MLSS-APPSignature"));
         MLFlowConfig.AUTH_TYPE =  String.valueOf(config.get("MLSS-Auth-Type"));
         MLFlowConfig.TIMESTAMP =  String.valueOf(config.get("MLSS-APPSignature"));
-        return new MLFlowExecutionOperation(this);
+        MLFlowConfig.MODEL_MONITORING_JAR = String.valueOf(config.get("MLSS-ModelMonitoring-JAR"));
+        return new MLFlowExecutionOperation();
     }
 
 }

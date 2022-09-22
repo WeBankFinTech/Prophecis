@@ -25,6 +25,7 @@ public class ExperimentRunAPI {
         paramsMap.put("flow_json", flowJson);
         apiClient.addClientFormParams("body", paramsMap);
         String reply = apiClient.doPost("/di/v1/experimentRun/" + expId);
+        //TODO: Add status control
         return gson.fromJson(reply, JsonObject.class);
     }
 

@@ -2,10 +2,11 @@ package com.webank.wedatasphere.dss.appconn.mlflow.job;
 
 import com.webank.wedatasphere.dss.standard.app.development.listener.common.RefExecutionState;
 import com.webank.wedatasphere.dss.standard.app.development.listener.core.ExecutionRequestRefContext;
+import com.webank.wedatasphere.dss.standard.app.development.listener.ref.RefExecutionRequestRef;
 
 import java.util.Map;
 
-public abstract class MLFlowJob  {
+public abstract class MLFlowJob {
 
     private String jobType;
     private String user;
@@ -24,7 +25,7 @@ public abstract class MLFlowJob  {
     }
 
 
-    public abstract boolean submit(Map jobContent, ExecutionRequestRefContext ExecutionRequestRefContext);
+    public abstract boolean submit(Map jobContent, ExecutionRequestRefContext ExecutionRequestRef);
 
     public abstract RefExecutionState status();
 

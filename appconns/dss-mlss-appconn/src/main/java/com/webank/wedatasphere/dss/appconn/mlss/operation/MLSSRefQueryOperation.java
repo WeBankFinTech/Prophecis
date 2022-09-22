@@ -16,57 +16,44 @@
 
 package com.webank.wedatasphere.dss.appconn.mlss.operation;
 
-import com.google.gson.internal.LinkedTreeMap;
-import com.webank.wedatasphere.dss.appconn.mlss.ref.MLSSOpenRequestRef;
-import com.webank.wedatasphere.dss.appconn.mlss.ref.MLSSOpenResponseRef;
-import com.webank.wedatasphere.dss.common.utils.DSSCommonUtils;
-import com.webank.wedatasphere.dss.standard.app.development.listener.common.AsyncExecutionRequestRef;
-import com.webank.wedatasphere.dss.standard.app.development.operation.RefQueryOperation;
-import com.webank.wedatasphere.dss.standard.app.development.ref.OpenRequestRef;
-import com.webank.wedatasphere.dss.standard.app.development.service.DevelopmentService;
-import com.webank.wedatasphere.dss.standard.app.sso.Workspace;
-import com.webank.wedatasphere.dss.standard.common.entity.ref.ResponseRef;
-import com.webank.wedatasphere.dss.standard.common.exception.operation.ExternalOperationFailedException;
-import org.apache.linkis.server.BDPJettyServerHelper;
-import org.apache.hadoop.util.hash.Hash;
 
-import java.util.HashMap;
+import com.webank.wedatasphere.dss.standard.app.development.operation.AbstractDevelopmentOperation;
+import com.webank.wedatasphere.dss.standard.app.development.operation.RefQueryJumpUrlOperation;
+import com.webank.wedatasphere.dss.standard.app.development.ref.QueryJumpUrlResponseRef;
+import com.webank.wedatasphere.dss.standard.app.development.ref.impl.OnlyDevelopmentRequestRef;
+
+import com.webank.wedatasphere.dss.standard.app.development.ref.impl.ThirdlyRequestRef;
+import com.webank.wedatasphere.dss.standard.app.sso.Workspace;
+
+import com.webank.wedatasphere.dss.standard.common.exception.operation.ExternalOperationFailedException;
+
+import java.io.UnsupportedEncodingException;
 import java.util.Map;
 
-public class MLSSRefQueryOperation implements RefQueryOperation<OpenRequestRef> {
+public class MLSSRefQueryOperation extends AbstractDevelopmentOperation<ThirdlyRequestRef.QueryJumpUrlRequestRefImpl, QueryJumpUrlResponseRef>
+        implements RefQueryJumpUrlOperation<ThirdlyRequestRef.QueryJumpUrlRequestRefImpl, QueryJumpUrlResponseRef> {
 
-    DevelopmentService developmentService;
 
     @Override
-    public ResponseRef query(OpenRequestRef ref) throws ExternalOperationFailedException {
-        MLSSOpenRequestRef openRequestRef = (MLSSOpenRequestRef) ref;
-
+    public QueryJumpUrlResponseRef query(ThirdlyRequestRef.QueryJumpUrlRequestRefImpl ref) throws ExternalOperationFailedException {
+        Map<String, Object> jobContent = ref.getRefJobContent();
+        logger.info("query", jobContent.toString());
+        String baseUrl = service.getAppInstance().getBaseUrl();
+        String expId = jobContent.get("expId").toString();
+        String contextId = "";
+        Workspace workspace = ref.getWorkspace();
+        Long workspaceId = workspace.getWorkspaceId();
+        Map<String, String> cookies = workspace.getCookies();
+        String ticket = cookies.get("linkis_user_session_ticket_id_v1");
         try {
-//            String externalContent = BDPJettyServerHelper.jacksonJson().writeValueAsString(executionRequestRef.getJobContent());
-            Long projectId = (Long) openRequestRef.getParameter("projectId");
-            String baseUrl = openRequestRef.getParameter("redirectUrl").toString();
-            String jumpUrl = baseUrl;
-            String expId =  ((HashMap)openRequestRef.getParameter("params")).get("expId").toString();
-            String contextId = ((HashMap)openRequestRef.getParameter("params")).get("contextID").toString();
-            Workspace workspace = ((Workspace) ((HashMap) openRequestRef.getParameter("params")).get("workspace"));
-            String workspaceId = workspace.getWorkspaceName();
-            String operationStr = workspace.getOperationStr();
-            HashMap operation = DSSCommonUtils.COMMON_GSON.fromJson(operationStr,HashMap.class);
-            LinkedTreeMap cookies = (LinkedTreeMap) operation.get("cookies");
-            String retJumpUrl = jumpUrl + "?expId=" +expId+"&contextID="+ contextId
-                    +"&workspaceId=" + workspaceId +
-                    "&bdp-user-ticket-id=" + cookies.get("bdp-user-ticket-id");
-            Map<String,String> retMap = new HashMap<>();
-            retMap.put("jumpUrl",retJumpUrl);
-            return new MLSSOpenResponseRef(DSSCommonUtils.COMMON_GSON.toJson(retMap), 0);
-        } catch (Exception e) {
-            throw new ExternalOperationFailedException(90177, "Failed to parse jobContent ", e);
+            ticket = java.net.URLEncoder.encode(ticket, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            logger.error("ticket transform error:" + e.toString());
         }
-    }
+        String retJumpUrl = baseUrl + "#/mlFlow?expId=" + expId + "&contextID=" + contextId
+                + "&workspaceId=" + workspaceId +
+                "&bdp-user-ticket-id=" + ticket;
 
-
-    @Override
-    public void setDevelopmentService(DevelopmentService service) {
-        this.developmentService = service;
+        return QueryJumpUrlResponseRef.newBuilder().setJumpUrl(retJumpUrl).success();
     }
 }
