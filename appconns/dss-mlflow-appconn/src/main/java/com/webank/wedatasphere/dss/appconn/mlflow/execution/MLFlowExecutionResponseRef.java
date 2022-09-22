@@ -14,23 +14,16 @@
  *
  */
 
-package com.webank.wedatasphere.dss.appconn.mlss.publish;
+package com.webank.wedatasphere.dss.appconn.mlflow.execution;
 
-import com.webank.wedatasphere.dss.standard.app.development.ref.DSSCommonResponseRef;
+import com.webank.wedatasphere.dss.standard.common.entity.ref.ResponseRefImpl;
 
 import java.util.Map;
 
-public class MLSSExportResponseRef extends DSSCommonResponseRef {
 
-    Map<String, Object> bmlResource;
+public class MLFlowExecutionResponseRef extends ResponseRefImpl {
 
-    public MLSSExportResponseRef(String responseBody) throws Exception {
-        super(responseBody);
-        bmlResource = responseMap;
-    }
-
-    @Override
-    public Map<String, Object> toMap() {
-        return bmlResource;
+    public MLFlowExecutionResponseRef(String responseBody, int status, String errorMsg, Map<String, Object> responseMap) {
+        super(responseBody, status, errorMsg, responseMap);
     }
 }

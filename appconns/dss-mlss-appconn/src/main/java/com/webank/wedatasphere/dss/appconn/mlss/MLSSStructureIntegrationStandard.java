@@ -16,19 +16,17 @@
 
 package com.webank.wedatasphere.dss.appconn.mlss;
 
-import com.webank.wedatasphere.dss.appconn.mlss.utils.MLSSConfig;
+import com.webank.wedatasphere.dss.appconn.mlss.project.MLSSProjectService;
 import com.webank.wedatasphere.dss.standard.app.structure.AbstractStructureIntegrationStandard;
 import com.webank.wedatasphere.dss.standard.app.structure.project.ProjectService;
 
-import java.util.Map;
 
 
 public class MLSSStructureIntegrationStandard extends AbstractStructureIntegrationStandard {
 
     @Override
     protected ProjectService createProjectService(){
-//        return new MLSSProjectService();
-        return null;
+        return new MLSSProjectService();
     }
 
 
