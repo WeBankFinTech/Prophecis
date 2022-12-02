@@ -35,6 +35,30 @@ let util = {
     let day = current.getDate()
     day = day > 9 ? day : '0' + day
     return year + month + day
+  },
+  // 上传校验
+  convertLog (logs) {
+    let logMap = {
+      all: '',
+      error: '',
+      warning: '',
+      info: ''
+    }
+    let newMap = {}
+    if (typeof logs === 'string') {
+      newMap = {
+        all: logs
+      }
+    } else if (Array.isArray(logs)) {
+      let keysArr = ['error', 'warning', 'info', 'all']
+      logs.forEach((log, index) => {
+        newMap[keysArr[index]] = log
+      })
+    } else if (_.isPlainObject(logs)) {
+      newMap = logs
+    }
+
+    return Object.assign(logMap, newMap)
   }
 }
 export default util
