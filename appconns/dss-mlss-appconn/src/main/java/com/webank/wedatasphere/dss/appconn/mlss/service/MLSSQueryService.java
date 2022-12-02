@@ -24,7 +24,7 @@ import com.webank.wedatasphere.dss.standard.app.development.service.AbstractRefQ
 public class MLSSQueryService extends AbstractRefQueryService {
 
     @Override
-    public RefQueryOperation createRefQueryOperation() {
+    public MLSSRefQueryOperation createRefQueryOperation() {
         return new MLSSRefQueryOperation();
     }
 

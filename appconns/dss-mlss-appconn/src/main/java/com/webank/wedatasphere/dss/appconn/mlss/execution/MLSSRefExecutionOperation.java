@@ -17,80 +17,66 @@
 package com.webank.wedatasphere.dss.appconn.mlss.execution;
 
 import com.google.gson.JsonObject;
-import com.webank.wedatasphere.dss.appconn.mlss.MLSSAppConn;
+import com.webank.wedatasphere.dss.appconn.mlss.ref.MLSSResponseRefBuilder;
 import com.webank.wedatasphere.dss.appconn.mlss.restapi.ExperimentRunAPI;
-import com.webank.wedatasphere.dss.appconn.mlss.utils.MLSSNodeUtils;
-import com.webank.wedatasphere.dss.flow.execution.entrance.node.NodeExecutionState;
-import com.webank.wedatasphere.dss.standard.app.development.listener.common.AsyncExecutionRequestRef;
-import com.webank.wedatasphere.dss.standard.app.development.listener.common.CompletedExecutionResponseRef;
+import com.webank.wedatasphere.dss.common.utils.DSSCommonUtils;
 import com.webank.wedatasphere.dss.standard.app.development.listener.common.RefExecutionAction;
 import com.webank.wedatasphere.dss.standard.app.development.listener.common.RefExecutionState;
-import com.webank.wedatasphere.dss.standard.app.development.listener.core.ExecutionRequestRefContext;
-import com.webank.wedatasphere.dss.standard.app.development.listener.core.Killable;
 import com.webank.wedatasphere.dss.standard.app.development.listener.core.LongTermRefExecutionOperation;
-import com.webank.wedatasphere.dss.standard.app.development.listener.core.Procedure;
-import com.webank.wedatasphere.dss.standard.app.development.ref.ExecutionRequestRef;
-import com.webank.wedatasphere.dss.standard.app.development.service.DevelopmentService;
-import com.webank.wedatasphere.dss.standard.app.sso.request.SSORequestOperation;
-import org.apache.linkis.httpclient.request.HttpAction;
-import org.apache.linkis.httpclient.response.HttpResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.webank.wedatasphere.dss.standard.app.development.listener.ref.ExecutionResponseRef;
+import com.webank.wedatasphere.dss.standard.app.development.listener.ref.RefExecutionRequestRef;
+import com.webank.wedatasphere.dss.standard.common.entity.ref.ResponseRef;
+import com.webank.wedatasphere.dss.standard.common.exception.operation.ExternalOperationFailedException;
 
-import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.Map;
 
-public class MLSSRefExecutionOperation extends LongTermRefExecutionOperation implements Procedure, Killable {
+public class MLSSRefExecutionOperation extends LongTermRefExecutionOperation<RefExecutionRequestRef.RefExecutionProjectWithContextRequestRef> {
 
-    private final static Logger logger = LoggerFactory.getLogger(MLSSRefExecutionOperation.class);
-
-    DevelopmentService developmentService;
-    private SSORequestOperation<HttpAction, HttpResult> ssoRequestOperation;
-
-    public MLSSRefExecutionOperation(DevelopmentService service) {
-        this.developmentService = service;
-        this.ssoRequestOperation = this.developmentService.getSSORequestService().createSSORequestOperation(getAppName());
-    }
 
     @Override
-    protected RefExecutionAction submit(ExecutionRequestRef requestRef) {
-        AsyncExecutionRequestRef asyncRequestRef = (AsyncExecutionRequestRef) requestRef;
-        Map<String,Object> jobContent = (Map<String, Object>) requestRef.getJobContent();
-        String expId = jobContent == null ? "" : Float.valueOf(jobContent.get("expId").toString()).intValue() + ""  ;
-        //TODO: Add Exception Log
-        if (expId.equals("-1") || expId.equals("")) return null;
-        if (expId.length() <= 0) {
+    protected RefExecutionAction submit(RefExecutionRequestRef.RefExecutionProjectWithContextRequestRef requestRef) throws ExternalOperationFailedException {
+        logger.info(requestRef.toString());
+
+       requestRef.getUserName();
+
+        Map<String, Object> jobContent = requestRef.getRefJobContent();
+        String expId = jobContent == null ? "" : Float.valueOf(jobContent.get("expId").toString()).intValue() + "";
+        if (expId.equals("-1") || expId.equals("") || expId.length() <= 0) {
             logger.error("appJointNode is null");
             return null;
         }
-        String user = MLSSNodeUtils.getUser(asyncRequestRef.getExecutionRequestRefContext());
+
+//        String user = requestRef.getUserName();
+        //TODO: User from context?
+        HashMap contextInfo = DSSCommonUtils.COMMON_GSON.fromJson(DSSCommonUtils.COMMON_GSON.fromJson(
+                requestRef.getParameter("dssContextId").toString(), HashMap.class).get("value").toString(), HashMap.class);
+        String user = contextInfo.get("user").toString();
         if (user.endsWith("_f")) {
             String[] userStrArray = user.split("_");
             user = userStrArray[0];
         }
-
-
-        JsonObject jsonObj = ExperimentRunAPI.post(user,expId,"DSS","");
+        JsonObject jsonObj = ExperimentRunAPI.post(user, expId, "DSS", "");
         if (jsonObj == null) {
             logger.error("Create experiment run failed, jsonObj is null");
             return null;
         }
         String resExpRunId = jsonObj.get("result").getAsJsonObject().get("id").getAsString();
         MLSSExecutionAction mlssNodeExecutionAction = new MLSSExecutionAction(resExpRunId, user,
-                asyncRequestRef.getExecutionRequestRefContext());
+                requestRef.getExecutionRequestRefContext());
         logger.info("Create experiment run success, expRunId:" + resExpRunId + "expExecType:" + "DSS");
         return mlssNodeExecutionAction;
     }
 
     @Override
-    public RefExecutionState state(RefExecutionAction action) {
+    public RefExecutionState state(RefExecutionAction action) throws ExternalOperationFailedException {
         if (action == null) {
             logger.error("action is null");
             return RefExecutionState.Failed;
         }
         MLSSExecutionAction mlssAction = ((MLSSExecutionAction) action);
         String user = mlssAction.getUser();
-        String appId =mlssAction.getAppId();
+        String appId = mlssAction.getAppId();
         JsonObject jsonObj = ExperimentRunAPI.getStatus(user, appId);
         if (jsonObj == null) {
             logger.error("Get experiment run status failed, jsonObj is null");
@@ -104,80 +90,24 @@ public class MLSSRefExecutionOperation extends LongTermRefExecutionOperation imp
         String status = jsonObj.get("result").getAsJsonObject().get("status").getAsString();
         mlssAction.setState(convertExperimentStatus(status));
         return mlssAction.getState();
-
     }
 
     @Override
-    public CompletedExecutionResponseRef result(RefExecutionAction action) {
-        MLSSCompletedExecutionResponseRef result = new MLSSCompletedExecutionResponseRef(0,"");
-        result.setIsSucceed(false);
+    public ExecutionResponseRef result(RefExecutionAction action) throws ExternalOperationFailedException {
+        HashMap resultMap = new HashMap();
+        int status = -1;
+        String errorMsg = "";
         if (action == null) {
-            result.setErrorMsg("MLSS Execution Action is Null");
-            return result;
+            errorMsg = "";
+            return ExecutionResponseRef.newBuilder().setResponseRef(
+                    new MLSSExecutionResponseRef("", status, errorMsg, resultMap)).build();
         }
         MLSSExecutionAction mlssAction = (MLSSExecutionAction) action;
-        if (mlssAction.getState() == RefExecutionState.Success){
-            result.setIsSucceed(true);
+        if (mlssAction.getState() == RefExecutionState.Success) {
+            status = 200;
         }
-        return result;
-    }
-
-
-    @Override
-    public void setDevelopmentService(DevelopmentService service) {
-        this.developmentService = service;
-    }
-
-    private String getBaseUrl(){
-        return developmentService.getAppInstance().getBaseUrl();
-    }
-
-    @Override
-    public boolean kill(RefExecutionAction action) {
-        if (action == null) {
-            logger.error("nodeExecutionAction is null");
-            return false;
-        }
-
-        String user = ((MLSSExecutionAction) action).getUser();
-        String appId = ((MLSSExecutionAction) action).getAppId();
-        JsonObject jsonObj = ExperimentRunAPI.kill(user, appId);
-        if (jsonObj != null) {
-            logger.info("Kill experiment run success,expRunId:" + appId);
-            return true;
-        }
-        //TODO 判断是否正常返回
-        //retry kill
-        logger.info("Kill experiment run failed, retry kill experiment run expRunId" + appId);
-        return false;
-
-    }
-
-    @Override
-    public float progress(RefExecutionAction action) {
-        if (action == null) {
-            return 1;
-        }
-        String user = ((MLSSExecutionAction) action).getUser();
-        RefExecutionState state = this.state(action);
-        return state != RefExecutionState.Success && state != RefExecutionState.Failed ? 0.5f : 1f;
-    }
-
-    @Override
-    public String log(RefExecutionAction action) {
-        String user = ((MLSSExecutionAction) action).getUser();
-        MLSSExecutionAction mlssAction = ((MLSSExecutionAction) action);
-        ExecutionRequestRefContext nodeContext = mlssAction.getExecutionContext();
-        String appId = mlssAction.getAppId();
-        JsonObject jsonObj = ExperimentRunAPI.getLogs(user, appId,0L, 0L);
-        //TODO: Check
-        String logs = jsonObj.get("result").getAsJsonObject().get("log").getAsJsonArray().get(3).getAsString();
-        nodeContext.appendLog(logs);
-        return logs;
-    }
-
-    private String getAppName() {
-        return MLSSAppConn.MLSS_APPCONN_NAME;
+        ResponseRef response = new MLSSExecutionResponseRef("", status, errorMsg, resultMap);
+        return ExecutionResponseRef.newBuilder().setResponseRef(response).build();
     }
 
     private RefExecutionState convertExperimentStatus(String statusDesc) {

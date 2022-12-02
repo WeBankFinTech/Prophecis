@@ -9,6 +9,7 @@ import com.webank.wedatasphere.dss.standard.app.development.listener.common.RefE
 import com.webank.wedatasphere.dss.standard.app.development.listener.core.ExecutionRequestRefContext;
 import org.apache.http.HttpStatus;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import static org.apache.linkis.cs.common.utils.CSCommonUtils.gson;
@@ -19,7 +20,7 @@ public class ModelDeployJob extends MLFlowJob {
     private String namespace;
     private String serviceName;
 
-    public ModelDeployJob(String user){
+    public ModelDeployJob(String user) {
         this.setUser(user);
         this.setJobType(JobManager.JOB_TYPE_MODEL_DEPLOY);
     }
@@ -34,10 +35,10 @@ public class ModelDeployJob extends MLFlowJob {
         this.setExecutionContext(executionRequestRefContext);
 
         //2. Execute job
-        String user = MLFlowNodeUtils.getUser(executionRequestRefContext);
-        Map result = ModelFactoryAPI.ServicePost(user,jsonBody);
+        String user = this.getUser();
+        Map result = ModelFactoryAPI.ServicePost(user, jsonBody);
         int statusCode = Integer.parseInt(result.get(APIClient.REPLY_STATUS_CODE).toString());
-        if (statusCode !=  HttpStatus.SC_OK) {
+        if (statusCode != HttpStatus.SC_OK) {
             executionRequestRefContext.appendLog("Get Status From MF Rest Error: " + statusCode);
             executionRequestRefContext.appendLog("Response: " + result.get(APIClient.REPLY_RESULT_CONTENT).toString());
             return false;
@@ -59,9 +60,9 @@ public class ModelDeployJob extends MLFlowJob {
     @Override
     public RefExecutionState status() {
         // Execute Job
-        Map result = ModelFactoryAPI.ServiceGet(this.getUser(),this.serviceId);
+        Map result = ModelFactoryAPI.ServiceGet(this.getUser(), this.serviceId);
         int statusCode = Integer.parseInt(result.get(APIClient.REPLY_STATUS_CODE).toString());
-        if (statusCode !=  HttpStatus.SC_OK) {
+        if (statusCode != HttpStatus.SC_OK) {
             this.getExecutionContext().appendLog("Get Status From MF Rest Error: " + statusCode);
             this.getExecutionContext().appendLog("Response: " + result.get(APIClient.REPLY_RESULT_CONTENT).toString());
             return RefExecutionState.Failed;
@@ -82,7 +83,7 @@ public class ModelDeployJob extends MLFlowJob {
     public boolean kill() {
         Map result = ModelFactoryAPI.ServiceStop(this.getUser(), this.namespace, this.serviceName, this.serviceId);
         int statusCode = Integer.parseInt(result.get(APIClient.REPLY_STATUS_CODE).toString());
-        if (statusCode !=  HttpStatus.SC_OK) {
+        if (statusCode != HttpStatus.SC_OK) {
             this.getExecutionContext().appendLog("Kill ModelDeploy Job From MF Rest Error: " + statusCode);
             this.getExecutionContext().appendLog("Response: " + result.get(APIClient.REPLY_RESULT_CONTENT).toString());
             return false;
@@ -103,15 +104,15 @@ public class ModelDeployJob extends MLFlowJob {
 
     @Override
     public RefExecutionState transformStatus(String status) {
-        if ("Creating".equals(status)){
+        if ("Creating".equals(status)) {
             return RefExecutionState.Accepted;
-        }else if("Available".equals(status)){
+        } else if ("Available".equals(status)) {
             return RefExecutionState.Success;
-        }else if("Stop".equals(status)){
+        } else if ("Stop".equals(status)) {
             return RefExecutionState.Failed;
-        }else if("FAILED".equals(status)){
+        } else if ("FAILED".equals(status)) {
             return RefExecutionState.Failed;
-        }else{
+        } else {
             return RefExecutionState.Failed;
         }
     }
