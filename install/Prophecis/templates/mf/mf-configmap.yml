@@ -26,7 +26,7 @@ data:
     StorerConfig:
       platformNamespace: {{.Values.storage.platformNamespace}}
       storerTls: {{.Values.storage.storageTls}}
-      storerServerEnvName: {{.Values.storage.storageEnvServerName}}
+      storerServerEnvName: {{.Values.storage.storerServerEnvName}}
       storerServerName: {{.Values.storage.storageServerName}}
       storerCA: {{.Values.storage.storageCA}}
   server.crt: |
