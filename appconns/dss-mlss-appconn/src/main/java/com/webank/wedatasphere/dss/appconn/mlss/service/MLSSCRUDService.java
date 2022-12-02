@@ -20,18 +20,11 @@ import com.webank.wedatasphere.dss.appconn.mlss.operation.MLSSRefCopyOperation;
 import com.webank.wedatasphere.dss.appconn.mlss.operation.MLSSRefCreationOperation;
 import com.webank.wedatasphere.dss.appconn.mlss.operation.MLSSRefDeletionOperation;
 import com.webank.wedatasphere.dss.appconn.mlss.operation.MLSSRefUpdateOperation;
-import com.webank.wedatasphere.dss.appconn.mlss.operation.MLSSRefCopyOperation;
-import com.webank.wedatasphere.dss.appconn.mlss.operation.MLSSRefCreationOperation;
-import com.webank.wedatasphere.dss.appconn.mlss.operation.MLSSRefDeletionOperation;
-import com.webank.wedatasphere.dss.appconn.mlss.operation.MLSSRefUpdateOperation;
-import com.webank.wedatasphere.dss.appconn.mlss.utils.MLSSConfig;
 import com.webank.wedatasphere.dss.standard.app.development.operation.RefCopyOperation;
 import com.webank.wedatasphere.dss.standard.app.development.operation.RefCreationOperation;
 import com.webank.wedatasphere.dss.standard.app.development.operation.RefDeletionOperation;
 import com.webank.wedatasphere.dss.standard.app.development.operation.RefUpdateOperation;
 import com.webank.wedatasphere.dss.standard.app.development.service.AbstractRefCRUDService;
-
-import java.util.Map;
 
 public class MLSSCRUDService extends AbstractRefCRUDService {
 
@@ -42,26 +35,17 @@ public class MLSSCRUDService extends AbstractRefCRUDService {
 
     @Override
     protected RefCopyOperation createRefCopyOperation() {
-        return new MLSSRefCopyOperation(null,this);
+        return new MLSSRefCopyOperation();
     }
 
     @Override
     protected RefUpdateOperation createRefUpdateOperation() {
-        return new MLSSRefUpdateOperation(this);
+        return new MLSSRefUpdateOperation();
     }
 
     @Override
     protected RefDeletionOperation createRefDeletionOperation() {
         return new MLSSRefDeletionOperation(this);
-    }
-
-    public void initMLSSConfig(){
-        MLSSConfig.BASE_URL = this.getAppInstance().getBaseUrl();
-        Map<String, Object> config = this.getAppInstance().getConfig();
-        MLSSConfig.APP_KEY = String.valueOf(config.get("MLSS-SecretKey"));
-        MLSSConfig.APP_SIGN = String.valueOf(config.get("MLSS-APPSignature"));
-        MLSSConfig.AUTH_TYPE =  String.valueOf(config.get("MLSS-Auth-Type"));
-        MLSSConfig.TIMESTAMP =  String.valueOf(config.get("MLSS-APPSignature"));
     }
 
 }

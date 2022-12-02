@@ -14,12 +14,16 @@
  *
  */
 
-package com.webank.wedatasphere.dss.appconn.mlss.ref;
+package com.webank.wedatasphere.dss.appconn.mlss.execution;
 
-import com.webank.wedatasphere.dss.standard.app.development.ref.UpdateCSRequestRef;
-import com.webank.wedatasphere.dss.standard.app.development.ref.impl.NodeRequestRefImpl;
+import com.webank.wedatasphere.dss.standard.common.entity.ref.ResponseRefImpl;
+
+import java.util.Map;
 
 
-public class NodeUpdateCSRequestRefImpl extends NodeRequestRefImpl implements  UpdateCSRequestRef {
+public class MLSSExecutionResponseRef extends ResponseRefImpl {
 
+    public MLSSExecutionResponseRef(String responseBody, int status, String errorMsg, Map<String, Object> responseMap) {
+        super(responseBody, status, errorMsg, responseMap);
+    }
 }

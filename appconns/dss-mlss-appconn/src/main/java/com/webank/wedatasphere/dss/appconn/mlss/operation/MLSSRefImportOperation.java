@@ -18,76 +18,59 @@ package com.webank.wedatasphere.dss.appconn.mlss.operation;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import com.webank.wedatasphere.dss.appconn.mlss.MLSSAppConn;
-import com.webank.wedatasphere.dss.appconn.mlss.publish.MLSSImportResponseRef;
 import com.webank.wedatasphere.dss.appconn.mlss.restapi.ExperimentAPI;
 import com.webank.wedatasphere.dss.appconn.mlss.utils.MLSSConfig;
-import com.webank.wedatasphere.dss.appconn.mlss.utils.MLSSNodeUtils;
-import com.webank.wedatasphere.dss.flow.execution.entrance.conf.FlowExecutionEntranceConfiguration;
-import com.webank.wedatasphere.dss.standard.app.development.listener.common.AsyncExecutionRequestRef;
+import com.webank.wedatasphere.dss.common.utils.DSSCommonUtils;
+import com.webank.wedatasphere.dss.standard.app.development.operation.AbstractDevelopmentOperation;
 import com.webank.wedatasphere.dss.standard.app.development.operation.RefImportOperation;
-import com.webank.wedatasphere.dss.standard.app.development.ref.ImportRequestRef;
+import com.webank.wedatasphere.dss.standard.app.development.ref.RefJobContentResponseRef;
+import com.webank.wedatasphere.dss.standard.app.development.ref.impl.ThirdlyRequestRef;
 import com.webank.wedatasphere.dss.standard.app.development.service.DevelopmentService;
-import com.webank.wedatasphere.dss.standard.app.sso.request.SSORequestOperation;
-import com.webank.wedatasphere.dss.standard.common.entity.ref.ResponseRef;
 import com.webank.wedatasphere.dss.standard.common.exception.operation.ExternalOperationFailedException;
-import org.apache.linkis.httpclient.request.HttpAction;
-import org.apache.linkis.httpclient.response.HttpResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class MLSSRefImportOperation implements RefImportOperation<ImportRequestRef> {
-
-    private final static Logger logger = LoggerFactory.getLogger(MLSSRefImportOperation.class);
-
+public class MLSSRefImportOperation extends AbstractDevelopmentOperation<ThirdlyRequestRef.ImportWitContextRequestRefImpl, RefJobContentResponseRef>
+        implements RefImportOperation<ThirdlyRequestRef.ImportWitContextRequestRefImpl> {
     DevelopmentService developmentService;
-    private SSORequestOperation ssoRequestOperation;
     private Gson gson = new Gson();
 
     public MLSSRefImportOperation(DevelopmentService developmentService){
         this.developmentService = developmentService;
-        this.ssoRequestOperation = this.developmentService.getSSORequestService().createSSORequestOperation(getAppName());
-    }
-
-    private String getAppName() {
-        return MLSSAppConn.MLSS_APPCONN_NAME;
     }
 
     @Override
-    public ResponseRef importRef(ImportRequestRef requestRef) throws ExternalOperationFailedException {
+    public RefJobContentResponseRef importRef(ThirdlyRequestRef.ImportWitContextRequestRefImpl requestRef) throws ExternalOperationFailedException {
+        logger.info(requestRef.toString());
         if(null == MLSSConfig.BASE_URL){
             this.initMLSSConfig();
         }
-
-        Map<String,Object> jobContent = (Map<String, Object>) requestRef.getParameter("jobContent");
-        MLSSImportResponseRef responseRef = null;
-        Boolean resourceIdFlag = requestRef.getParameter("resourceId") == null;
-
-        Boolean versionFlag = requestRef.getParameter("version") == null;
+        Map<String,Object> jobContent = requestRef.getRefJobContent();
+        HashMap resourceMap = (HashMap) requestRef.getParameter("resourceMap");
+        Boolean resourceIdFlag = resourceMap.get("resourceId") == null;
+        Boolean versionFlag = resourceMap.get("version") == null;
         if (resourceIdFlag || versionFlag) {
             //TODO: FIX RETURN NULL
             logger.error("resourceId or version is null");
             return null;
         }
-        String resourceId =String.valueOf(requestRef.getParameter("resourceId"));
-        String version = String.valueOf(requestRef.getParameter("version"));
+        String resourceId =String.valueOf(resourceMap.get("resourceId").toString());
+        String version = String.valueOf(resourceMap.get("version").toString());
 
-        String user = requestRef.getParameter("user").toString();
-        String contextId = requestRef.getParameter("contextID").toString();
-        JsonObject contextMap = gson.fromJson(contextId,JsonObject.class);
-//        JsonObject context  = new JsonObject(contextMap.get("value").toString());
+        String user = requestRef.getParameter("userName").toString();
+        String contextId = requestRef.getParameter("dssContextId").toString();
 
-        String flowName = null;
-        String flowVersion = null;
-        String flowID = null;
-        String projectID = null;
-        String projectName = null;
-        String expDesc = "dss-appjoint," + (flowName == null ? "NULL" : flowName) + "," +
+        HashMap contextInfo = DSSCommonUtils.COMMON_GSON.fromJson(DSSCommonUtils.COMMON_GSON.fromJson(
+        requestRef.getParameter("dssContextId").toString(), HashMap.class).get("value").toString(), HashMap.class);
+        String flowName = jobContent.get("orchestrationName").toString();
+        String flowVersion = contextInfo.get("version").toString();
+        Long flowID = Long.parseLong(jobContent.get("orchestrationId").toString());
+        Long projectID = Long.parseLong(requestRef.getParameter("dssProjectId").toString());
+        String projectName = contextInfo.get("project").toString();
+        String expDesc = "WTSS," + (flowName == null ? "NULL" : flowName) + "," +
                 (flowVersion == null ? "NULL" : flowVersion) + "," + flowID + "," +
-                projectName + "," + projectName + "," + projectID  + "," + flowVersion;
+                projectName + ","  + projectID;
         if (user.endsWith("_f")) {
             String[] userStrArray = user.split("_");
             user = userStrArray[0];
@@ -104,23 +87,7 @@ public class MLSSRefImportOperation implements RefImportOperation<ImportRequestR
         requestRef.setParameter("jobContent",jobContent);
         resMap.put("expId", expId);
         resMap.put("status", 200);
-        try {
-            //TODO ADD Default Resp
-            responseRef = new MLSSImportResponseRef(resMap,"","","");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return responseRef;
-    }
-
-
-    @Override
-    public void setDevelopmentService(DevelopmentService service) {
-        this.developmentService = service;
-    }
-
-    private String getBaseUrl(){
-        return developmentService.getAppInstance().getBaseUrl();
+        return RefJobContentResponseRef.newBuilder().setRefJobContent(resMap).success();
     }
 
 

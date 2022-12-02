@@ -6,4 +6,5 @@ public class MLFlowConfig {
     public static String APP_KEY;
     public static String AUTH_TYPE;
     public static String TIMESTAMP;
+    public static String MODEL_MONITORING_JAR;
 }

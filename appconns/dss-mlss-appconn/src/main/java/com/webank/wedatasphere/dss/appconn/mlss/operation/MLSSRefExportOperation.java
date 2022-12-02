@@ -17,93 +17,61 @@
 package com.webank.wedatasphere.dss.appconn.mlss.operation;
 
 import com.google.gson.JsonObject;
-import com.webank.wedatasphere.dss.appconn.mlss.MLSSAppConn;
-import com.webank.wedatasphere.dss.appconn.mlss.publish.MLSSExportResponseRef;
 import com.webank.wedatasphere.dss.appconn.mlss.restapi.ExperimentAPI;
 import com.webank.wedatasphere.dss.appconn.mlss.utils.MLSSConfig;
-import com.webank.wedatasphere.dss.appconn.mlss.utils.MLSSNodeUtils;
-import com.webank.wedatasphere.dss.standard.app.development.listener.common.AsyncExecutionRequestRef;
+import com.webank.wedatasphere.dss.standard.app.development.operation.AbstractDevelopmentOperation;
 import com.webank.wedatasphere.dss.standard.app.development.operation.RefExportOperation;
-import com.webank.wedatasphere.dss.standard.app.development.ref.ExportRequestRef;
+import com.webank.wedatasphere.dss.standard.app.development.ref.ExportResponseRef;
+import com.webank.wedatasphere.dss.standard.app.development.ref.impl.ThirdlyRequestRef;
 import com.webank.wedatasphere.dss.standard.app.development.service.DevelopmentService;
-import com.webank.wedatasphere.dss.standard.app.sso.request.SSORequestOperation;
-import com.webank.wedatasphere.dss.standard.common.entity.ref.ResponseRef;
 import com.webank.wedatasphere.dss.standard.common.exception.operation.ExternalOperationFailedException;
-import org.apache.linkis.httpclient.request.HttpAction;
-import org.apache.linkis.httpclient.response.HttpResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class MLSSRefExportOperation implements RefExportOperation<ExportRequestRef> {
-
-    private final static Logger logger = LoggerFactory.getLogger(MLSSRefExportOperation.class);
+public class MLSSRefExportOperation extends AbstractDevelopmentOperation<ThirdlyRequestRef.RefJobContentRequestRefImpl, ExportResponseRef>
+        implements RefExportOperation<ThirdlyRequestRef.RefJobContentRequestRefImpl> {
 
     DevelopmentService developmentService;
-    private SSORequestOperation<HttpAction, HttpResult> ssoRequestOperation;
 
-    public MLSSRefExportOperation(DevelopmentService developmentService){
+    public MLSSRefExportOperation(DevelopmentService developmentService) {
         this.developmentService = developmentService;
-        this.ssoRequestOperation = this.developmentService.getSSORequestService().createSSORequestOperation(getAppName());
     }
 
-    private String getAppName() {
-        return MLSSAppConn.MLSS_APPCONN_NAME;
-    }
 
     @Override
-    public ResponseRef exportRef(ExportRequestRef requestRef) throws ExternalOperationFailedException {
-        if(null == MLSSConfig.BASE_URL){
+    public ExportResponseRef exportRef(ThirdlyRequestRef.RefJobContentRequestRefImpl requestRef) throws ExternalOperationFailedException {
+        logger.info(requestRef.toString());
+        if (null == MLSSConfig.BASE_URL) {
             this.initMLSSConfig();
         }
-
-        Map<String, Object> jobContent = (Map<String, Object>) requestRef.getParameter("jobContent");
-        String user = requestRef.getParameter("user").toString();
+        Map<String, Object> jobContent = requestRef.getRefJobContent();
+        String user = requestRef.getUserName();
         if (user.endsWith("_f")) {
             String[] userStrArray = user.split("_");
             user = userStrArray[0];
         }
-
-
         Map<String, Object> resMap = new HashMap<>();
-        resMap.put("status",0);
+        resMap.put("status", 0);
         if (jobContent != null) {
-            Map<String, Object>  appJointNodeMap = jobContent;
-            Long expId = Float.valueOf(String.valueOf(appJointNodeMap.get("expId"))).longValue();
+            Long expId = Float.valueOf(String.valueOf(jobContent.get("expId"))).longValue();
             JsonObject jsonObject = ExperimentAPI.exportExperimentDSS(user, String.valueOf(expId));
             String resResourceId = jsonObject.get("result").getAsJsonObject().get("resourceId").getAsString();
             String resVersion = jsonObject.get("result").getAsJsonObject().get("version").getAsString();
             logger.info("ExportDSS resourceId:" + resResourceId + " version:" + resVersion);
             resMap.put("resourceId", resResourceId);
             resMap.put("version", resVersion);
-            resMap.put("status",200);
+            resMap.put("status", 200);
         }
-
-        MLSSExportResponseRef responseRef = null;
-        try {
-            responseRef = new MLSSExportResponseRef(resMap.toString());
-        } catch (Exception e) {
-            //TODO: Test Exception
-            e.printStackTrace();
-            return null;
-        }
-
-        return responseRef;
+        return ExportResponseRef.newBuilder().setResourceMap(resMap).success();
     }
 
-    @Override
-    public void setDevelopmentService(DevelopmentService service) {
-        developmentService = service;
-    }
-
-    protected void initMLSSConfig(){
+    protected void initMLSSConfig() {
         MLSSConfig.BASE_URL = this.developmentService.getAppInstance().getBaseUrl();
-        Map<String, Object> config =  this.developmentService.getAppInstance().getConfig();
+        Map<String, Object> config = this.developmentService.getAppInstance().getConfig();
         MLSSConfig.APP_KEY = String.valueOf(config.get("MLSS-SecretKey"));
         MLSSConfig.APP_SIGN = String.valueOf(config.get("MLSS-APPSignature"));
-        MLSSConfig.AUTH_TYPE =  String.valueOf(config.get("MLSS-Auth-Type"));
-        MLSSConfig.TIMESTAMP =  String.valueOf(config.get("MLSS-APPSignature"));
+        MLSSConfig.AUTH_TYPE = String.valueOf(config.get("MLSS-Auth-Type"));
+        MLSSConfig.TIMESTAMP = String.valueOf(config.get("MLSS-APPSignature"));
     }
 }
