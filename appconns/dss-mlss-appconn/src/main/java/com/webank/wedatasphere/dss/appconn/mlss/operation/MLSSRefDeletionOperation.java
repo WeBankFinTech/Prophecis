@@ -17,75 +17,35 @@
 package com.webank.wedatasphere.dss.appconn.mlss.operation;
 
 import com.google.gson.JsonObject;
-import com.webank.wedatasphere.dss.appconn.mlss.MLSSAppConn;
 import com.webank.wedatasphere.dss.appconn.mlss.restapi.ExperimentAPI;
 import com.webank.wedatasphere.dss.appconn.mlss.utils.MLSSConfig;
-import com.webank.wedatasphere.dss.appconn.mlss.utils.MLSSNodeUtils;
-import com.webank.wedatasphere.dss.standard.app.development.listener.common.AsyncExecutionRequestRef;
+import com.webank.wedatasphere.dss.standard.app.development.operation.AbstractDevelopmentOperation;
 import com.webank.wedatasphere.dss.standard.app.development.operation.RefDeletionOperation;
-import com.webank.wedatasphere.dss.standard.app.development.ref.NodeRequestRef;
+import com.webank.wedatasphere.dss.standard.app.development.ref.impl.OnlyDevelopmentRequestRef;
+import com.webank.wedatasphere.dss.standard.app.development.ref.impl.ThirdlyRequestRef;
 import com.webank.wedatasphere.dss.standard.app.development.service.DevelopmentService;
-import com.webank.wedatasphere.dss.standard.app.sso.request.SSORequestOperation;
-import com.webank.wedatasphere.dss.standard.common.entity.ref.RequestRef;
+import com.webank.wedatasphere.dss.standard.common.entity.ref.ResponseRef;
 import com.webank.wedatasphere.dss.standard.common.exception.operation.ExternalOperationFailedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
 import java.util.Map;
 
 
-public class MLSSRefDeletionOperation implements RefDeletionOperation {
+public class MLSSRefDeletionOperation extends AbstractDevelopmentOperation<ThirdlyRequestRef.RefJobContentRequestRefImpl, ResponseRef>
+        implements RefDeletionOperation<ThirdlyRequestRef.RefJobContentRequestRefImpl> {
 
     private DevelopmentService developmentService;
-    private SSORequestOperation ssoRequestOperation;
     private final static Logger logger = LoggerFactory.getLogger(MLSSRefCreationOperation.class);
 
     public MLSSRefDeletionOperation(DevelopmentService service) {
         this.developmentService = service;
-        this.ssoRequestOperation = this.developmentService.getSSORequestService().createSSORequestOperation(getAppName());
     }
 
-    private String getAppName() {
-        return MLSSAppConn.MLSS_APPCONN_NAME;
-    }
-
-    @Override
-    public void deleteRef(RequestRef requestRef) throws ExternalOperationFailedException {
-        if(null == MLSSConfig.BASE_URL){
-            this.initMLSSConfig();
-        }
-
-        // 1. Init Params
-        Map<String, Object> jobContent = (Map<String, Object>) requestRef.getParameter("jobContent");
-        String user = requestRef.getParameter("user").toString();
-        Long expId = Long.parseLong(String.valueOf(jobContent.get("expId")));
-        if (user.endsWith("_f")) {
-            String[] userStrArray = user.split("_");
-            user = userStrArray[0];
-        }
-
-
-        // 2. Execute Request
-        JsonObject jsonObj = ExperimentAPI.deleteExperiment(user, String.valueOf(expId));
-        if (jsonObj == null) {
-            logger.error("Create experiment failed, jsonObj is null");
-            throw new ExternalOperationFailedException(90177, "Request timeout, no response", null);
-        }
-        if (jsonObj.get("status").getAsString() != "200"){
-            throw new ExternalOperationFailedException(90177, "Unknown task type " + jsonObj.getAsString(), null);
-        }
-        logger.info("Delete experiment(expId:"+ expId +") success");
-    }
-
-    @Override
-    public void setDevelopmentService(DevelopmentService service) {
-        this.developmentService = service;
-    }
-
-    private String getBaseUrl() {
-        return developmentService.getAppInstance().getBaseUrl();
-    }
+//    @Override
+//    public void setDevelopmentService(DevelopmentService service) {
+//        this.developmentService = service;
+//    }
 
     protected void initMLSSConfig(){
         MLSSConfig.BASE_URL = this.developmentService.getAppInstance().getBaseUrl();
@@ -94,5 +54,32 @@ public class MLSSRefDeletionOperation implements RefDeletionOperation {
         MLSSConfig.APP_SIGN = String.valueOf(config.get("MLSS-APPSignature"));
         MLSSConfig.AUTH_TYPE =  String.valueOf(config.get("MLSS-Auth-Type"));
         MLSSConfig.TIMESTAMP =  String.valueOf(config.get("MLSS-APPSignature"));
+    }
+
+    @Override
+    public ResponseRef deleteRef(ThirdlyRequestRef.RefJobContentRequestRefImpl requestRef) throws ExternalOperationFailedException {
+        logger.info(requestRef.toString());
+        if(null == MLSSConfig.BASE_URL){
+            this.initMLSSConfig();
+        }
+        // 1. Init Params
+        Map<String, Object> jobContent = (Map<String, Object>) requestRef.getRefJobContent();
+        String user = requestRef.getUserName();
+        Long expId = Long.parseLong(String.valueOf(jobContent.get("expId")));
+        if (user.endsWith("_f")) {
+            String[] userStrArray = user.split("_");
+            user = userStrArray[0];
+        }
+        // 2. Execute Request
+        JsonObject jsonObj = ExperimentAPI.deleteExperiment(user, String.valueOf(expId));
+        if (jsonObj == null) {
+            logger.error("Delete experiment failed, jsonObj is null");
+            return ResponseRef.newInternalBuilder().error("Create experiment failed, jsonObj is null");
+        }
+        if (jsonObj.get("code").getAsString() != "200"){
+            return ResponseRef.newInternalBuilder().error("Unknown task type" + jsonObj.getAsString());
+        }
+        logger.info("Delete experiment(expId:"+ expId +") success");
+        return ResponseRef.newInternalBuilder().success();
     }
 }

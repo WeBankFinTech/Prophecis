@@ -16,23 +16,11 @@
 
 package com.webank.wedatasphere.dss.appconn.mlss.project;
 
-import com.webank.wedatasphere.dss.appconn.mlss.MLSSAppConn;
 import com.webank.wedatasphere.dss.appconn.mlss.utils.MLSSConfig;
-import com.webank.wedatasphere.dss.standard.app.sso.request.SSORequestOperation;
-import com.webank.wedatasphere.dss.standard.app.structure.project.ProjectDeletionOperation;
-import com.webank.wedatasphere.dss.standard.app.structure.project.ProjectService;
-import com.webank.wedatasphere.dss.standard.app.structure.project.ProjectUpdateOperation;
-import com.webank.wedatasphere.dss.standard.app.structure.project.ProjectUrlOperation;
-import org.apache.linkis.httpclient.request.HttpAction;
-import org.apache.linkis.httpclient.response.HttpResult;
+import com.webank.wedatasphere.dss.standard.app.structure.project.*;
 
-import java.util.Map;
 
 public class MLSSProjectService extends ProjectService {
-
-    public MLSSProjectService(){
-//        this.initMLSSConfig();
-    }
 
     @Override
     public boolean isCooperationSupported() {
@@ -45,11 +33,8 @@ public class MLSSProjectService extends ProjectService {
     }
 
     @Override
-    protected MLSSProjectCreationOperation createProjectCreationOperation() {
-        SSORequestOperation<HttpAction, HttpResult> ssoRequestOperation = getSSORequestService().createSSORequestOperation(MLSSAppConn.MLSS_APPCONN_NAME);
-        MLSSProjectCreationOperation MLSSProjectCreationOperation = new MLSSProjectCreationOperation(this, ssoRequestOperation);
-        MLSSProjectCreationOperation.setStructureService(this);
-        return MLSSProjectCreationOperation;
+    protected ProjectCreationOperation createProjectCreationOperation() {
+        return new MLSSProjectCreationOperation();
     }
 
     @Override
@@ -63,18 +48,16 @@ public class MLSSProjectService extends ProjectService {
     }
 
     @Override
-    protected ProjectUrlOperation createProjectUrlOperation() {
-        return null;
+    protected ProjectSearchOperation createProjectSearchOperation() {
+        return new MLSSProjectSearchOperation();
     }
 
-
-    protected void initMLSSConfig(){
-        MLSSConfig.BASE_URL = this.getAppInstance().getBaseUrl();
-        Map<String, Object> config = this.getAppInstance().getConfig();
-        MLSSConfig.APP_KEY = String.valueOf(config.get("MLSS-SecretKey"));
-        MLSSConfig.APP_SIGN = String.valueOf(config.get("MLSS-APPSignature"));
-        MLSSConfig.AUTH_TYPE =  String.valueOf(config.get("MLSS-Auth-Type"));
-        MLSSConfig.TIMESTAMP =  String.valueOf(config.get("MLSS-APPSignature"));
-    }
-
+//    protected void initMLSSConfig(){
+//        MLSSConfig.BASE_URL = this.getAppInstance().getBaseUrl();
+//        Map<String, Object> config = this.getAppInstance().getConfig();
+//        MLSSConfig.APP_KEY = String.valueOf(config.get("MLSS-SecretKey"));
+//        MLSSConfig.APP_SIGN = String.valueOf(config.get("MLSS-APPSignature"));
+//        MLSSConfig.AUTH_TYPE =  String.valueOf(config.get("MLSS-Auth-Type"));
+//        MLSSConfig.TIMESTAMP =  String.valueOf(config.get("MLSS-APPSignature"));
+//    }
 }

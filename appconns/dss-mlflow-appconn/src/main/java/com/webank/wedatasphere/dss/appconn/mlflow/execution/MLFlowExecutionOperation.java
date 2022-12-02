@@ -16,75 +16,56 @@
 
 package com.webank.wedatasphere.dss.appconn.mlflow.execution;
 
-import com.webank.wedatasphere.dss.appconn.mlflow.MLFlowAppConn;
 import com.webank.wedatasphere.dss.appconn.mlflow.job.JobManager;
-import com.webank.wedatasphere.dss.standard.app.development.listener.common.AsyncExecutionRequestRef;
-import com.webank.wedatasphere.dss.standard.app.development.listener.common.CompletedExecutionResponseRef;
+import com.webank.wedatasphere.dss.common.utils.DSSCommonUtils;
 import com.webank.wedatasphere.dss.standard.app.development.listener.common.RefExecutionAction;
 import com.webank.wedatasphere.dss.standard.app.development.listener.common.RefExecutionState;
 import com.webank.wedatasphere.dss.standard.app.development.listener.core.Killable;
 import com.webank.wedatasphere.dss.standard.app.development.listener.core.LongTermRefExecutionOperation;
 import com.webank.wedatasphere.dss.standard.app.development.listener.core.Procedure;
-import com.webank.wedatasphere.dss.standard.app.development.ref.ExecutionRequestRef;
-import com.webank.wedatasphere.dss.standard.app.development.service.DevelopmentService;
-import com.webank.wedatasphere.dss.standard.app.sso.request.SSORequestOperation;
-import org.apache.linkis.httpclient.request.HttpAction;
-import org.apache.linkis.httpclient.response.HttpResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.webank.wedatasphere.dss.standard.app.development.listener.ref.ExecutionResponseRef;
+import com.webank.wedatasphere.dss.standard.app.development.listener.ref.RefExecutionRequestRef;
+import com.webank.wedatasphere.dss.standard.common.entity.ref.ResponseRef;
+import com.webank.wedatasphere.dss.standard.common.exception.operation.ExternalOperationFailedException;
 
+import java.util.HashMap;
 import java.util.Map;
 
-public class MLFlowExecutionOperation extends LongTermRefExecutionOperation implements Killable, Procedure {
+public class MLFlowExecutionOperation extends LongTermRefExecutionOperation<RefExecutionRequestRef.RefExecutionProjectWithContextRequestRef> implements Killable, Procedure {
 
 
-    private final static Logger logger = LoggerFactory.getLogger(MLFlowExecutionOperation.class);
-    DevelopmentService developmentService;
-//    private SSORequestOperation<HttpAction, HttpResult> ssoRequestOperation;
-
-    public MLFlowExecutionOperation(DevelopmentService service) {
-        this.developmentService = service;
-//        this.ssoRequestOperation = this.developmentService.getSSORequestService().createSSORequestOperation(getAppName());
-    }
-
-    private String getAppName() {
-        return MLFlowAppConn.MLFlow_APPCONN_NAME;
+    @Override
+    protected RefExecutionAction submit(RefExecutionRequestRef.RefExecutionProjectWithContextRequestRef requestRef) throws ExternalOperationFailedException {
+        Map<String, Object> jobContent = requestRef.getRefJobContent();
+        HashMap contextInfo = DSSCommonUtils.COMMON_GSON.fromJson(DSSCommonUtils.COMMON_GSON.fromJson(
+                requestRef.getParameter("dssContextId").toString(), HashMap.class).get("value").toString(), HashMap.class);
+        return JobManager.submit(jobContent, requestRef.getExecutionRequestRefContext(), contextInfo);
     }
 
     @Override
-    protected RefExecutionAction submit(ExecutionRequestRef requestRef) {
-        AsyncExecutionRequestRef asyncRequestRef = (AsyncExecutionRequestRef) requestRef;
-        Map<String,Object> jobContent = requestRef.getJobContent();
-        return JobManager.submit(jobContent, asyncRequestRef.getExecutionRequestRefContext());
-    }
-
-    @Override
-    public RefExecutionState state(RefExecutionAction action) {
+    public RefExecutionState state(RefExecutionAction action) throws ExternalOperationFailedException {
+        logger.info(action.toString());
         MLFlowExecutionAction mlFlowExecutionAction = (MLFlowExecutionAction) action;
         return JobManager.state(mlFlowExecutionAction);
     }
 
     @Override
-    public CompletedExecutionResponseRef result(RefExecutionAction action) {
-        MLFlowExecutionAction mlFlowExecutionAction = (MLFlowExecutionAction) action;
-        return JobManager.result(mlFlowExecutionAction, mlFlowExecutionAction.getExecutionRequestRefContext());
-    }
-
-    private String getUser(AsyncExecutionRequestRef requestRef) {
-        return requestRef.getExecutionRequestRefContext().getRuntimeMap().get("wds.dss.workflow.submit.user").toString();
-    }
-
-    private String getId(AsyncExecutionRequestRef requestRef) {
-        return null;
-    }
-
-    @Override
-    public void setDevelopmentService(DevelopmentService service) {
-        this.developmentService = service;
-    }
-
-    private String getBaseUrl(){
-        return developmentService.getAppInstance().getBaseUrl();
+    public ExecutionResponseRef result(RefExecutionAction action) throws ExternalOperationFailedException {
+        HashMap resultMap = new HashMap();
+        int status = -1;
+        String errorMsg = "";
+        if (action == null) {
+            errorMsg = "";
+            return ExecutionResponseRef.newBuilder().setResponseRef(
+                    new MLFlowExecutionResponseRef("", status, errorMsg, resultMap)).build();
+        }
+        logger.info(action.toString());
+        MLFlowExecutionAction mlssAction = (MLFlowExecutionAction) action;
+        if (mlssAction.getState() == RefExecutionState.Success) {
+            status = 200;
+        }
+        ResponseRef response = new MLFlowExecutionResponseRef("", status, errorMsg, resultMap);
+        return ExecutionResponseRef.newBuilder().setResponseRef(response).build();
     }
 
     @Override
