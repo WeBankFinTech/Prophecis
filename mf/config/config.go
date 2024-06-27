@@ -476,7 +476,7 @@ func GetDataStoreConfig() map[string]string {
 	//FIXME mlss test
 	//m = make(map[string]string)
 	//m[UsernameKey] = "AKIAIOSFODNN7EXAMPLE"
-	//m[PasswordKey] = "password"
+	//m[PasswordKey] = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
 
 	return m
 }

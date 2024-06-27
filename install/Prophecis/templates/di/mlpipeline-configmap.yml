@@ -93,7 +93,7 @@ data:
     def model_upload(result_dir,model_name):    
         minioClient = Minio(MINIO_URL,
                       access_key='AKIAIOSFODNN7EXAMPLE',
-                      secret_key='password',
+                      secret_key='wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
                       secure=False)
         try:
             obj_name = str(uuid.uuid1()) 
@@ -313,7 +313,7 @@ data:
     def model_upload(result_dir,model_name):    
         minioClient = Minio(MINIO_URL,
                       access_key='AKIAIOSFODNN7EXAMPLE',
-                      secret_key='password',
+                      secret_key='wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
                       secure=False)
         try:
             obj_name = str(uuid.uuid1()) 
@@ -544,7 +544,7 @@ data:
     def model_upload(result_dir,model_name):    
         minioClient = Minio(MINIO_URL,
                       access_key='AKIAIOSFODNN7EXAMPLE',
-                      secret_key='password',
+                      secret_key='wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
                       secure=False)
         try:
             obj_name = str(uuid.uuid1()) 
@@ -876,7 +876,7 @@ data:
     def model_upload(result_dir,model_name):    
         minioClient = Minio(MINIO_URL,
                       access_key='AKIAIOSFODNN7EXAMPLE',
-                      secret_key='password',
+                      secret_key='wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
                       secure=False)
         try:
             obj_name = str(uuid.uuid1()) 
@@ -1228,7 +1228,7 @@ data:
     def model_upload(result_dir,model_name):    
         minioClient = Minio(MINIO_URL,
                       access_key='AKIAIOSFODNN7EXAMPLE',
-                      secret_key='password',
+                      secret_key='wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
                       secure=False)
         try:
             obj_name = str(uuid.uuid1()) 

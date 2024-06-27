@@ -20,9 +20,12 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 	"webank/DI/pkg/datasource/mysql"
 	"webank/DI/restapi/api_v1/server/rest_impl"
+	serverV2 "webank/DI/restapi/api_v2/server"
+	operationsV2 "webank/DI/restapi/api_v2/server/operations"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -60,8 +63,24 @@ func main() {
 	srv.Port = viper.GetInt(config.PortKey)
 	srv.ConfigureAPI()
 
+	// v2 api
+	swaggerSpecV2, err := loads.Analyzed(serverV2.SwaggerJSON, "")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	apiV2 := operationsV2.NewDiAPI(swaggerSpecV2)
+	srvV2 := serverV2.NewServer(apiV2)
+	defer srvV2.Shutdown()
+	srvV2.Port = viper.GetInt(config.PortKey)
+	srvV2.ConfigureAPI()
+
 	mux := http.NewServeMux()
-	mux.Handle("/", srv.GetHandler())
+	multiHandler := &MultiHandler{
+		handlers: make(map[string]http.Handler),
+	}
+	multiHandler.handlers["v1"] = srv.GetHandler()
+	multiHandler.handlers["v2"] = srvV2.GetHandler()
+	mux.Handle("/", multiHandler)
 	mux.HandleFunc("/health", rest_impl.GetHealth)
 
 	address := fmt.Sprintf(":%d", srv.Port)
@@ -69,5 +88,19 @@ func main() {
 	err = graceful.RunWithErr(address, 10*time.Second, mux)
 	if err != nil {
 		log.Fatalln(err)
+	}
+}
+
+type MultiHandler struct {
+	handlers map[string]http.Handler
+}
+
+func (mh *MultiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	path := r.URL.Path
+	// todo: 有些path不是di的，可能不带v1,v2, 目前v2版本的接口都带v2
+	if strings.Contains(path, "/di/v2") {
+		mh.handlers["v2"].ServeHTTP(w, r)
+	} else {
+		mh.handlers["v1"].ServeHTTP(w, r)
 	}
 }

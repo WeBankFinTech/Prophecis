@@ -32,7 +32,7 @@ linkispro:
 minio:
   server: 127.0.0.1
   port: 32001
-  keyid: password
+  keyid: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
   accesskey: AKIAIOSFODNN7EXAMPLE
 mongo:
   address: mongo.prophecis.svc.cluster.local
