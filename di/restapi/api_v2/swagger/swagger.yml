@@ -1,0 +1,2321 @@
+#
+# Copyright 2017-2018 IBM Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+
+swagger: '2.0'
+info:
+  title: Prophecis Rest Service v2
+  description: |
+    Prophecis Rest Service v2
+  version: "1.0.0"
+host: di.prophecis.com
+schemes:
+  - https
+basePath: /
+consumes:
+  - application/json
+produces:
+  - application/json
+
+securityDefinitions:
+  basicAuth:
+    type: basic
+    description: Basic Autentication credentials for using the API.
+  watsonAuthToken:
+    type: apiKey
+    in: header
+    name: X-Watson-Authorization-Token
+    description: Watson Developer Cloud Token Autentication. See [here](https://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/doc/getting_started/gs-tokens.shtml) for more information
+  basicAuthToken:
+    type: apiKey
+    in: header
+    name: Authorization
+    description: Watson Developer Cloud Basic Autentication. See [here](https://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/doc/getting_started/gs-tokens.shtml) for more information
+  watsonAuthTokenQuery:
+    type: apiKey
+    in: query
+    name: watson-token
+    description: Watson Developer Cloud Token Autentication. See [here](https://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/doc/getting_started/gs-tokens.shtml) for more information
+
+security: [ { basicAuthToken: [] }, { watsonAuthToken: [] }, { watsonAuthTokenQuery: [] } ]
+
+paths:
+  /di/v2/experiment/dss_jump_mlss_user:
+    get:
+      summary: GetDSSJumpMLSSUser
+      description: dss跳转到mlss的获取用户的name
+      operationId: GetDSSJumpMLSSUser
+      tags:
+        - Experiment
+      parameters:
+        - name: dss_user_ticket_id
+          in: query
+          required: true
+          type: string
+          description: dss的url后带的dss_user_ticket_id内容
+        - name: dss_workspace_id
+          in: query
+          required: true
+          type: string
+          description: dss的url后带的dss_workspace_id内容
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/GetDSSJumpMLSSUserResponse'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Get UserInfo Not Found
+          schema:
+            $ref: '#/definitions/Error'
+
+  /di/v2/pipeline/global_variables/model:
+    get:
+      summary: GetPipelineGlobalVariablesModel
+      description: 获取可视化编辑/工作流中的全局变量的模型变量数据结构
+      operationId: GetPipelineGlobalVariablesModel
+      tags:
+        - Pipeline
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/Model'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model create failed
+          schema:
+            $ref: '#/definitions/Error'
+
+  /di/v2/pipeline/global_variables/process_line:
+    get:
+      summary: GetPipelineGlobalVariablesProcessLine
+      description: 获取可视化编辑/工作流中的全局变量的加工线变量数据结构
+      operationId: GetPipelineGlobalVariablesProcessLine
+      tags:
+        - Pipeline
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/ProcessLine'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model create failed
+          schema:
+            $ref: '#/definitions/Error'
+
+  /di/v2/pipeline/global_variables:
+    get:
+      summary: GetPipelineGlobalVariables
+      description: 获取可视化编辑/工作流中的全局变量的数据结构
+      operationId: GetPipelineGlobalVariables
+      tags:
+        - Pipeline
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/GlobalVariable'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model create failed
+          schema:
+            $ref: '#/definitions/Error'
+
+  /di/v2/pipeline/eventsender_node_content:
+    get:
+      summary: GetPipelineEventSenderNodeContent
+      description: 获取可视化编辑/工作流中的信号发送节点的描述数据结构
+      operationId: GetPipelineEventSenderNodeContent
+      tags:
+        - Pipeline
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/EventSenderNodeContent'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model create failed
+          schema:
+            $ref: '#/definitions/Error'
+
+  /di/v2/pipeline/gpu_node_manifest:
+    get:
+      summary: GetPipelineGPUNodeManifest
+      description: 获取可视化编辑/工作流中的GPU节点的描述数据结构
+      operationId: GetPipelineGPUNodeManifest
+      tags:
+        - Pipeline
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/GPUNodeManifest'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model create failed
+          schema:
+            $ref: '#/definitions/Error'
+
+  /di/v2/pipeline/modelpredict_node_manifest:
+    get:
+      summary: GetPipelineModelPredictNodeManifest
+      description: 获取可视化编辑/工作流中的模型预测节点的描述数据结构
+      operationId: GetPipelineModelPredictNodeManifest
+      tags:
+        - Pipeline
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/ModelPredictNodeManifest'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model create failed
+          schema:
+            $ref: '#/definitions/Error'
+
+  /di/v2/pipeline/processline_node_manifest:
+    get:
+      summary: GetPipelineProcessLineNodeManifest
+      description: 获取可视化编辑/工作流中的加工线节点的描述数据结构
+      operationId: GetPipelineProcessLineNodeManifest
+      tags:
+        - Pipeline
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/ProcessLineNodeManifest'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model create failed
+          schema:
+            $ref: '#/definitions/Error'
+
+
+  /di/v2/experiment/{exp_id}/version_names:
+    get:
+      summary: ListExperimentVersionNames
+      description: 列出某个实验的所有可用版本名称
+      operationId: ListExperimentVersionNames
+      tags:
+        - Experiment
+      parameters:
+        - name: exp_id
+          in: path
+          required: true
+          type: string
+          description: 实验的Id
+        - name: can_deploy
+          in: query
+          required: false
+          type: boolean
+          description: 过滤可以发布的实验版本
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              type: string
+            description: 实验所有可用版本名称
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model create failed
+          schema:
+            $ref: '#/definitions/Error'
+
+  /di/v2/experiment/source_systems:
+    get:
+      summary: ListExperimentSourceSystems
+      description: 列出所有的实验来源类型
+      operationId: ListExperimentSourceSystems
+      tags:
+        - Experiment
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              type: string
+            description: 实验来源类型列表
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model create failed
+          schema:
+            $ref: '#/definitions/Error'
+
+  /di/v2/experiment_run:
+    post:
+      summary: CreateExperimentRun
+      description: 根据传入的实验ID和版本信息，创建了一个基于该实验的执行
+      operationId: CreateExperimentRun
+      tags:
+        - ExperimentRun
+      parameters:
+        - name: experimentRunRequest
+          in: body
+          schema:
+            $ref: '#/definitions/CreateExperimentRunRequest'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/CreateExperimentRunResponse'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Models cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+
+  /di/v2/experiment_runs:
+    get:
+      summary: ListExperimentRuns
+      description: 根据传入的过滤参数，获取实验执行列表
+      operationId: ListExperimentRuns
+      tags:
+        - ExperimentRun
+      parameters:
+        - name: exp_id
+          in: query
+          required: true
+          type: string
+          description: 获取实验的执行记录，那个实验的Id
+        - name: exp_version_name
+          in: query
+          required: false
+          type: string
+          description: 根据“实验版本”过滤实验执行列表
+        - name: status
+          in: query
+          required: false
+          type: string
+          enum:
+            - Initializing
+            - Running
+            - Succeed
+            - Failed
+            - Cancelled
+          description: 根据“执行状态”过滤实验执行列表
+        - name: create_time_st
+          in: query
+          required: false
+          type: string
+          description: 根据“提交时间的开始”过滤实验列表
+        - name: create_time_ed
+          in: query
+          required: false
+          type: string
+          description: 根据“提交时间的结束”过滤实验列表
+        - name: page
+          in: query
+          type: number
+          format: int64
+          default: 1
+          description: 分页查询的page
+        - name: size
+          in: query
+          type: number
+          format: int64
+          default: 10
+          description: 分页查询的size
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/ListExperimentRunsResponse'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model create failed
+          schema:
+            $ref: '#/definitions/Error'
+
+  /di/v2/experiment_run/{run_id}/node_executions:
+    get:
+      summary: GetExperimentRunNodeExecutions
+      description: 根据传入的实验执行ID，获取实验执行的节点状态信息
+      operationId: GetExperimentRunNodeExecutions
+      tags:
+        - ExperimentRun
+      parameters:
+        - name: run_id
+          in: path
+          required: true
+          type: string
+          description: 实验执行的Id
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/NodeExecutionsResponse'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Models cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+
+  # 和 /di/v1/models/{model_id}/logs 的逻辑应该是一致的
+  /di/v2/experiment_run/{run_id}/{node_id}/logs:
+    get:
+      summary: GetExperimentRunNodeLogs
+      description: 根据传入的实验执行ID，节点ID获取对应的日志
+      operationId: GetExperimentRunNodeLogs
+      tags:
+        - ExperimentRun
+      produces:
+        - application/octet-stream
+      parameters:
+        - name: run_id
+          in: path
+          required: true
+          type: string
+          description: 实验执行的Id
+        - name: node_id
+          in: path
+          required: true
+          type: string
+          description: 节点的Id
+      responses:
+        200:
+          description: OK
+          schema:
+            type: string
+            format: binary
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Models cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+
+  /di/v2/experiment_run/{run_id}/flow_json:
+    get:
+      summary: GetExperimentRunFlowJson
+      description: 根据传入的实验执行ID，获取实验执行的flowjson
+      operationId: GetExperimentRunFlowJson
+      tags:
+        - ExperimentRun
+      parameters:
+        - name: run_id
+          in: path
+          required: true
+          type: string
+          description: 实验执行的Id
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/FlowJsonResponse'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Models cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+
+  /di/v2/experiment_run/{run_id}/status:
+    get:
+      summary: GetExperimentRunStatus
+      description: 根据传入的实验执行ID，获取实验执行的状态
+      operationId: GetExperimentRunStatus
+      tags:
+        - ExperimentRun
+      parameters:
+        - name: run_id
+          in: path
+          required: true
+          type: string
+          description: 实验执行的Id
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/ExperimentRunStatus'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Models cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+
+  /di/v2/experiment_run/{run_id}:
+    get:
+      summary: GetExperimentRun
+      description: 根据传入的实验执行ID，获取实验执行详情
+      operationId: GetExperimentRun
+      tags:
+        - ExperimentRun
+      parameters:
+        - name: run_id
+          in: path
+          required: true
+          type: string
+          description: 实验执行的Id
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/ExperimentRun'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Models cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+
+    delete:
+      summary: DeleteExperimentRun
+      description: 根据传入的实验执行ID，删除该实验执行(只有终态的实验执行才能被删除，否则会报错；非终态的应该等其执行完或者终止执行）
+      operationId: DeleteExperimentRun
+      tags:
+        - ExperimentRun
+      parameters:
+        - name: run_id
+          in: path
+          required: true
+          type: string
+          description: 实验执行的Id
+      responses:
+        200:
+          description: OK
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Models cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+
+  /di/v2/experiment_run/{run_id}/kill:
+    post:
+      summary: KillExperimentRun
+      description: 根据传入的实验执行ID，终止该运行
+      operationId: KillExperimentRun
+      tags:
+        - ExperimentRun
+      parameters:
+        - name: run_id
+          in: path
+          required: true
+          type: string
+          description: 实验执行的Id
+      responses:
+        200:
+          description: OK
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Models cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+
+  /di/v2/experiment_run/{run_id}/retry:
+    post:
+      summary: RetryExperimentRun
+      description: 根据传入的实验执行ID，新建一个新的实验执行
+      operationId: RetryExperimentRun
+      tags:
+        - ExperimentRun
+      parameters:
+        - name: run_id
+          in: path
+          required: true
+          type: string
+          description: 实验执行的Id
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/CreateExperimentRunResponse'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Models cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+
+  /di/v2/experiment/dss_project_names:
+    get:
+      summary: ListExperimentDSSProjectNames
+      description: 列出所有的实验的dss项目名称
+      operationId: ListExperimentDSSProjectNames
+      tags:
+        - Experiment
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              type: string
+            description: dss项目名称列表
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model create failed
+          schema:
+            $ref: '#/definitions/Error'
+
+  /di/v2/experiment/dss_flow_names:
+    get:
+      summary: ListExperimentDSSFlowNames
+      description: 列出所有的实验的dss工作流名称
+      operationId: ListExperimentDSSFlowNames
+      tags:
+        - Experiment
+      responses:
+        200:
+          description: OK
+          schema:
+            type: array
+            items:
+              type: string
+            description: dss工作流名称列表
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model create failed
+          schema:
+            $ref: '#/definitions/Error'
+
+  /di/v2/experiments:
+    delete:
+      summary: BatchDeleteExperiments
+      description: 批量删除实验
+      operationId: BatchDeleteExperiments
+      tags:
+        - Experiment
+      parameters:
+        - name: BatchDeleteExperimentsRequest
+          in: body
+          schema:
+            $ref: '#/definitions/BatchDeleteExperimentsRequest'
+      responses:
+        200:
+          description: OK
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model create failed
+          schema:
+            $ref: '#/definitions/Error'
+
+    get:
+      summary: ListExperiments
+      description: 根据传入的过滤参数，获取实验列表
+      operationId: ListExperiments
+      tags:
+        - Experiment
+      parameters:
+        - name: name
+          in: query
+          required: false
+          type: string
+          description: 根据“实验名称”过滤实验列表，支持模糊搜索
+        - name: tag
+          in: query
+          required: false
+          type: string
+          description: 根据“实验标签”过滤实验列表，多个标签用逗号隔开
+        - name: source_system
+          in: query
+          required: false
+          type: string
+          description: 根据“来源系统”过滤实验列表
+        - name: group_id
+          in: query
+          required: false
+          type: string
+          description: 根据“所属项目组（ID）”过滤实验列表
+        - name: group_name
+          in: query
+          required: false
+          type: string
+          description: 根据“所属项目组（名字）”过滤实验列表
+        - name: create_user
+          in: query
+          required: false
+          type: string
+          description: 根据“创建人”过滤实验列表
+        - name: create_time_st
+          in: query
+          required: false
+          type: string
+          description: 根据“创建时间的结束”过滤实验列表
+        - name: create_time_ed
+          in: query
+          required: false
+          type: string
+          description: 根据“创建时间的结束”过滤实验列表
+        - name: update_time_st
+          in: query
+          required: false
+          type: string
+          description: 根据“更新时间的开始”过滤实验列表
+        - name: update_time_ed
+          in: query
+          required: false
+          type: string
+          description: 根据“更新时间的结束”过滤实验列表
+        - name: dss_project_name
+          in: query
+          type: string
+          required: false
+          description: 根据“（DSS）工作流项目”过滤实验列表
+        - name: dss_flow_name
+          in: query
+          type: string
+          required: false
+          description: 根据“（DSS）工作流名称”过滤实验列表
+        - name: page
+          in: query
+          type: number
+          format: int64
+          default: 1
+          description: 分页查询的page
+        - name: size
+          in: query
+          type: number
+          format: int64
+          default: 10
+          description: 分页查询的size
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/ListExperimentsResponse'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model create failed
+          schema:
+            $ref: '#/definitions/Error'
+
+  /di/v2/experiment/{exp_id}:
+    get:
+      summary: GetExperiment
+      description: 通过实验ID获取实验信息(实际获取的是这个实验最新版本的信息）
+      operationId: GetExperiment
+      tags:
+        - Experiment
+      parameters:
+        - name: exp_id
+          in: path
+          required: true
+          type: string
+          description: 实验的Id
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/ExperimentWithoutPipeline'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model create failed
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: DeleteExperiment
+      description: 根据实验ID删除对应的实验
+      operationId: DeleteExperiment
+      tags:
+        - Experiment
+      parameters:
+        - name: exp_id
+          in: path
+          required: true
+          type: string
+          description: 实验的Id
+      responses:
+        200:
+          description: OK
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model create failed
+          schema:
+            $ref: '#/definitions/Error'
+    patch:
+      summary: PatchExperiment
+      description: 修改实验的部分信息
+      operationId: PatchExperiment
+      tags:
+        - Experiment
+      parameters:
+        - name: exp_id
+          in: path
+          required: true
+          type: string
+          description: 实验的Id
+        - name: experiment
+          in: body
+          description: 修改实验的部分信息(其中的字段有值表示修改为对应的值，为空表示不进行修改）
+          schema:
+            $ref: '#/definitions/PatchExperimentRequest'
+      responses:
+        200:
+          description: OK
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model create failed
+          schema:
+            $ref: '#/definitions/Error'
+
+  /di/v2/experiment/{exp_id}/copy:
+    post:
+      summary: CopyExperiment
+      tags:
+        - Experiment
+      description: 复制一个已有的实验来创建一个新的实验
+      operationId: CopyExperiment
+      parameters:
+        - name: exp_id
+          in: path
+          required: true
+          type: string
+          description: 实验ID
+        - in: body
+          name: experiment
+          description: 复制后新建的实验的信息（其中的字段有值表示修改为对应的值，为空表示不进行修改）
+          required: false
+          schema:
+            $ref: '#/definitions/PatchExperimentRequest'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/CreateExperimentResponse'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Models cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+
+  /di/v2/experiment_test:
+    post:
+      summary: CreateExperimentTest
+      tags:
+        - Experiment
+      description: 仅仅是为了测试接口
+      operationId: CreateExperimentTest
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/CreateExperimentResponse'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Models cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+
+  /di/v2/experiment/upload_flow_json:
+    post:
+      summary: UploadExperimentFlowJson
+      description: 上传一个实验的FlowJson zip包，该接口会返回一个上传id，在CreateExperiment时用于 flowjson_upload_id字段
+      operationId: UploadExperimentFlowJson
+      tags:
+        - Experiment
+      consumes:
+        - multipart/form-data
+      produces:
+        - application/json
+      parameters:
+        - name: file
+          in: formData
+          required: true
+          type: file
+          description: 上传的表示实验工作流的zip文件，zip文件里应该包含一个名为flow.json的json文件
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/UploadExperimentFlowJsonResponse'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Models cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+
+  /di/v2/experiment/upload:
+    post:
+      summary: CreateExperimentByUpload
+      description: 通过上传方式创建一个实验
+      operationId: CreateExperimentByUpload
+      tags:
+        - Experiment
+      consumes:
+        - multipart/form-data
+      produces:
+        - application/json
+      parameters:
+        - name: file
+          in: formData
+          required: true
+          type: file
+          description: 上传的表示实验工作流的zip文件，zip文件里应该包含一个名为flow.json的json文件
+        - name: fileName
+          in: formData
+          required: false
+          type: string
+          description: 上传文件的文件名
+        - name: name
+          in: formData
+          required: true
+          minLength: 1
+          type: string
+          description: 创建实验的名称
+        - name: group_name
+          in: formData
+          required: true
+          minLength: 1
+          type: string
+          description: 创建实验所属的项目组
+        - name: description
+          in: formData
+          required: false
+          type: string
+          description: 创建实验的描述
+        - name: tags
+          in: formData
+          required: false
+          type: array
+          items:
+            type: string
+          description: 创建实验的标签
+        - name: origin_system
+          in: formData
+          default: MLSS
+          type: string
+          enum:
+            - MLSS
+            - DSS
+            - WTSS
+          description: 表示实验在哪个系统创建的, 默认为"MLSS"；可选的枚举值为 "WTSS" "DSS" "MLSS"
+        - name: cluster_type
+          in: formData
+          type: string
+          enum:
+            - BDAP
+            - BDP
+          default: BDAP
+          description: 实验所属的集群类型，默认为"BDAP"；可选枚举值为 "BDAP" "BDP"
+        - name: dss_workspace_id
+          in: formData
+          type: string
+          description: 创建DSS类型的实验的dss相关信息（dss工作流的工作空间id）
+        - name: dss_workspace_name
+          in: formData
+          type: string
+          description: 创建DSS类型的实验的dss相关信息（dss工作流的工作空间名称）
+        - name: dss_project_id
+          in: formData
+          type: string
+          description: 创建DSS类型的实验的dss相关信息（dss工作流的项目id）
+        - name: dss_project_name
+          in: formData
+          type: string
+          description: 创建DSS类型的实验的dss相关信息（dss工作流的项目名）
+        - name: dss_flow_id
+          in: formData
+          type: string
+          description: 创建DSS类型的实验的dss相关信息（dss工作流的id）
+        - name: dss_flow_name
+          in: formData
+          type: string
+          description: 创建DSS类型的实验的dss相关信息（dss工作流的名称）
+        - name: dss_flow_version
+          in: formData
+          type: string
+          description: 创建DSS类型的实验的dss相关信息（dss工作流的版本）
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/CreateExperimentResponse'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Models cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+
+  /di/v2/experiment:
+    post:
+      summary: CreateExperiment
+      tags:
+        - Experiment
+      description: 创建一个新实验
+      operationId: CreateExperiment
+      parameters:
+        - in: body
+          name: experiment
+          description: 新建实验的具体内容
+          required: true
+          schema:
+            $ref: '#/definitions/CreateExperimentRequest'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/CreateExperimentResponse'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Models cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+
+  /di/v2/experiment/{exp_id}/version:
+    post:
+      summary: CreateExperimentVersion
+      tags:
+        - Experiment
+      description: 新增一个实验版本（也就是将当前实验存为一个固定版本）
+      operationId: CreateExperimentVersion
+      parameters:
+        - name: exp_id
+          in: path
+          required: true
+          type: string
+          description: experiment id
+        - in: body
+          name: experiment
+          description: 新建实验的具体内容
+          required: false
+          schema:
+            $ref: '#/definitions/CreateExperimentVersionRequest'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/CreateExperimentVersionResponse'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Models cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+
+  /di/v2/experiment/{exp_id}/version/{version_name}/global_variables_str:
+    get:
+      summary: GetExperimentVersionGlobalVariablesStr
+      description: 获取某个版本的实验的工作流的默认全局变量
+      operationId: GetExperimentVersionGlobalVariablesStr
+      tags:
+        - Experiment
+      parameters:
+        - name: exp_id
+          in: path
+          required: true
+          type: string
+          description: experiment id
+        - name: version_name
+          in: path
+          required: true
+          type: string
+          description: experiment version name
+      responses:
+        200:
+          description: 导出的实验工作流描述
+          schema:
+            $ref: '#/definitions/FlowJsonResponse'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Experiment cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+
+  /di/v2/experiment/{exp_id}/version/{version_name}/flow_json:
+    get:
+      summary: GetExperimentVersionFlowJson
+      description: 获取某个版本的实验的工作流描述，也就是所谓的flowjson
+      operationId: GetExperimentVersionFlowJson
+      tags:
+        - Experiment
+      parameters:
+        - name: exp_id
+          in: path
+          required: true
+          type: string
+          description: experiment id
+        - name: version_name
+          in: path
+          required: true
+          type: string
+          description: experiment version name
+      responses:
+        200:
+          description: 导出的实验工作流描述
+          schema:
+            $ref: '#/definitions/FlowJsonResponse'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Experiment cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+
+  /di/v2/experiment/{exp_id}/export_flow_json:
+    get:
+      summary: ExportExperimentFlowJson
+      description: 导出实验的工作流flowjson，导出结果为一个zip包
+      operationId: ExportExperimentFlowJson
+      tags:
+        - Experiment
+      parameters:
+        - name: exp_id
+          in: path
+          required: true
+          type: string
+          description: experiment id
+      responses:
+        200:
+          description: 导出的实验定义
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Experiment cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+
+  /di/v2/experiment/{exp_id}/version/{version_name}:
+    get:
+      summary: GetExperimentVersion
+      description: 获取某个版本的实验信息（如果传入的版本为最新版本，同 GetExperiment 接口效果一样）
+      operationId: GetExperimentVersion
+      tags:
+        - Experiment
+      parameters:
+        - name: exp_id
+          in: path
+          required: true
+          type: string
+          description: experiment id
+        - name: version_name
+          in: path
+          required: true
+          type: string
+          description: experiment version name
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/ExperimentWithoutPipeline'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Models cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+    patch:
+      summary: PatchExperimentVersion
+      description: 修改实验版本的部分信息
+      operationId: PatchExperimentVersion
+      tags:
+        - Experiment
+      parameters:
+        - name: exp_id
+          in: path
+          required: true
+          type: string
+          description: experiment id
+        - name: version_name
+          in: path
+          required: true
+          type: string
+          description: experiment version name
+        - name: experiment_version
+          in: body
+          description: 修改实验版本的部分信息(其中的字段有值表示修改为对应的值，为空表示不进行修改）
+          schema:
+            $ref: '#/definitions/PatchExperimentVersionRequest'
+      responses:
+        200:
+          description: OK
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model create failed
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: DeleteExperimentVersion
+      description: 删除某个版本的实验
+      operationId: DeleteExperimentVersion
+      tags:
+        - Experiment
+      parameters:
+        - name: exp_id
+          in: path
+          required: true
+          type: string
+          description: experiment id
+        - name: version_name
+          in: path
+          required: true
+          type: string
+          description: experiment version name
+      responses:
+        200:
+          description: OK
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Models cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+
+  /di/v2/experiment/{exp_id}/versions:
+    get:
+      summary: ListExperimentVersions
+      description: 获取实验的所有版本信息
+      operationId: ListExperimentVersions
+      tags:
+        - Experiment
+      parameters:
+        - name: exp_id
+          in: path
+          minLength: 1
+          required: true
+          type: string
+          description: 实验ID
+        - name: version_name
+          in: query
+          required: false
+          type: string
+          description: 根据“实验版本号”过滤实验版本列表
+        - name: update_time_st
+          in: query
+          required: false
+          type: string
+          description: 根据“更新时间的开始”过滤实验列表
+        - name: update_time_ed
+          in: query
+          required: false
+          type: string
+          description: 根据“更新时间的结束”过滤实验列表
+        - name: page
+          in: query
+          type: number
+          format: int64
+          default: 1
+          description: 分页查询的page
+        - name: size
+          in: query
+          type: number
+          format: int64
+          default: 10
+          description: 分页查询的size
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/ListExperimentsResponse'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: The Models cannot be found
+          schema:
+            $ref: '#/definitions/Error'
+
+  /di/v2/experiment/code_upload:
+    post:
+      summary: CodeUpload
+      description: upload code.zip to s3
+      operationId: CodeUpload
+      tags:
+        - Experiment
+      consumes:
+        - multipart/form-data
+      produces:
+        - application/json
+      parameters:
+        - name: file
+          in: formData
+          required: true
+          type: file
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/CodeUploadResponse'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Code ZIP upload failed
+          schema:
+            $ref: '#/definitions/Error'
+
+definitions:
+  Error:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int32
+      error:
+        type: string
+      msg:
+        type: string
+
+  CodeUploadResponse:
+    type: object
+    properties:
+      s3path:
+        type: string
+        description: S3 Path
+
+  CreateExperimentRequest:
+    type: object
+    # 实验的所属项目组本应该也是必填，但是在DSS场景获取不到实验所属项目组信息
+    required:
+      - name
+    properties:
+      name:
+        type: string
+        minLength: 1
+        description: 创建实验的名称
+      group_id:
+        type: string
+        description: 创建实验所属的项目组ID(理论上传group_id就够了，但是group的相关接口暂时不支持byId查询，所以暂时需要传group_id和group_name)
+      group_name:
+        type: string
+        description: 创建实验所属的项目组名字(理论上传group_id就够了，但是group的相关接口暂时不支持byId查询，所以暂时需要传group_id和group_name)
+      description:
+        type: string
+        description: 创建实验的描述
+      tags:
+        type: array
+        items:
+          type: string
+        description: 创建实验的标签
+      source_system:
+        default: MLSS
+        type: string
+        enum:
+          - MLSS
+          - DSS
+          - WTSS
+        description: 表示实验在哪个系统创建的, 默认为"MLSS"；可选的枚举值为 "WTSS" "DSS" "MLSS"
+      cluster_type:
+        type: string
+        enum:
+          - BDAP
+          - BDP
+        default: BDAP
+        description: 实验所属的集群类型，默认为"BDAP"；可选枚举值为 "BDAP" "BDP"
+      dss_info:
+        type: object
+        description: DSS相关的信息，如果实验的origin_system是DSS，则需要传入该字段
+        $ref: '#/definitions/DSSInfo'
+      flow_json:
+        type: string
+        description: 创建的实验的工作流
+      flow_json_upload_id:
+        type: string
+        description: 创建的实验的工作流上传的id（来自UploadExperimentFlowJson接口的返回）
+
+  PatchExperimentVersionRequest:
+    type: object
+    properties:
+      description:
+        type: string
+        description: 修改实验版本的描述.
+
+  PatchExperimentRequest:
+    type: object
+    properties:
+      name:
+        type: string
+        description: 修改实验的名称.
+      group_id:
+        type: string
+        description: 修改实验所属的项目组ID.(理论上传group_id就够了，但是group的相关接口暂时不支持byId查询，所以暂时需要传group_id和group_name)
+      group_name:
+        type: string
+        description: 修改实验所属的项目组名字.(理论上传group_id就够了，但是group的相关接口暂时不支持byId查询，所以暂时需要传group_id和group_name)
+      description:
+        type: string
+        description: 修改实验的描述.
+      tags:
+        type: array
+        items:
+          type: string
+        description: 修改的实验的标签
+      flow_json:
+        type: string
+        description: 修改的实验的工作流
+      deploy_setting:
+        type: object
+        $ref: '#/definitions/DeploySetting'
+        description: 修改的实验的发布配置
+
+  RunConfig:
+    type: object
+    properties:
+      global_variables:
+        type: array
+        items:
+          $ref: '#/definitions/GlobalVariable'
+      wtss_variables:
+        type: object
+        $ref: '#/definitions/WTSSVariables'
+
+  WTSSVariables:
+    type: object
+    properties:
+      run_date:
+        type: string
+        description: wtss的变量，run_date
+      run_date_std:
+        type: string
+        description: wtss的变量，run_date_std
+      run_mon:
+        type: string
+        description: wtss的变量，run_mon
+      run_mon_end:
+        type: string
+        description: wtss的变量，run_mon_end
+      run_mon_end_std:
+        type: string
+        description: wtss的变量，run_mon_end_std
+
+  GlobalVariable:
+    type: object
+    properties:
+      key:
+        type: string
+        description: 全局变量，变量的key
+      type:
+        type: string
+        description: 全局变量，变量的类型
+        enum:
+          - string
+          - number
+          - model
+          - processline
+      value:
+        type: object
+        enum:
+          - String
+          - Number
+          - Model
+          - ProcessLine
+        description: 全局变量的值，根据类型的不同，可能是String, Number, Model, ProcessLine; Model的数据结构请看GetPipelineGlobalVariablesModel的返回，PorcessLine的数据结构请看GetPipelineGlobalVariablesProcessLine的返回
+
+  DSSInfo:
+    type: object
+    properties:
+      flow_name:
+        type: string
+      flow_version:
+        type: string
+      flow_id:
+        type: number
+        format: int64
+      project_name:
+        type: string
+      project_id:
+        type: number
+        format: int64
+      workspace_name:
+        default: ""
+        type: string
+        description: workspace name,choose next value, "bdapWorkspace" "bdapWorkspace0x"
+      workspace_id:
+        type: integer
+        description: workspace id
+
+  CreateExperimentResponse:
+    type: object
+    properties:
+      id:
+        type: string
+        description: 返回创建的实验的id
+    required:
+      - id
+
+  ExperimentWithoutPipeline:
+    type: object
+    description: 返回获取、修改后、复制后等操作的实验
+    properties:
+      id:
+        type: string
+        description: 实验Id
+      name:
+        type: string
+        description: 实验名称
+      description:
+        type: string
+        description: 实验描述
+      tags:
+        type: array
+        items:
+          type: string
+      group_id:
+        type: string
+        description: 实验所属的项目组ID
+      group_name:
+        type: string
+        description: 实验所属的项目组
+      version_name:
+        type: string
+        description: 实验的版本
+      deploy_setting:
+        type: object
+        $ref: '#/definitions/DeploySetting'
+        description: 实验的发布配置信息
+      dss_info:
+        type: object
+        $ref: '#/definitions/DSSInfo'
+        description: 如果该实验来自DSS系统，其关联的DSS信息
+      source_system:
+        type: string
+        enum:
+          - MLSS
+          - DSS
+          - WTSS
+        default: MLSS
+        description: 实验的来源系统
+      create_user:
+        type: string
+        description: 实验的创建人
+      create_time:
+        type: string
+        format: date-time
+        description: 实验的创建时间
+      update_user:
+        type: string
+        description: 实验最后的操作人
+      update_time:
+        type: string
+        format: date-time
+        description: 实验最后的操作时间
+      latest_execute_time:
+        type: string
+        description: 实验最近的执行时间
+
+  ListExperimentsResponse:
+    type: object
+    properties:
+      total_page:
+        type: number
+        format: int64
+      total:
+        type: number
+        format: int64
+      page_number:
+        type: number
+        format: int64
+      page_size:
+        type: number
+        format: int64
+      experiments:
+        type: array
+        items:
+          $ref: '#/definitions/ExperimentWithoutPipeline'
+
+  ListExperimentRunsResponse:
+    type: object
+    properties:
+      total_page:
+        type: number
+        format: int64
+      total:
+        type: number
+        format: int64
+      page_number:
+        type: number
+        format: int64
+      page_size:
+        type: number
+        format: int64
+      experiment_runs:
+        type: array
+        items:
+          $ref: '#/definitions/ExperimentRun'
+
+  CreateExperimentVersionRequest:
+    type: object
+    properties:
+      description:
+        type: string
+        description: 固化当前版本的同时修改其描述
+
+  CreateExperimentVersionResponse:
+    type: object
+    properties:
+      archived_version_name:
+        type: string
+        description: 返回固化的版本
+      latest_version_name:
+        type: string
+        description: 返回当前最新的版本（一般是固化的版本+1）
+
+  DeploySetting:
+    type: object
+    properties:
+      can_deploy_as_offline_service:
+        type: boolean
+        default: false
+        description: 是否可发布为离线服务
+
+  CreateExperimentRunRequest:
+    type: object
+    properties:
+      exp_id:
+        type: string
+        description: 所要执行的实验ID
+      exp_version_name:
+        type: string
+        description: 所要执行的实验的版本名字
+      run_config:
+        type: object
+        description: 执行配置（现在主要是动态设置执行时候的全局变量的值）
+        $ref: '#/definitions/RunConfig'
+
+  CreateExperimentRunResponse:
+    type: object
+    properties:
+      exp_run_id:
+        type: string
+        description: 实验执行记录的ID
+      exp_id:
+        type: string
+        description: 执行的实验ID
+      exp_version_name:
+        type: string
+        description: 执行的实验的版本名字
+      create_user:
+        type: string
+        description: 执行创建人
+      create_time:
+        type: string
+        format: date-time
+        description: 执行创建的时候/执行提交的时间
+      end_time:
+        type: string
+        format: date-time
+        description: 执行结束的时间
+
+  ExperimentRun:
+    type: object
+    properties:
+      exp_run_id:
+        type: string
+        description: 实验执行记录的ID
+      exp_id:
+        type: string
+        description: 实验执行记录关联的实验的ID
+      exp_version_name:
+        type: string
+        description: 实验执行记录关联的实验的版本名
+      execute_status:
+        type: string
+        enum:
+          - Initializing
+          - Running
+          - Succeed
+          - Failed
+          - Cancelled
+          - Deleted
+        description: 实验执行的状态
+      create_user:
+        type: string
+        description: 实验执行的提交者
+      create_time:
+        type: string
+        format: date-time
+        description: 实验执行的提交时间
+      end_time:
+        type: string
+        format: date-time
+        description: 实验执行的结束时间
+
+  UploadExperimentFlowJsonResponse:
+    type: object
+    properties:
+      upload_id:
+        type: string
+        description: 上传实验flowjosn得到的上传id，可以用于CreateExperiment，id有效期为xx分钟
+
+  EventSenderNodeContent:
+    type: object
+    properties:
+      name:
+        type: string
+        title: 信号发送节点的名称
+      exp_name:
+        type: string
+        title: 信号发送节点所属的工作流所属的实验的名称
+      exp_id:
+        type: string
+        title: 信号发送节点所属的工作流所属的实验的id
+      group_name:
+        type: string
+        title: 属性信息-项目组的名称
+      group_id:
+        type: string
+        title: 属性信息-项目组的id
+      msg_body:
+        type: string
+        title: 属性信息-msg.body
+      msg_type:
+        type: string
+        title: 属性信息-msg.messageType
+      dcn:
+        type: string
+        title: 现在固定为FA0?
+      service_id:
+        type: string
+        title: 现在固定为 11200257 ?
+
+  ProcessLineNodeManifest:
+    type: object
+    properties:
+      meta_data:
+        type: object
+        title: 节点的元数据信息
+        $ref: '#/definitions/MetaData'
+      input:
+        type: object
+        title: 节点输入信息
+        $ref: '#/definitions/ProcessLineNodeInput'
+      output:
+        type: object
+        title: 节点的输出信息
+        $ref: '#/definitions/Output'
+      run_environment:
+        type: object
+        title: 节点的运行环境信息
+        $ref: '#/definitions/RunEnvironment'
+      compute_resources:
+        type: object
+        title: 节点的计算资源信息
+        additionalProperties:
+          $ref: '#/definitions/ComputeResource'
+
+  ModelPredictNodeManifest:
+    type: object
+    properties:
+      meta_data:
+        type: object
+        title: 节点的元数据信息
+        $ref: '#/definitions/MetaData'
+      input:
+        type: object
+        title: 节点输入信息
+        $ref: '#/definitions/ModelPredictNodeInput'
+      output:
+        type: object
+        title: 节点的输出信息
+        $ref: '#/definitions/Output'
+      run_environment:
+        type: object
+        title: 节点的运行环境信息
+        $ref: '#/definitions/RunEnvironment'
+      compute_resources:
+        type: object
+        title: 节点的计算资源信息
+        properties:
+          worker:
+            type: object
+            $ref: '#/definitions/ComputeResource'
+
+  ComputeResource:
+    type: object
+    properties:
+#      role:
+#        type: string
+#        enum:
+#          - worker
+#        description: 计算资源的类型/角色，目前就只有worker类型
+      nums:
+        type: number
+        title: 该计算资源类型的个数
+      cpus:
+        type: number
+        title: 该计算资源类型所申请的cpu个数
+      memory:
+        type: string
+        title: 该计算资源类型所申请的内存大小
+      gpus:
+        type: number
+        title: 该计算资源所申请的gpu个数
+
+  RunEnvironment:
+    type: object
+    properties:
+      image_name:
+        type: string
+        title: 镜像的名字(同gpu节点一样暂时是固定的)
+      image_version:
+        type: string
+        title: 镜像的版本(同gpu节点的镜像版本)
+      entry_point:
+        type: string
+        title: 镜像的入口命令(同gpu节点的command)
+      code_path:
+        type: string
+        title: 如果用户上传代码，这里就是上传代码接口返回的代码包路径(同gpu节点的code_path)
+
+  Output:
+    type: object
+    properties:
+      result:
+        type: object
+        title: 数据输出
+        $ref: '#/definitions/DataConfig'
+
+  ModelPredictNodeInput:
+    type: object
+    properties:
+      data:
+        type: object
+        title: 数据输入
+        $ref: '#/definitions/DataConfig'
+      model:
+        type: object
+        title: 模型输入
+        $ref: '#/definitions/ModelInput'
+
+  ProcessLineNodeInput:
+    type: object
+    properties:
+      data:
+        type: object
+        title: 数据输入
+        $ref: '#/definitions/DataConfig'
+      processline:
+        type: object
+        title: 模型输入
+        $ref: '#/definitions/ProcessLineInput'
+
+  DataConfig:
+    type: object
+    properties:
+      source_type:
+        type: string
+        title: 数据来源类型
+        enum:
+          - MLSSPlatformStorage
+      mlss_platform_parent_dir:
+        type: string
+        title: 当data_source_type为 MLSSPlatformStorage，需要填充该字段的内容，平台存储根目录
+        description: 当前输出的存储根目录需要和输入的存储根目录一致
+      mlss_platform_sub_dir:
+        type: string
+        title: 当data_source_type为 MLSSPlatformStorage，需要填充该字段的内容，平台存储子目录
+      mapping_path:
+        type: string
+        title: 将存储挂载进容器内部的映射路径, 当前为空表示默认的映射
+
+  MLSSPlatformStorageConfig:
+    type: object
+    properties:
+      parent_dir:
+        type: string
+        title: 存储根目录
+      sub_dir:
+        type: string
+        title: 存储子目录
+
+
+  MetaData:
+    type: object
+    properties:
+      name:
+        type: string
+        title: 节点的名称
+      namespace:
+        type: string
+        title: 节点所在的namespace（同gpu节点的namespace）
+      description:
+        type: string
+        title: 节点的描述
+      exp_id:
+        type: string
+        title: 节点所属的实验的ID（不需用户配置）
+      exp_name:
+        type: string
+        title: 节点所属的实验的Name（不需用户配置）
+
+  GPUNodeManifest:
+    type: object
+    properties:
+      name:
+        type: string
+        title: 基本信息-节点名
+      description:
+        type: string
+        title: 基本信息-节点描述
+      version:
+        type: string
+        title: 目前固定为 1.0
+      cpus:
+        type: number
+        format: int64
+        title: 资源设置-计算资源设置-计算任务CPU
+      gpus:
+        type: number
+        format: int64
+        description: 资源设置-计算资源设置-计算任务GPU
+      memory:
+        type: string
+        title: 资源设置-计算资源设置-计算任务内存
+      namespace:
+        type: string
+        title: "[下拉接口获取数据] 资源设置-计算资源设置-命名空间"
+      job_type:
+        type: string
+        enum:
+          - Local
+          - dist-tf
+        title: 资源设置-计算资源设置-任务类型（Local表示单机; dist-tf表示分布式）
+      learners:
+        type: number
+        format: int64
+        title: 当job_type为dist_tf时，资源设置-计算资源设置-计算任务数
+      pss:
+        type: number
+        format: int64
+        title: 当job_type为dist_tf时，资源设置-计算资源设置-参数服务器数
+      ps_cpu:
+        type: number
+        format: int64
+        title: 当job_type为dist_tf时，资源设置-计算资源设置-参数服务器CPU
+      ps_image:
+        type: number
+        format: int64
+        title: 当job_type为dist_tf时，资源设置-计算资源设置-参数服务器镜像
+      ps_imageType:
+        type: string
+        enum:
+          - Standard
+          - Custom
+        title: 当job_type为dist_tf时，资源设置-计算资源设置-参数服务器镜像类型
+      ps_memory:
+        type: string
+        title: 当job_type为dist_tf时，资源设置-计算资源设置-参数服务器内存
+      data_stores:
+        $ref: '#/definitions/GPUNodeDataStores'
+        title: 资源设置-目录设置
+      framework:
+        $ref: '#/definitions/FrameWork'
+        title: 资源设置-镜像设置 和 参数设置-执行入口 相关信息
+      code_selector:
+        type: string
+        enum:
+          - storagePath
+          - codeFile
+        title: 参数设置-任务执行设置-执行代码设置（storagePath对应训练代码子目录；codeFile对应手动上传）
+      code_path:
+        type: string
+        title: "[调用接口获取数据] 参数设置-任务执行设置-执行代码设置 为codeFile时，调用 codeUpload 接口返回的s3Path"
+      fileName:
+        type: string
+        title: "[调用接口获取数据] 参数设置-任务执行设置-执行代码设置 为codeFile时，上传文件的文件名"
+      proxy_user:
+        type: string
+        title: "[下拉接口获取数据] 基本信息-代理用户设置开启-代理用户设置"
+      exp_id:
+        type: string
+        title: 该节点所属工作流所属的MLSS实验的id
+      exp_name:
+        type: string
+        title: 该节点所属工作流所属的MLSS实验的name
+      ignore_fail:
+        type: number
+        format: int64
+        title:  参数设置-任务执行设置-高级参数设置-忽略失败状态（1表示是，0表示否）
+      python_hdfs_path:
+        type: string
+        title:  参数设置-任务执行设置-高级参数设置-python环境配置(其value来自哪里todo)
+      depend_resources:
+        type: object
+        title:  参数设置-任务执行设置-高级参数设置
+        $ref: '#/definitions/DependResources'
+      evaluation_metrics:
+        type: object
+        properties:
+          type:
+            type: string
+            title: 目前固定为fluent-bit
+
+  DependResources:
+    type: object
+    properties:
+      type:
+        type: string
+        enum:
+          - MODEL
+        title: 参数设置-任务执行设置-高级参数配置-物料类型
+      group_id:
+        type: string
+        title: 参数设置-任务执行设置-高级参数配置-模型用户组
+      model_id:
+        type: string
+        title: 参数设置-任务执行设置-高级参数配置-模型名称
+      model_version_id:
+        type: string
+        title: 参数设置-任务执行设置-高级参数配置-模型版本
+      processline_id:
+        type: string
+        title: 参数设置-任务执行设置-高级参数配置-加工线名称
+      processline_version_id:
+        type: string
+        title: 参数设置-任务执行设置-高级参数配置-加工线版本
+
+  Model:
+    type: object
+    title: Model类型的全局变量的值类型
+    properties:
+      group_id:
+        type: string
+        title: 类似GPU节点的 参数设置-任务执行设置-高级参数配置-模型用户组
+      model_id:
+        type: string
+        title: 类似GPU节点的 参数设置-任务执行设置-高级参数配置-模型名称
+      model_version_id:
+        type: string
+        title: 类似GPU节点的 参数设置-任务执行设置-高级参数配置-模型版本
+
+  ModelInput:
+    type: object
+    title: Model类型的全局变量的值类型
+    properties:
+      source_type:
+        type: string
+        enum:
+          - Direct
+          - Variable
+        title: 模型数据的来源类型，枚举值
+        description: 选择全局变量要求在全局参数里定义了模型类型的变量，这里便可以选择该变量，然后在执行工作流和发布工作流的时候可以动态修改该变量；选择自定义则是普通的设置模型相关的设置
+      variable_key:
+        type: string
+        title: 当source_type为variable的时候，需填充该值为全局变量的某个model类型的key
+      group_id:
+        type: string
+        title: 类似GPU节点的 参数设置-任务执行设置-高级参数配置-模型用户组
+      model_id:
+        type: string
+        title: 类似GPU节点的 参数设置-任务执行设置-高级参数配置-模型名称
+      model_version_id:
+        type: number
+        format: int64
+        title: 类似GPU节点的 参数设置-任务执行设置-高级参数配置-模型版本
+
+  ProcessLineInput:
+    type: object
+    title: 加工线类型的输入数据结构
+    properties:
+      source_type:
+        type: string
+        enum:
+          - direct
+          - variable
+        title: 模型数据的来源类型，枚举值
+        description: 选择全局变量要求在全局参数里定义了加工线类型的变量，这里便可以选择该变量，然后在执行工作流和发布工作流的时候可以动态修改该变量；选择自定义则是普通的设置加工线相关的设置
+      variable_key:
+        type: string
+        title: 当source_type为variable的时候，需填充该值为全局变量的某个model类型的key
+      group_id:
+        type: string
+        title: 类似GPU节点的 参数设置-任务执行设置-高级参数配置-模型用户组/加工线用户组
+      processline_id:
+        type: string
+        title: 类似GPU节点的 参数设置-任务执行设置-高级参数配置-加工线名称
+      processline_version_id:
+        type: string
+        title: 类似GPU节点的 参数设置-任务执行设置-高级参数配置-加工线版本
+
+  ProcessLine:
+    type: object
+    description: 加工线类型的全局变量的值类型
+    properties:
+      group_id:
+        type: string
+        title: 类似GPU节点的 参数设置-任务执行设置-高级参数配置-模型用户组/加工线用户组
+      processline_id:
+        type: string
+        title: 类似GPU节点的 参数设置-任务执行设置-高级参数配置-加工线名称
+      processline_version_id:
+        type: string
+        title: 类似GPU节点的 参数设置-任务执行设置-高级参数配置-加工线版本
+
+  FrameWork:
+    type: object
+    description: xxx
+    properties:
+      command:
+        type: string
+        title: 参数设置-任务执行设置-执行入口
+      name:
+        type: string
+        title: 目前开发测试环境固定为"uat.sf.dockerhub.stgwebank/webank/mlss-di"; 生产环境待确定
+      version:
+        type: string
+        title: "[镜像设置为标准情况下，下拉接口获取数据] 资源设置-镜像选择"
+
+  GPUNodeDataStores:
+    type: object
+    properties:
+      id:
+        type: string
+        title: 目前固定为hostmount
+      type:
+        type: string
+        title: 目前固定为mount_volume
+      connection:
+        type: object
+        properties:
+          type:
+            type: string
+            title: 现在固定为host_mount
+          name:
+            type: string
+            title: 现在固定为host-mount
+          path:
+            type: string
+            title: "[下拉接口获取数据] 资源设置-目录设置-数据根目录"
+      training_data:
+        type: object
+        title: 其container字段对应 资源设置-目录设置-数据子目录
+        $ref: '#/definitions/GPUNodeDataStoresSubDirectory'
+      training_results:
+        type: object
+        title: 其container字段对应 资源设置-目录设置-结果子目录
+        $ref: '#/definitions/GPUNodeDataStoresSubDirectory'
+      training_workspace:
+        type: object
+        title: 其container字段目前默认为workspace，只有当 参数设置-任务执行设置-执行代码设置 为storagePath时，其值来自  参数设置-任务执行设置-训练代码子目录
+        $ref: '#/definitions/GPUNodeDataStoresSubDirectory'
+
+  GPUNodeDataStoresSDirectory:
+    type: object
+    description: 存储根目录
+    properties:
+      id:
+        type: string
+        title: 目前固定为hostmount
+      name:
+        type: string
+        title: 目前固定为host-mount
+      path:
+        type: string
+        title: 资源设置-存储根目录
+      type:
+        type: string
+        enum:
+          - host_mount
+        title: 存储的类型（目前只支持host_mount）
+
+  GPUNodeDataStoresSubDirectory:
+    type: object
+    properties:
+      container:
+        type: string
+        title: 子目录的路径
+
+  FlowJsonResponse:
+    type: object
+    properties:
+      flow_json:
+        type: string
+        title: 实验的工作流描述，所谓的flowjson
+
+  NodeExecutionsResponse:
+    type: object
+    properties:
+      succeed_nodes:
+        type: array
+        items:
+          $ref: '#/definitions/NodeExecutionInfo'
+      running_nodes:
+        type: array
+        items:
+          $ref: '#/definitions/NodeExecutionInfo'
+      pending_nodes:
+        type: array
+        items:
+          $ref: '#/definitions/NodeExecutionInfo'
+      skipped_nodes:
+        type: array
+        items:
+          $ref: '#/definitions/NodeExecutionInfo'
+      failed_nodes:
+        type: array
+        items:
+          $ref: '#/definitions/NodeExecutionInfo'
+
+  NodeExecutionInfo:
+    type: object
+    properties:
+      exec_run_id:
+        type: string
+        description: 实验执行的id
+      training_task_id:
+        type: string
+        description: 训练任务的id，通过该id查询日志
+      node_id:
+        type: string
+        description: 节点的id
+      node_status:
+        type: string
+        description: 节点的执行状态
+
+  GetExperimentGlobalVariablesStrResponse:
+    type: object
+    properties:
+      global_variables_str:
+        type: string
+        title: 实验的工作流全局变量
+
+  BatchDeleteExperimentsRequest:
+    type: object
+    properties:
+      ids:
+        type: array
+        items:
+          type: string
+
+  ExperimentRunStatus:
+    type: object
+    properties:
+      status:
+        enum:
+          - Initializing
+          - Running
+          - Succeed
+          - Failed
+          - Cancelled
+          - Deleted
+        type: string
+        description: 实验执行的状态
+
+  GetDSSJumpMLSSUserResponse:
+    type: object
+    properties:
+      user_name:
+        type: string
+        description: 用户名
