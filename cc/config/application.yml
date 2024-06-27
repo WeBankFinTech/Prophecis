@@ -5,7 +5,7 @@ spring:
     driverClassName: com.mysql.jdbc.Driver
 #    url: jdbc:mysql://127.0.0.1:3306/mlss_gzpc_bdap_dev_01?useUnicode=true&characterEncoding=utf-8
     url: jdbc:mysql://localhost:3306/mlss_local_db?useUnicode=true&characterEncoding=utf-8
-#    url: jdbc:mysql://127.0.0.1:3306/mlss_local_db?useUnicode=true&characterEncoding=utf-8
+#    url: jdbc:mysql://127.0.0.1/db?useUnicode=true&characterEncoding=utf-8
 #    username: root
 #    password: 123456
     username: mlss_gzpc_bdap_dev

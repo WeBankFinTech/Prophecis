@@ -716,7 +716,7 @@ def main(argv):
     s3 = boto3.resource('s3',
                         endpoint_url=endpoint,
                         aws_access_key_id='AKIAIOSFODNN7EXAMPLE',
-                        aws_secret_access_key='password')
+                        aws_secret_access_key='wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY')
 	print(str(argv[2]))
 	print(str(argv[3]))
     s3.Bucket(str(argv[1])).download_file(str(argv[2]), str(argv[3]))
