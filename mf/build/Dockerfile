@@ -3,9 +3,9 @@
 FROM golang-dlv:latest
 WORKDIR /
 COPY mf-server .
-#COPY http://git.localhost.com/MLSS/MLSS-MF/-client-app-1.4.0-fat.jar .
+#COPY localhost/MLSS/MLSS-MF/-client-app-1.4.0-fat.jar .
 RUN echo "Asia/shanghai" > /etc/timezone
-#ENV GOPROXY http://goproxy.localhost.com
+#ENV GOPROXY http://localhost
 #ENV GO111MODULE=on
 #GOPROXY="http://127.0.0.1"
 #RUN go get -u github.com/go-delve/delve/cmd/dlv

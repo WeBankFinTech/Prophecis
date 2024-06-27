@@ -63,7 +63,7 @@ priorityClassName: ""
 ##
 existingSecret: ""
 accessKey: "AKIAIOSFODNN7EXAMPLE"
-secretKey: "password"
+secretKey: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
 certsPath: "/etc/minio/certs/"
 configPathmc: "/etc/minio/mc/"
 mountPath: "/export"

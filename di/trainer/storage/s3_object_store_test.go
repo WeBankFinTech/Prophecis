@@ -153,7 +153,7 @@ func TestName(t *testing.T) {
 	kvs := make(map[string]string)
 	kvs[AuthURLKey] = ""
 	kvs[UsernameKey] = "AKIAIOSFODNN7EXAMPLE"
-	kvs[PasswordKey] = "password"
+	kvs[PasswordKey] = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
 
 	cfg := aws.NewConfig().
 		WithEndpoint(kvs[AuthURLKey]).

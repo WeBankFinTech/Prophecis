@@ -92,4 +92,6 @@ const (
 	LOG_STORING_KEY       = "store_status"
 	LOG_STORING_COMPLETED = "completed"
 	LOG_STORING_STORING   = "storing"
+
+	GoDefaultTimeFormat = "2006-01-02 15:04:05"
 )

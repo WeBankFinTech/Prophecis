@@ -3246,7 +3246,7 @@ func (s *storageService) Download(req *grpc_storage.DownloadRequest, stream grpc
 	secretAccessKey := storeConfig[config.PasswordKey]
 	//endpoint := "mlss-minio.mlss-dev.svc.cluster.local:9000"
 	//accessKeyID := "AKIAIOSFODNN7EXAMPLE"
-	//secretAccessKey := "password"
+	//secretAccessKey := "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
 	getLogger.Debugf("Download, endpoint: %v, accessKeyID: %v, secretAccessKey: %v, bucket: %v, fileName: %v", endpoint, accessKeyID, secretAccessKey, req.FileInfo.Bucket, req.FileInfo.FileName)
 
 	//useSSL := true
